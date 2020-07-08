@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<panorama appversion="6.1.8" apprev="17956" id="node1">
+  <input leveltilesize="510" levelbiashidpi="1.000" levelingroll="0" levelbias="0.400" levelingpitch="0" height="960" width="960" leveltileurl="tiles/node1/cf_%c/l_%l/c_%x/tile_%y.jpg" overlap="1">
+    <level preload="0" height="960" width="960" predecode="0"/>
+    <level preload="1" height="480" width="480" predecode="1"/>
+    <preview strip="1" color="0x808080"/>
+    <video startmutedmobile="0" endaction="loop" targetview="" startonload="1" format="equirectangular">
+      <source url="videos/VR_Sequence_360.mp4"/>
+    </video>
+  </input>
+  <view pannorth="0" fovmode="0">
+    <start projection="4" fov="70" pan="0" tilt="0"/>
+    <flyin projection="9" fov="170" pan="0" tilt="-90"/>
+    <min pan="0" tilt="-90" fovpixel="2"/>
+    <max fovstereographic="270" fovfisheye="360" fov="120" pan="360" tilt="90" scaletofit="1"/>
+  </view>
+  <userdata author="" tags="VR_Sequence" comment="" heading="0" longitude="" datetime="" info="" source="" latitude="" copyright="" customnodeid="" nodeid="node1" title="" description=""/>
+  <hotspots wordwrap="1" height="20" width="180">
+    <label bordercolor="0x000000" wordwrap="1" enabled="1" background="1" border="1" borderradius="1" backgroundcolor="0xffffff" backgroundalpha="1" borderalpha="1" height="20" textalpha="1" width="180" textcolor="0x000000"/>
+    <polystyle bordercolor="0x0000ff" handcursor="1" backgroundcolor="0x0000ff" backgroundalpha="0.25098" borderalpha="1" mode="0"/>
+  </hotspots>
+  <media/>
+  <transition blendcolor="0x000000" zoomin="0" enabled="1" zoomspeed="2" type="crossdissolve" zoomfov="20" blendtime="1" zoomout="0" softedge="0" zoomoutpause="1"/>
+  <animation syncanimationwithvideo="0" useinautorotation="0" animsequence="Animation01"/>
+  <control invertwheel="0" dblclickfullscreen="0" lockedkeyboard="0" lockedkeyboardzoom="0" contextfullscreen="1" invertcontrol="1" simulatemass="1" rubberband="0" speedwheel="1" contextprojections="0" lockedmouse="0" sensitivity="8" lockedwheel="0"/>
+</panorama>
