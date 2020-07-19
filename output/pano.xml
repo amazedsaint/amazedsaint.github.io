@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<panorama appversion="6.1.8" id="node1" apprev="17956">
+  <input leveltileurl="tiles/node1/cf_%c/l_%l/c_%x/tile_%y.jpg" leveltilesize="510" levelbiashidpi="1.000" width="960" overlap="1" height="960" levelbias="0.400" levelingroll="0" levelingpitch="0">
+    <level width="960" height="960" preload="0" predecode="0"/>
+    <level width="480" height="480" preload="1" predecode="1"/>
+    <preview strip="1" color="0x808080"/>
+    <video format="equirectangular" startmutedmobile="0" endaction="loop" targetview="" startonload="1">
+      <source url="videos/VR_Sequence_360.mp4"/>
+    </video>
+  </input>
+  <view pannorth="0" fovmode="0">
+    <start pan="0" tilt="0" fov="70" projection="4"/>
+    <flyin pan="0" tilt="-90" fov="170" projection="9"/>
+    <min fovpixel="2" pan="0" tilt="-90"/>
+    <max pan="360" scaletofit="1" tilt="90" fov="120" fovstereographic="270" fovfisheye="360"/>
+  </view>
+  <userdata longitude="" nodeid="node1" customnodeid="" title="" source="" info="" latitude="" heading="0" copyright="" tags="VR_Sequence" description="" author="" datetime="" comment=""/>
+  <hotspots wordwrap="1" width="180" height="20">
+    <label borderradius="1" background="1" textalpha="1" borderalpha="1" enabled="1" backgroundcolor="0xffffff" textcolor="0x000000" wordwrap="1" width="180" bordercolor="0x000000" height="20" backgroundalpha="1" border="1"/>
+    <polystyle borderalpha="1" backgroundcolor="0x0000ff" handcursor="1" bordercolor="0x0000ff" mode="0" backgroundalpha="0.25098"/>
+  </hotspots>
+  <media/>
+  <transition zoomfov="20" zoomout="0" zoomin="0" enabled="1" type="crossdissolve" zoomoutpause="1" softedge="0" zoomspeed="2" blendtime="1" blendcolor="0x000000"/>
+  <animation syncanimationwithvideo="0" animsequence="Animation01" useinautorotation="0"/>
+  <control lockedkeyboardzoom="0" lockedwheel="0" contextfullscreen="1" sensitivity="8" speedwheel="1" rubberband="0" dblclickfullscreen="0" invertcontrol="1" simulatemass="1" lockedmouse="0" lockedkeyboard="0" invertwheel="0" contextprojections="0" hideabout="0"/>
+</panorama>
