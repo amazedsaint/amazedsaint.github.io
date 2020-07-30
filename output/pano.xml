@@ -1,69 +1,172 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tour appversion="6.1.8" apprev="17956" start="node1">
-  <panorama id="node1">
-    <input width="1920" leveltilesize="510" levelbiashidpi="1.000" overlap="1" height="1920" levelbias="0.400" levelingpitch="0" levelingroll="0" leveltileurl="tiles/node1/cf_%c/l_%l/c_%x/tile_%y.jpg">
-      <level width="1920" preload="0" predecode="0" height="1920"/>
-      <level width="960" preload="0" predecode="0" height="960"/>
-      <level width="480" preload="1" predecode="1" height="480"/>
-      <preview color="0x808080" strip="1"/>
-      <video startonload="1" endaction="loop" format="equirectangular" targetview="" startmutedmobile="0">
+<tour apprev="17956" start="node1" appversion="6.1.8">
+  <panorama id="node1" hideabout="1">
+    <input width="1920" levelingroll="0" levelingpitch="0" levelbias="0.400" height="1920" overlap="1" leveltileurl="tiles/node1/cf_%c/l_%l/c_%x/tile_%y.jpg" leveltilesize="510" levelbiashidpi="1.000">
+      <level predecode="0" width="1920" height="1920" preload="0"/>
+      <level predecode="0" width="960" height="960" preload="0"/>
+      <level predecode="1" width="480" height="480" preload="1"/>
+      <preview strip="1" color="0x808080"/>
+      <video startonload="1" endaction="loop" format="equirectangular" startmutedmobile="0" targetview="">
         <source url="videos/VR_Home_360.mp4"/>
       </video>
     </input>
     <view pannorth="0" fovmode="0">
-      <start fov="70" pan="0" projection="4" tilt="0"/>
-      <flyin fov="69.87" pan="-1.73" projection="4" tilt="7.65"/>
-      <min pan="0" tilt="-90" fovpixel="2"/>
-      <max fov="120" pan="360" fovfisheye="360" scaletofit="1" tilt="90" fovstereographic="270"/>
+      <start projection="4" tilt="2.13" fov="65.12" pan="-0.05"/>
+      <flyin projection="4" tilt="2.37" fov="75.62" pan="-1.84"/>
+      <min fovpixel="2" tilt="-90" pan="0"/>
+      <max fovstereographic="270" fovfisheye="360" scaletofit="1" tilt="90" fov="120" pan="360"/>
     </view>
-    <userdata source="" datetime="" comment="" nodeid="node1" heading="0" description="" latitude="" copyright="" author="" customnodeid="" info="" longitude="" tags="VR_Home" title=""/>
-    <hotspots width="180" wordwrap="1" height="20">
-      <label border="1" enabled="1" width="180" bordercolor="0x000000" backgroundalpha="1" textcolor="0x000000" textalpha="1" wordwrap="1" borderradius="1" backgroundcolor="0xffffff" height="20" background="1" borderalpha="1"/>
-      <polystyle bordercolor="0x0000ff" mode="0" backgroundalpha="0.25098" backgroundcolor="0x0000ff" borderalpha="1" handcursor="1"/>
-      <hotspot skinid="ht_node" description="Solutions for Biologics" pan="-323.13" tilt="6.63" url="{node2}" target="" id="Point01" title="Biologics"/>
+    <userdata title="" copyright="" customnodeid="" author="" datetime="" heading="0" info="" nodeid="node1" comment="" description="" latitude="40.06214341" longitude="-75.68000793" source="" tags="VR_Home">
+      <mapcoords mapid="FloorPlan01" y="-0.455933" x_floorplan_percent="47.9718" y_floorplan_percent="58.042" x="0.74707"/>
+    </userdata>
+    <hotspots width="180" height="20" wordwrap="1">
+      <label backgroundalpha="1" border="1" textcolor="0x000000" width="180" backgroundcolor="0xffffff" height="20" textalpha="1" background="1" bordercolor="0x000000" borderalpha="1" borderradius="1" wordwrap="1" enabled="1"/>
+      <polystyle backgroundalpha="0.25098" backgroundcolor="0x0000ff" mode="0" bordercolor="0x0000ff" borderalpha="1" handcursor="1"/>
+      <polyhotspot title="Solutions for Biologics" url="{node2}" id="Biologics" target="" description="Visit our Biologics booth for Solutions for Biologics">
+        <polystring>-320.21/11.07|-319.86/-8.2|-327.38/-8.34|-327.49/11.23</polystring>
+      </polyhotspot>
+      <polyhotspot title="Solutions For Generics" url="{node3}" id="Poly01" target="" description="">
+        <polystring>-336.91/11.28|-344.63/10.95|-344.72/-8.28|-337.19/-8.4|-337.14/0.93</polystring>
+      </polyhotspot>
+      <polyhotspot title=" Integrated Services &amp; Solutions" url="{node5}" id="Poly02" target="" description="">
+        <polystring>-36.5/11.56|-44.33/11.51|-44.44/-8.56|-36.51/-8.74</polystring>
+      </polyhotspot>
+      <polyhotspot title="Solutions For Pharma" url="{node4}" id="Poly03" target="" description="">
+        <polystring>-19.76/10.97|-27.29/11.28|-26.85/-8.31|-19.71/-8.17</polystring>
+      </polyhotspot>
+      <hotspot title="" skinid="ht_node" url="{node1}" id="Point02" target="$fwd" description="" tilt="0" pan="-180"/>
+      <hotspot title="West's Vision, Mission &amp; Values" skinid="ht_video_youtube" url="t8UCNQZ-buc" id="Point01" target="" description="" tilt="11.79" pan="-355.08"/>
+      <hotspot title="Key Features to Our Knowledge Center" skinid="ht_video_youtube" url="WNuOnoYhTKw" id="Point03" target="" description="" tilt="9.32" pan="-211.4"/>
+      <hotspot title="By Your Side for Collaboration - Knowledge Center Enhancements" skinid="ht_video_youtube" url="XtyeP_Qgakk" id="Point04" target="" description="" tilt="9.55" pan="-138.18"/>
+      <hotspot title="West By the Side of Patients for Innovation" skinid="ht_video_youtube" url="lzRKY0ttOHo" id="Point05" target="" description="" tilt="11.53" pan="-10.72"/>
     </hotspots>
     <media>
-      <sound level="0.900" mode="1" pan="-2.350" ambientlevel="0.000" pansize="10.000" tiltsize="10.000" tilt="15.030" nodechangekeep="0" id="Element01" field="90.000" loop="0" startmutedmobile="0">
-        <source url="media/2 minutes of relaxing music,2 minute meditation music,2 minutes meditation,music 2 minute.mp3"/>
+      <sound pansize="10.000" tiltsize="10.000" field="90.000" mode="0" id="_background" tilt="-1.000" level="1.000" startmutedmobile="0" ambientlevel="0.000" pan="-1.000" nodechangekeep="0" loop="0">
+        <source url="media/Relaxing Music.mp3"/>
       </sound>
     </media>
-    <transition type="crossdissolve" zoomspeed="2" softedge="0" blendtime="1" enabled="1" zoomoutpause="1" zoomfov="20" zoomout="0" zoomin="0" blendcolor="0x000000"/>
+    <transition zoomoutpause="1" type="crossdissolve" softedge="0" zoomfov="20" blendcolor="0x000000" blendtime="1" zoomspeed="2" zoomin="0" zoomout="0" enabled="1"/>
     <animation useinautorotation="0" animsequence="Animation01" syncanimationwithvideo="0"/>
-    <control lockedkeyboard="0" speedwheel="1" invertwheel="0" lockedwheel="0" contextprojections="0" rubberband="0" simulatemass="1" invertcontrol="1" lockedmouse="0" dblclickfullscreen="0" lockedkeyboardzoom="0" sensitivity="8" contextfullscreen="1" hideabout="0"/>
+    <control simulatemass="1" lockedwheel="0" sensitivity="8" speedwheel="1" contextprojections="1" invertwheel="0" dblclickfullscreen="0" lockedmouse="0" lockedkeyboardzoom="0" invertcontrol="1" lockedkeyboard="0" hideabout="1" rubberband="0" contextfullscreen="1"/>
   </panorama>
-  <panorama id="node2">
-    <input width="1920" leveltilesize="510" levelbiashidpi="1.000" overlap="1" height="1920" levelbias="0.400" levelingpitch="0" levelingroll="0" leveltileurl="tiles/node2/cf_%c/l_%l/c_%x/tile_%y.jpg">
-      <level width="1920" preload="0" predecode="0" height="1920"/>
-      <level width="960" preload="0" predecode="0" height="960"/>
-      <level width="480" preload="1" predecode="1" height="480"/>
-      <preview color="0x808080" strip="1"/>
-      <video startonload="1" endaction="loop" format="equirectangular" targetview="" startmutedmobile="0">
+  <panorama id="node2" hideabout="1">
+    <input width="1920" levelingroll="0" levelingpitch="0" levelbias="0.400" height="1920" overlap="1" leveltileurl="tiles/node2/cf_%c/l_%l/c_%x/tile_%y.jpg" leveltilesize="510" levelbiashidpi="1.000">
+      <level predecode="0" width="1920" height="1920" preload="0"/>
+      <level predecode="0" width="960" height="960" preload="0"/>
+      <level predecode="1" width="480" height="480" preload="1"/>
+      <preview strip="1" color="0x808080"/>
+      <video startonload="1" endaction="loop" format="equirectangular" startmutedmobile="0" targetview="">
         <source url="videos/VR_Biologics_360.mp4"/>
       </video>
     </input>
     <view pannorth="0" fovmode="0">
-      <start fov="70" pan="0" projection="4" tilt="0"/>
-      <flyin fov="69.87" pan="-2.32" projection="4" tilt="12.2"/>
-      <min pan="0" tilt="-90" fovpixel="2"/>
-      <max fov="120" pan="360" fovfisheye="360" scaletofit="1" tilt="90" fovstereographic="270"/>
+      <start projection="4" tilt="0" fov="70" pan="0"/>
+      <flyin projection="9" tilt="-90" fov="170" pan="0"/>
+      <min fovpixel="2" tilt="-90" pan="0"/>
+      <max fovstereographic="270" fovfisheye="360" scaletofit="1" tilt="90" fov="120" pan="360"/>
     </view>
-    <userdata source="" datetime="" comment="" nodeid="node2" heading="0" description="" latitude="" copyright="" author="" customnodeid="" info="" longitude="" tags="VR_Biologics" title=""/>
-    <hotspots width="180" wordwrap="1" height="20">
-      <label border="1" enabled="1" width="180" bordercolor="0x000000" backgroundalpha="1" textcolor="0x000000" textalpha="1" wordwrap="1" borderradius="1" backgroundcolor="0xffffff" height="20" background="1" borderalpha="1"/>
-      <polystyle bordercolor="0x0000ff" mode="0" backgroundalpha="0.25098" backgroundcolor="0x0000ff" borderalpha="1" handcursor="1"/>
-      <hotspot skinid="ht_video_youtube" description="West Ready Pack® high-quality primary packaging components consist of sterilized NovaPure® stoppers, Flip-Off® seals and vials. Ready Pack components are provided ready to use and are available for order in small minimum order quantities from stock." pan="-121.62" tilt="11.48" url="NoAF6s6L9M0" target="" id="Point01" title="Ready Pack® components - Video "/>
-      <hotspot skinid="ht_url" description="&#xa;West Ready Pack® high-quality primary packaging components consist of sterilized NovaPure® stoppers, Flip-Off® seals and vials. Ready Pack components are provided ready to use and are available for order in small minimum order quantities from stock. &#xa;" pan="-132.1" tilt="12.29" url="https://www.westpharma.com/-/media/WestPharma/Files/Products/Gene-therapy-information-sheet.pdf?la=en&amp;hash=893FF146109258CDB49E7CA04AD05A23AB00C40F&#xa;" target="_blank" id="Point02" title="Ready Pack® components - Ready Pack® components - Gene Therapy Info Sheet"/>
+    <userdata title="" copyright="" customnodeid="" author="" datetime="" heading="0" info="" nodeid="node2" comment="" description="" latitude="" longitude="" source="" tags="VR_Biologics">
+      <mapcoords mapid="FloorPlan01" y="-0.332336" x_floorplan_percent="22.575" y_floorplan_percent="42.3077" x="0.351563"/>
+    </userdata>
+    <hotspots width="180" height="20" wordwrap="1">
+      <label backgroundalpha="1" border="1" textcolor="0x000000" width="180" backgroundcolor="0xffffff" height="20" textalpha="1" background="1" bordercolor="0x000000" borderalpha="1" borderradius="1" wordwrap="1" enabled="1"/>
+      <polystyle backgroundalpha="0.25098" backgroundcolor="0x0000ff" mode="0" bordercolor="0x0000ff" borderalpha="1" handcursor="1"/>
+      <hotspot distance3D="371.477" title="Back to West Expo Home" customimage="media/home-button.png" use3D="0" skinid="ht_node" url="{node1}" id="Point01" customimagewidth="65" target="" description="" customimageheight="65" tilt="-1.4" fov="10" pan="-177.11"/>
     </hotspots>
-    <media>
-      <sound level="1.000" mode="1" pan="-0.760" ambientlevel="0.000" pansize="10.000" tiltsize="10.000" tilt="38.870" nodechangekeep="0" id="Element01" field="90.000" loop="1" startmutedmobile="0">
-        <source url="media/2 minutes of relaxing music,2 minute meditation music,2 minutes meditation,music 2 minute.mp3"/>
-      </sound>
-    </media>
-    <transition type="crossdissolve" zoomspeed="2" softedge="0" blendtime="1" enabled="1" zoomoutpause="1" zoomfov="20" zoomout="0" zoomin="0" blendcolor="0x000000"/>
+    <media/>
+    <transition zoomoutpause="1" type="crossdissolve" softedge="0" zoomfov="20" blendcolor="0x000000" blendtime="1" zoomspeed="2" zoomin="0" zoomout="0" enabled="1"/>
     <animation useinautorotation="0" animsequence="Animation01" syncanimationwithvideo="0"/>
-    <control lockedkeyboard="0" speedwheel="1" invertwheel="0" lockedwheel="0" contextprojections="0" rubberband="0" simulatemass="1" invertcontrol="1" lockedmouse="0" dblclickfullscreen="0" lockedkeyboardzoom="0" sensitivity="8" contextfullscreen="1" hideabout="0"/>
+    <control simulatemass="1" lockedwheel="0" sensitivity="8" speedwheel="1" contextprojections="1" invertwheel="0" dblclickfullscreen="0" lockedmouse="0" lockedkeyboardzoom="0" invertcontrol="1" lockedkeyboard="0" hideabout="1" rubberband="0" contextfullscreen="1"/>
+  </panorama>
+  <panorama id="node3" hideabout="1">
+    <input width="1920" levelingroll="0" levelingpitch="0" levelbias="0.400" height="1920" overlap="1" leveltileurl="tiles/node3/cf_%c/l_%l/c_%x/tile_%y.jpg" leveltilesize="510" levelbiashidpi="1.000">
+      <level predecode="0" width="1920" height="1920" preload="0"/>
+      <level predecode="0" width="960" height="960" preload="0"/>
+      <level predecode="1" width="480" height="480" preload="1"/>
+      <preview strip="1" color="0x808080"/>
+      <video startonload="1" endaction="loop" format="equirectangular" startmutedmobile="0" targetview="">
+        <source url="videos/VR_Generics_360.mp4"/>
+      </video>
+    </input>
+    <view pannorth="0" fovmode="0">
+      <start projection="4" tilt="0" fov="70" pan="0"/>
+      <flyin projection="9" tilt="-90" fov="170" pan="0"/>
+      <min fovpixel="2" tilt="-90" pan="0"/>
+      <max fovstereographic="270" fovfisheye="360" scaletofit="1" tilt="90" fov="120" pan="360"/>
+    </view>
+    <userdata title="" copyright="" customnodeid="" author="" datetime="" heading="0" info="" nodeid="node3" comment="" description="" latitude="" longitude="" source="" tags="VR_Generics">
+      <mapcoords mapid="FloorPlan01" y="-0.249939" x_floorplan_percent="48.5009" y_floorplan_percent="31.8182" x="0.75531"/>
+    </userdata>
+    <hotspots width="180" height="20" wordwrap="1">
+      <label backgroundalpha="1" border="1" textcolor="0x000000" width="180" backgroundcolor="0xffffff" height="20" textalpha="1" background="1" bordercolor="0x000000" borderalpha="1" borderradius="1" wordwrap="1" enabled="1"/>
+      <polystyle backgroundalpha="0.25098" backgroundcolor="0x0000ff" mode="0" bordercolor="0x0000ff" borderalpha="1" handcursor="1"/>
+      <hotspot distance3D="377.192" title="Back to West Expo Home" customimage="media/home-button.png" use3D="0" skinid="ht_node" url="{node1}" id="Point01" customimagewidth="66" target="" description="" customimageheight="66" tilt="0.21" fov="10" pan="-177.02"/>
+    </hotspots>
+    <media/>
+    <transition zoomoutpause="1" type="crossdissolve" softedge="0" zoomfov="20" blendcolor="0x000000" blendtime="1" zoomspeed="2" zoomin="0" zoomout="0" enabled="1"/>
+    <animation useinautorotation="0" animsequence="Animation01" syncanimationwithvideo="0"/>
+    <control simulatemass="1" lockedwheel="0" sensitivity="8" speedwheel="1" contextprojections="1" invertwheel="0" dblclickfullscreen="0" lockedmouse="0" lockedkeyboardzoom="0" invertcontrol="1" lockedkeyboard="0" hideabout="1" rubberband="0" contextfullscreen="1"/>
+  </panorama>
+  <panorama id="node4" hideabout="1">
+    <input width="1920" levelingroll="0" levelingpitch="0" levelbias="0.400" height="1920" overlap="1" leveltileurl="tiles/node4/cf_%c/l_%l/c_%x/tile_%y.jpg" leveltilesize="510" levelbiashidpi="1.000">
+      <level predecode="0" width="1920" height="1920" preload="0"/>
+      <level predecode="0" width="960" height="960" preload="0"/>
+      <level predecode="1" width="480" height="480" preload="1"/>
+      <preview strip="1" color="0x808080"/>
+      <video startonload="1" endaction="loop" format="equirectangular" startmutedmobile="0" targetview="">
+        <source url="videos/VR_Pharma_360.mp4"/>
+      </video>
+    </input>
+    <view pannorth="0" fovmode="0">
+      <start projection="4" tilt="0" fov="70" pan="0"/>
+      <flyin projection="9" tilt="-90" fov="170" pan="0"/>
+      <min fovpixel="2" tilt="-90" pan="0"/>
+      <max fovstereographic="270" fovfisheye="360" scaletofit="1" tilt="90" fov="120" pan="360"/>
+    </view>
+    <userdata title="" copyright="" customnodeid="" author="" datetime="" heading="0" info="" nodeid="node4" comment="" description="" latitude="" longitude="" source="" tags="VR_Pharma">
+      <mapcoords mapid="FloorPlan01" y="-0.348816" x_floorplan_percent="68.9594" y_floorplan_percent="44.4056" x="1.07391"/>
+    </userdata>
+    <hotspots width="180" height="20" wordwrap="1">
+      <label backgroundalpha="1" border="1" textcolor="0x000000" width="180" backgroundcolor="0xffffff" height="20" textalpha="1" background="1" bordercolor="0x000000" borderalpha="1" borderradius="1" wordwrap="1" enabled="1"/>
+      <polystyle backgroundalpha="0.25098" backgroundcolor="0x0000ff" mode="0" bordercolor="0x0000ff" borderalpha="1" handcursor="1"/>
+      <hotspot distance3D="377.192" title="Back to West Expo Home" customimage="media/home-button.png" use3D="0" skinid="ht_node" url="{node1}" id="Point01" customimagewidth="66" target="" description="" customimageheight="66" tilt="-0.42" fov="10" pan="-177.02"/>
+    </hotspots>
+    <media/>
+    <transition zoomoutpause="1" type="crossdissolve" softedge="0" zoomfov="20" blendcolor="0x000000" blendtime="1" zoomspeed="2" zoomin="0" zoomout="0" enabled="1"/>
+    <animation useinautorotation="0" animsequence="Animation01" syncanimationwithvideo="0"/>
+    <control simulatemass="1" lockedwheel="0" sensitivity="8" speedwheel="1" contextprojections="1" invertwheel="0" dblclickfullscreen="0" lockedmouse="0" lockedkeyboardzoom="0" invertcontrol="1" lockedkeyboard="0" hideabout="1" rubberband="0" contextfullscreen="1"/>
+  </panorama>
+  <panorama id="node5" hideabout="1">
+    <input width="1920" levelingroll="0" levelingpitch="0" levelbias="0.400" height="1920" overlap="1" leveltileurl="tiles/node5/cf_%c/l_%l/c_%x/tile_%y.jpg" leveltilesize="510" levelbiashidpi="1.000">
+      <level predecode="0" width="1920" height="1920" preload="0"/>
+      <level predecode="0" width="960" height="960" preload="0"/>
+      <level predecode="1" width="480" height="480" preload="1"/>
+      <preview strip="1" color="0x808080"/>
+      <video startonload="1" endaction="loop" format="equirectangular" startmutedmobile="0" targetview="">
+        <source url="videos/VR_Services_360.mp4"/>
+      </video>
+    </input>
+    <view pannorth="0" fovmode="0">
+      <start projection="4" tilt="0.45" fov="78.09" pan="2.4"/>
+      <flyin projection="9" tilt="-90" fov="170" pan="0"/>
+      <min fovpixel="2" tilt="-90" pan="0"/>
+      <max fovstereographic="270" fovfisheye="360" scaletofit="1" tilt="90" fov="120" pan="360"/>
+    </view>
+    <userdata title="" copyright="" customnodeid="" author="" datetime="" heading="0" info="" nodeid="node5" comment="" description="" latitude="" longitude="" source="" tags="VR_Services">
+      <mapcoords mapid="FloorPlan01" y="-0.574036" x_floorplan_percent="66.1376" y_floorplan_percent="73.0769" x="1.02997"/>
+    </userdata>
+    <hotspots width="180" height="20" wordwrap="1">
+      <label backgroundalpha="1" border="1" textcolor="0x000000" width="180" backgroundcolor="0xffffff" height="20" textalpha="1" background="1" bordercolor="0x000000" borderalpha="1" borderradius="1" wordwrap="1" enabled="1"/>
+      <polystyle backgroundalpha="0.25098" backgroundcolor="0x0000ff" mode="0" bordercolor="0x0000ff" borderalpha="1" handcursor="1"/>
+      <hotspot distance3D="371.477" title="Back to West Expo Home" customimage="media/home-button.png" use3D="0" skinid="ht_node" url="{node1}" id="Point01" customimagewidth="65" target="" description="" customimageheight="65" tilt="0.24" fov="10" pan="-177.05"/>
+    </hotspots>
+    <media/>
+    <transition zoomoutpause="1" type="crossdissolve" softedge="0" zoomfov="20" blendcolor="0x000000" blendtime="1" zoomspeed="2" zoomin="0" zoomout="0" enabled="1"/>
+    <animation useinautorotation="0" animsequence="Animation01" syncanimationwithvideo="0"/>
+    <control simulatemass="1" lockedwheel="0" sensitivity="8" speedwheel="1" contextprojections="1" invertwheel="0" dblclickfullscreen="0" lockedmouse="0" lockedkeyboardzoom="0" invertcontrol="1" lockedkeyboard="0" hideabout="1" rubberband="0" contextfullscreen="1"/>
   </panorama>
   <masternode>
-    <userdata source="" datetime="" comment="" nodeid="master" heading="0" description="" latitude="" copyright="" author="" customnodeid="" info="" longitude="" tags="" title=""/>
+    <userdata title="" copyright="" customnodeid="" author="" datetime="" heading="0" info="" nodeid="master" comment="" description="" latitude="" longitude="" source="" tags=""/>
   </masternode>
+  <map type="file" title="" width="567" height="286" transparent="0" zoomlevels="1" id="FloorPlan01" bgcolor="rgba(255, 255, 255, 1)" floorplannorth="0" tileformat="jpg"/>
 </tour>
