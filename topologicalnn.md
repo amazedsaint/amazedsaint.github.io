@@ -1,6 +1,3 @@
-Below is the whitepaper rewritten using GitHub-compatible Markdown with LaTeX for mathematical expressions.
-
----
 
 # Topological Transformations in Attention-Based Networks: A Systematic Analysis
 
@@ -252,8 +249,6 @@ Attention-based networks, epitomized by the Transformer, fundamentally alter the
 
 In essence, while **“attention is all you need”**, optimal performance requires a careful interplay of hyperparameter tuning, architectural design, and training dynamics—all rooted in a deep understanding of the model’s topological transformations.
 
-*References in brackets (e.g., [2], [7]) denote citations from foundational and follow-up studies.*
+[Home](/)
 
----
 
-This Markdown document with embedded LaTeX should render correctly on GitHub (provided that the repository or viewer supports math rendering, e.g., via [GitHub Pages](https://pages.github.com/) or a math-enabled Markdown viewer).
