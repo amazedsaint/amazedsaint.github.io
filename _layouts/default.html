@@ -55,8 +55,8 @@ const POSTS_DATA = [
       </div>
       <div class="control-row">
         <label>Breeding Rate</label>
-        <input type="range" id="breeding-rate" min="0" max="0.1" step="0.01" value="0.03">
-        <span class="value">3%</span>
+        <input type="range" id="breeding-rate" min="0" max="0.02" step="0.001" value="0.005">
+        <span class="value">0.5%</span>
       </div>
       <div class="control-row">
         <label>Collaboration</label>
@@ -110,10 +110,12 @@ class AntColony {
     this.height = window.innerHeight;
     this.params = {
       foodStrength: 1.0,
-      breedingRate: 0.03,
+      breedingRate: 0.005, // Much lower breeding rate
       collaborationMode: 'flocking',
       antSpeed: 0.8,
-      foodDecay: 0.98
+      foodDecay: 0.995, // Slower decay
+      maxDensity: 8, // Max ants per area before dispersion/death
+      dispersalForce: 0.3
     };
     this.init();
   }
@@ -263,23 +265,42 @@ class AntColony {
   }
 
   addFood(x, y) {
-    // Create food point
-    const food = document.createElement('div');
-    food.className = 'food-point';
-    food.style.left = (x - 4) + 'px';
-    food.style.top = (y - 4) + 'px';
-    this.antContainer.appendChild(food);
+    const clickRadius = 30;
+    
+    // Check if clicking near existing food to accumulate
+    let existingFood = this.foodPoints.find(food => {
+      const dx = food.x - x;
+      const dy = food.y - y;
+      return Math.sqrt(dx * dx + dy * dy) < clickRadius;
+    });
 
-    const foodPoint = {
-      element: food,
-      x: x,
-      y: y,
-      strength: this.params.foodStrength,
-      radius: 60,
-      id: Date.now() + Math.random()
-    };
+    if (existingFood) {
+      // Accumulate food at existing point
+      existingFood.strength = Math.min(existingFood.strength + this.params.foodStrength * 0.5, 3.0);
+      existingFood.radius = Math.min(20 + existingFood.strength * 30, 100);
+      
+      // Update visual size
+      const scale = 0.5 + existingFood.strength * 0.3;
+      existingFood.element.style.transform = `scale(${scale})`;
+    } else {
+      // Create new food point
+      const food = document.createElement('div');
+      food.className = 'food-point';
+      food.style.left = (x - 3) + 'px';
+      food.style.top = (y - 3) + 'px';
+      this.antContainer.appendChild(food);
 
-    this.foodPoints.push(foodPoint);
+      const foodPoint = {
+        element: food,
+        x: x,
+        y: y,
+        strength: this.params.foodStrength,
+        radius: 50,
+        id: Date.now() + Math.random()
+      };
+
+      this.foodPoints.push(foodPoint);
+    }
 
     // Attract nearby ants to the food
     [...this.ants, ...this.freeAnts].forEach(ant => {
@@ -287,12 +308,12 @@ class AntColony {
       const dy = y - ant.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      if (distance < 120) {
+      if (distance < 150) {
         ant.target = { 
-          x: x + (Math.random() - 0.5) * 30, 
-          y: y + (Math.random() - 0.5) * 30 
+          x: x + (Math.random() - 0.5) * 40, 
+          y: y + (Math.random() - 0.5) * 40 
         };
-        ant.targetTime = Date.now() + 3000 + Math.random() * 4000;
+        ant.targetTime = Date.now() + 2000 + Math.random() * 3000;
       }
     });
   }
@@ -307,7 +328,7 @@ class AntColony {
 
     // Bind control inputs
     this.bindControl('food-strength', 'foodStrength', (v) => v.toFixed(1));
-    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(0) + '%');
+    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(1) + '%');
     this.bindControl('ant-speed', 'antSpeed', (v) => v.toFixed(1));
     this.bindControl('food-decay', 'foodDecay', (v) => (v * 100).toFixed(1) + '%');
 
@@ -373,70 +394,88 @@ class AntColony {
   moveAnt(ant) {
     const now = Date.now();
     
-    // Food seeking behavior
-    let nearestFood = null;
-    let nearestFoodDistance = Infinity;
+    // Density-based behavior (population control)
+    const densityResult = this.checkDensity(ant);
     
-    this.foodPoints.forEach(food => {
-      const dx = food.x - ant.x;
-      const dy = food.y - ant.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < food.radius && distance < nearestFoodDistance) {
-        nearestFood = food;
-        nearestFoodDistance = distance;
-      }
-    });
+    if (densityResult.shouldDie) {
+      this.killAnt(ant);
+      return;
+    }
     
-    // Prioritize food over other targets
-    if (nearestFood && nearestFoodDistance < 100) {
-      const dx = nearestFood.x - ant.x;
-      const dy = nearestFood.y - ant.y;
-      const angleToFood = Math.atan2(dy, dx);
-      ant.angle = this.lerp(ant.angle, angleToFood, 0.2);
-      ant.speed = Math.min(ant.speed * 1.2, 2.0) * this.params.antSpeed;
-    } else if (ant.target && now < ant.targetTime) {
-      // Move towards click target
-      const dx = ant.target.x - ant.x;
-      const dy = ant.target.y - ant.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+    if (densityResult.shouldDisperse) {
+      // Force ant to move away from crowded area
+      ant.angle = densityResult.dispersalAngle;
+      ant.speed = 1.0 * this.params.antSpeed;
+      ant.target = null; // Override other targets
+    } else {
+      // Normal behavior when not overcrowded
       
-      if (distance > 5) {
-        const angleToTarget = Math.atan2(dy, dx);
-        ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
-        ant.speed = Math.min(ant.speed * 1.1, 1.5) * this.params.antSpeed;
+      // Food seeking behavior
+      let nearestFood = null;
+      let nearestFoodDistance = Infinity;
+      
+      this.foodPoints.forEach(food => {
+        const dx = food.x - ant.x;
+        const dy = food.y - ant.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < food.radius && distance < nearestFoodDistance) {
+          nearestFood = food;
+          nearestFoodDistance = distance;
+        }
+      });
+      
+      // Prioritize food over other targets
+      if (nearestFood && nearestFoodDistance < nearestFood.radius) {
+        const attraction = nearestFood.strength * (1 - nearestFoodDistance / nearestFood.radius);
+        const dx = nearestFood.x - ant.x;
+        const dy = nearestFood.y - ant.y;
+        const angleToFood = Math.atan2(dy, dx);
+        ant.angle = this.lerp(ant.angle, angleToFood, 0.1 + attraction * 0.1);
+        ant.speed = (0.5 + attraction) * this.params.antSpeed;
+      } else if (ant.target && now < ant.targetTime) {
+        // Move towards click target
+        const dx = ant.target.x - ant.x;
+        const dy = ant.target.y - ant.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+          const angleToTarget = Math.atan2(dy, dx);
+          ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
+          ant.speed = Math.min(ant.speed * 1.1, 1.5) * this.params.antSpeed;
+        } else {
+          ant.target = null;
+        }
       } else {
         ant.target = null;
-      }
-    } else {
-      ant.target = null;
-      ant.speed = Math.max(ant.speed * 0.95, 0.3) * this.params.antSpeed;
-      
-      // Collaboration behaviors
-      if (this.params.collaborationMode === 'flocking') {
-        this.applyFlockingBehavior(ant);
-      } else if (this.params.collaborationMode === 'swarm') {
-        this.applySwarmBehavior(ant);
-      }
-      
-      if (ant.article) {
-        // Orbit around article
-        const article = ant.article;
-        const centerX = article.x;
-        const centerY = article.y;
+        ant.speed = Math.max(ant.speed * 0.95, 0.3) * this.params.antSpeed;
         
-        ant.targetAngle += 0.01 + Math.random() * 0.02;
-        const targetX = centerX + Math.cos(ant.targetAngle) * ant.orbitRadius;
-        const targetY = centerY + Math.sin(ant.targetAngle) * ant.orbitRadius;
+        // Collaboration behaviors
+        if (this.params.collaborationMode === 'flocking') {
+          this.applyFlockingBehavior(ant);
+        } else if (this.params.collaborationMode === 'swarm') {
+          this.applySwarmBehavior(ant);
+        }
         
-        const dx = targetX - ant.x;
-        const dy = targetY - ant.y;
-        const angleToOrbit = Math.atan2(dy, dx);
-        ant.angle = this.lerp(ant.angle, angleToOrbit, 0.1);
-      } else {
-        // Wander randomly
-        ant.wanderAngle += (Math.random() - 0.5) * 0.3;
-        ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.05);
+        if (ant.article) {
+          // Orbit around article
+          const article = ant.article;
+          const centerX = article.x;
+          const centerY = article.y;
+          
+          ant.targetAngle += 0.008 + Math.random() * 0.015;
+          const targetX = centerX + Math.cos(ant.targetAngle) * ant.orbitRadius;
+          const targetY = centerY + Math.sin(ant.targetAngle) * ant.orbitRadius;
+          
+          const dx = targetX - ant.x;
+          const dy = targetY - ant.y;
+          const angleToOrbit = Math.atan2(dy, dx);
+          ant.angle = this.lerp(ant.angle, angleToOrbit, 0.08);
+        } else {
+          // Wander randomly
+          ant.wanderAngle += (Math.random() - 0.5) * 0.25;
+          ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.04);
+        }
       }
     }
     
@@ -455,8 +494,64 @@ class AntColony {
     ant.element.style.top = ant.y + 'px';
     ant.element.style.transform = `rotate(${ant.angle}rad)`;
     
-    // Breeding check
-    this.checkBreeding(ant);
+    // Breeding check (only if not overcrowded)
+    if (!densityResult.shouldDisperse) {
+      this.checkBreeding(ant);
+    }
+  }
+
+  checkDensity(ant) {
+    const checkRadius = 25;
+    let nearbyCount = 0;
+    let avgX = 0, avgY = 0;
+    
+    [...this.ants, ...this.freeAnts].forEach(other => {
+      if (other === ant) return;
+      const dx = other.x - ant.x;
+      const dy = other.y - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < checkRadius) {
+        nearbyCount++;
+        avgX += other.x;
+        avgY += other.y;
+      }
+    });
+    
+    if (nearbyCount > this.params.maxDensity) {
+      // Overcrowded - chance to die or forced dispersal
+      if (nearbyCount > this.params.maxDensity * 1.5 && Math.random() < 0.02) {
+        return { shouldDie: true };
+      }
+      
+      // Calculate dispersal direction (away from crowd center)
+      if (nearbyCount > 0) {
+        avgX /= nearbyCount;
+        avgY /= nearbyCount;
+        const awayAngle = Math.atan2(ant.y - avgY, ant.x - avgX);
+        return { 
+          shouldDisperse: true, 
+          dispersalAngle: awayAngle + (Math.random() - 0.5) * 0.5
+        };
+      }
+    }
+    
+    return { shouldDie: false, shouldDisperse: false };
+  }
+
+  killAnt(ant) {
+    // Remove ant from arrays and DOM
+    const antIndex = this.ants.indexOf(ant);
+    if (antIndex > -1) {
+      this.ants.splice(antIndex, 1);
+    } else {
+      const freeIndex = this.freeAnts.indexOf(ant);
+      if (freeIndex > -1) {
+        this.freeAnts.splice(freeIndex, 1);
+      }
+    }
+    
+    ant.element.remove();
   }
 
   applyFlockingBehavior(ant) {
