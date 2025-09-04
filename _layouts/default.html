@@ -299,7 +299,7 @@ class AntColony {
         x: article.x + 150 + Math.cos(angle) * radius,
         y: article.y + 75 + Math.sin(angle) * radius,
         angle: Math.random() * Math.PI * 2,
-        speed: 0.3 + Math.random() * 0.5,
+        baseSpeed: 0.3 + Math.random() * 0.5,
         targetAngle: angle,
         orbitRadius: radius,
         article: article,
@@ -324,7 +324,7 @@ class AntColony {
         x: Math.random() * this.width,
         y: Math.random() * this.height,
         angle: Math.random() * Math.PI * 2,
-        speed: 0.2 + Math.random() * 0.4,
+        baseSpeed: 0.2 + Math.random() * 0.4,
         wanderAngle: Math.random() * Math.PI * 2,
         target: null,
         gender: gender,
@@ -398,7 +398,7 @@ class AntColony {
 
     // Bind control inputs
     this.bindControl('food-strength', 'foodStrength', (v) => v.toFixed(1));
-    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(2) + '%');
+    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(3) + '%');
     this.bindControl('ant-speed', 'antSpeed', (v) => v.toFixed(1));
     this.bindControl('food-decay', 'foodDecay', (v) => (v * 100).toFixed(1) + '%');
 
@@ -475,7 +475,7 @@ class AntColony {
     if (densityResult.shouldDisperse) {
       // Force ant to move away from crowded area
       ant.angle = densityResult.dispersalAngle;
-      ant.speed = 1.0 * this.params.antSpeed;
+      ant.baseSpeed = 1.0; // Force dispersal at full speed
       ant.target = null; // Override other targets
     } else {
       // Normal behavior when not overcrowded
@@ -502,7 +502,7 @@ class AntColony {
         const dy = nearestFood.y - ant.y;
         const angleToFood = Math.atan2(dy, dx);
         ant.angle = this.lerp(ant.angle, angleToFood, 0.1 + attraction * 0.1);
-        ant.speed = (0.5 + attraction) * this.params.antSpeed;
+        ant.baseSpeed = (0.4 + attraction * 0.6);
       } else if (ant.target && now < ant.targetTime) {
         // Move towards click target
         const dx = ant.target.x - ant.x;
@@ -512,13 +512,13 @@ class AntColony {
         if (distance > 5) {
           const angleToTarget = Math.atan2(dy, dx);
           ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
-          ant.speed = Math.min(ant.speed * 1.1, 1.5) * this.params.antSpeed;
+          ant.baseSpeed = Math.min((ant.baseSpeed || 0.5) * 1.1, 1.2);
         } else {
           ant.target = null;
         }
       } else {
         ant.target = null;
-        ant.speed = Math.max(ant.speed * 0.95, 0.3) * this.params.antSpeed;
+        ant.baseSpeed = Math.max((ant.baseSpeed || 0.5) * 0.98, 0.3);
         
         // Collaboration behaviors
         if (this.params.collaborationMode === 'flocking') {
@@ -549,9 +549,12 @@ class AntColony {
       }
     }
     
+    // Calculate final speed with global multiplier
+    const finalSpeed = (ant.baseSpeed || 0.5) * this.params.antSpeed;
+    
     // Move ant
-    ant.x += Math.cos(ant.angle) * ant.speed;
-    ant.y += Math.sin(ant.angle) * ant.speed;
+    ant.x += Math.cos(ant.angle) * finalSpeed;
+    ant.y += Math.sin(ant.angle) * finalSpeed;
     
     // Screen wrapping
     if (ant.x < -10) ant.x = this.width + 10;
@@ -716,7 +719,7 @@ class AntColony {
       x: x + (Math.random() - 0.5) * 25,
       y: y + (Math.random() - 0.5) * 25,
       angle: Math.random() * Math.PI * 2,
-      speed: 0.2 + Math.random() * 0.4,
+      baseSpeed: 0.2 + Math.random() * 0.4,
       wanderAngle: Math.random() * Math.PI * 2,
       target: null,
       article: null,
