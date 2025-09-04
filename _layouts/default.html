@@ -125,13 +125,12 @@ class AntColony {
       this.createFreeAnts(80 + POSTS_DATA.length * 12);
     }, 100);
 
-    // Add click handler for food placement (anywhere on page)
+    // Add click handler for food placement (only on background/empty areas)
     document.addEventListener('click', (e) => {
-      // Don't place food if clicking on controls
-      if (e.target.closest('.control-panel') || e.target.closest('.article-carried')) {
-        return;
+      // Only place food if clicking on the body or ant-world div directly
+      if (e.target === document.body || e.target.id === 'ant-world') {
+        this.addFood(e.clientX, e.clientY);
       }
-      this.addFood(e.clientX, e.clientY);
     });
 
     // Initialize control panel
