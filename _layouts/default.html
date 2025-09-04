@@ -110,13 +110,22 @@ class AntColony {
     this.height = window.innerHeight;
     this.params = {
       foodStrength: 1.0,
-      breedingRate: 0.005, // Much lower breeding rate
+      breedingRate: 0.005,
       collaborationMode: 'flocking',
       antSpeed: 0.8,
-      foodDecay: 0.995, // Slower decay
-      maxDensity: 8, // Max ants per area before dispersion/death
+      foodDecay: 0.995,
+      maxDensity: 8,
       dispersalForce: 0.3
     };
+    
+    // Performance optimizations
+    this.frameCount = 0;
+    this.spatialGrid = null;
+    this.gridSize = 50;
+    this.lastUpdate = 0;
+    this.targetFPS = 60;
+    this.frameInterval = 1000 / this.targetFPS;
+    
     this.init();
   }
 
@@ -143,8 +152,8 @@ class AntColony {
     // Initialize control panel
     this.initControls();
 
-    // Start animation
-    this.animate();
+    // Start optimized animation loop
+    requestAnimationFrame((time) => this.animate(time));
 
     // Handle resize
     window.addEventListener('resize', () => {
@@ -160,6 +169,54 @@ class AntColony {
       article.x = rect.left + rect.width / 2;
       article.y = rect.top + rect.height / 2;
     });
+  }
+
+  buildSpatialGrid() {
+    // Create spatial grid for efficient neighbor queries
+    const cols = Math.ceil(this.width / this.gridSize);
+    const rows = Math.ceil(this.height / this.gridSize);
+    this.spatialGrid = Array(cols * rows).fill(null).map(() => []);
+    
+    // Place all ants in grid cells
+    [...this.ants, ...this.freeAnts].forEach(ant => {
+      const col = Math.floor(ant.x / this.gridSize);
+      const row = Math.floor(ant.y / this.gridSize);
+      const index = col + row * cols;
+      if (index >= 0 && index < this.spatialGrid.length) {
+        this.spatialGrid[index].push(ant);
+      }
+    });
+  }
+
+  getNearbyAnts(ant, radius) {
+    const col = Math.floor(ant.x / this.gridSize);
+    const row = Math.floor(ant.y / this.gridSize);
+    const cols = Math.ceil(this.width / this.gridSize);
+    const cellRadius = Math.ceil(radius / this.gridSize);
+    
+    const nearby = [];
+    
+    for (let dy = -cellRadius; dy <= cellRadius; dy++) {
+      for (let dx = -cellRadius; dx <= cellRadius; dx++) {
+        const checkCol = col + dx;
+        const checkRow = row + dy;
+        const index = checkCol + checkRow * cols;
+        
+        if (index >= 0 && index < this.spatialGrid.length && 
+            checkCol >= 0 && checkCol < cols) {
+          this.spatialGrid[index].forEach(other => {
+            if (other !== ant) {
+              const dist = Math.sqrt((other.x - ant.x) ** 2 + (other.y - ant.y) ** 2);
+              if (dist < radius) {
+                nearby.push({ ant: other, distance: dist });
+              }
+            }
+          });
+        }
+      }
+    }
+    
+    return nearby;
   }
 
   createArticle(post, index) {
@@ -501,37 +558,29 @@ class AntColony {
   }
 
   checkDensity(ant) {
-    const checkRadius = 25;
-    let nearbyCount = 0;
-    let avgX = 0, avgY = 0;
-    
-    [...this.ants, ...this.freeAnts].forEach(other => {
-      if (other === ant) return;
-      const dx = other.x - ant.x;
-      const dy = other.y - ant.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < checkRadius) {
-        nearbyCount++;
-        avgX += other.x;
-        avgY += other.y;
-      }
-    });
+    const nearby = this.getNearbyAnts(ant, 25);
+    const nearbyCount = nearby.length;
     
     if (nearbyCount > this.params.maxDensity) {
       // Overcrowded - chance to die or forced dispersal
-      if (nearbyCount > this.params.maxDensity * 1.5 && Math.random() < 0.02) {
+      if (nearbyCount > this.params.maxDensity * 1.5 && Math.random() < 0.015) {
         return { shouldDie: true };
       }
       
       // Calculate dispersal direction (away from crowd center)
-      if (nearbyCount > 0) {
-        avgX /= nearbyCount;
-        avgY /= nearbyCount;
+      if (nearby.length > 0) {
+        let avgX = 0, avgY = 0;
+        nearby.forEach(neighbor => {
+          avgX += neighbor.ant.x;
+          avgY += neighbor.ant.y;
+        });
+        avgX /= nearby.length;
+        avgY /= nearby.length;
+        
         const awayAngle = Math.atan2(ant.y - avgY, ant.x - avgX);
         return { 
           shouldDisperse: true, 
-          dispersalAngle: awayAngle + (Math.random() - 0.5) * 0.5
+          dispersalAngle: awayAngle + (Math.random() - 0.5) * 0.4
         };
       }
     }
@@ -555,60 +604,45 @@ class AntColony {
   }
 
   applyFlockingBehavior(ant) {
-    let nearbyAnts = [...this.ants, ...this.freeAnts].filter(other => {
-      if (other === ant) return false;
-      const dx = other.x - ant.x;
-      const dy = other.y - ant.y;
-      return Math.sqrt(dx * dx + dy * dy) < 40;
-    });
-
-    if (nearbyAnts.length > 0) {
+    const nearby = this.getNearbyAnts(ant, 40);
+    
+    if (nearby.length > 0) {
       let avgAngle = 0;
-      nearbyAnts.forEach(other => {
-        avgAngle += other.angle;
+      nearby.forEach(neighbor => {
+        avgAngle += neighbor.ant.angle;
       });
-      avgAngle /= nearbyAnts.length;
-      ant.angle = this.lerp(ant.angle, avgAngle, 0.1);
+      avgAngle /= nearby.length;
+      ant.angle = this.lerp(ant.angle, avgAngle, 0.08);
     }
   }
 
   applySwarmBehavior(ant) {
-    // Move towards center of nearby ants
-    let nearbyAnts = [...this.ants, ...this.freeAnts].filter(other => {
-      if (other === ant) return false;
-      const dx = other.x - ant.x;
-      const dy = other.y - ant.y;
-      return Math.sqrt(dx * dx + dy * dy) < 60;
-    });
-
-    if (nearbyAnts.length > 2) {
+    const nearby = this.getNearbyAnts(ant, 60);
+    
+    if (nearby.length > 2) {
       let centerX = 0, centerY = 0;
-      nearbyAnts.forEach(other => {
-        centerX += other.x;
-        centerY += other.y;
+      nearby.forEach(neighbor => {
+        centerX += neighbor.ant.x;
+        centerY += neighbor.ant.y;
       });
-      centerX /= nearbyAnts.length;
-      centerY /= nearbyAnts.length;
+      centerX /= nearby.length;
+      centerY /= nearby.length;
       
       const dx = centerX - ant.x;
       const dy = centerY - ant.y;
       const angleToCenter = Math.atan2(dy, dx);
-      ant.angle = this.lerp(ant.angle, angleToCenter, 0.08);
+      ant.angle = this.lerp(ant.angle, angleToCenter, 0.06);
     }
   }
 
   checkBreeding(ant) {
     if (Math.random() > this.params.breedingRate) return;
     
-    // Find nearby ants for breeding
-    let nearbyAnts = [...this.ants, ...this.freeAnts].filter(other => {
-      if (other === ant) return false;
-      const dx = other.x - ant.x;
-      const dy = other.y - ant.y;
-      return Math.sqrt(dx * dx + dy * dy) < 15;
-    });
-
-    if (nearbyAnts.length > 0) {
+    // Find nearby ants for breeding using spatial grid
+    const nearby = this.getNearbyAnts(ant, 15);
+    
+    if (nearby.length > 0 && nearby.length < this.params.maxDensity / 2) {
+      // Only breed if not approaching overcrowding
       this.spawnNewAnt(ant.x, ant.y);
     }
   }
@@ -641,36 +675,60 @@ class AntColony {
     return a + diff * t;
   }
 
-  animate() {
-    // Update food points (decay over time)
-    this.foodPoints = this.foodPoints.filter(food => {
-      food.strength *= this.params.foodDecay;
-      
-      if (food.strength < 0.1) {
-        food.element.remove();
-        return false;
+  animate(currentTime) {
+    // Frame rate limiting
+    if (currentTime - this.lastUpdate < this.frameInterval) {
+      requestAnimationFrame((time) => this.animate(time));
+      return;
+    }
+    this.lastUpdate = currentTime;
+    this.frameCount++;
+    
+    // Build spatial grid for efficient neighbor queries (every 3 frames)
+    if (this.frameCount % 3 === 0) {
+      this.buildSpatialGrid();
+    }
+    
+    // Update food points (every frame but optimized)
+    if (this.frameCount % 2 === 0) {
+      this.foodPoints = this.foodPoints.filter(food => {
+        food.strength *= this.params.foodDecay;
+        
+        if (food.strength < 0.1) {
+          food.element.remove();
+          return false;
+        }
+        
+        // Visual feedback for food strength (less frequent updates)
+        const opacity = Math.min(1, food.strength);
+        const scale = 0.5 + food.strength * 0.5;
+        food.element.style.opacity = opacity;
+        food.element.style.transform = `scale(${scale})`;
+        
+        return true;
+      });
+    }
+    
+    // Update article positions less frequently
+    if (this.frameCount % 30 === 0) {
+      this.updateArticlePositions();
+    }
+    
+    // Move ants (split processing across frames for large populations)
+    const allAnts = [...this.ants, ...this.freeAnts];
+    const batchSize = Math.max(10, Math.ceil(allAnts.length / 3));
+    const startIndex = (this.frameCount * batchSize) % allAnts.length;
+    
+    for (let i = 0; i < batchSize && i < allAnts.length; i++) {
+      const index = (startIndex + i) % allAnts.length;
+      const ant = allAnts[index];
+      if (ant) {
+        this.moveAnt(ant);
       }
-      
-      // Visual feedback for food strength
-      const opacity = Math.min(1, food.strength);
-      const scale = 0.5 + food.strength * 0.5;
-      food.element.style.opacity = opacity;
-      food.element.style.transform = `scale(${scale})`;
-      
-      return true;
-    });
-    
-    // Move article ants
-    this.ants.forEach(ant => this.moveAnt(ant));
-    
-    // Move free-roaming ants
-    this.freeAnts.forEach(ant => this.moveAnt(ant));
-    
-    // Update article positions from DOM (articles are stationary in flex grid)
-    this.updateArticlePositions();
+    }
     
     // Continue animation
-    requestAnimationFrame(() => this.animate());
+    requestAnimationFrame((time) => this.animate(time));
   }
 }
 
