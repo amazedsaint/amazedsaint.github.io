@@ -17,18 +17,26 @@
 
 </head>
 <body>
-  <div class="container">
-    <header class="hero">
-      <h1><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>
-      <div class="subtitle">{{ site.description }}</div>
-      <div class="description">Welcome to my corner of the web where I explore the fascinating intersections of neural networks, evolution, and consciousness.</div>
-    </header>
-    <main>
+  <header>
+    <div class="container">
+      <div class="hero">
+        <h1><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>
+        <div class="subtitle">{{ site.description }}</div>
+        <div class="description">Academic exploration of computational intelligence, mathematical foundations, and the emergence of consciousness in artificial systems.</div>
+      </div>
+    </div>
+  </header>
+  
+  <main>
+    <div class="container">
       {{ content }}
-    </main>
-    <footer>
+    </div>
+  </main>
+  
+  <footer>
+    <div class="container">
       <p>&copy; {{ site.time | date: '%Y' }} {{ site.title }}. All rights reserved.</p>
-    </footer>
-  </div>
+    </div>
+  </footer>
 </body>
 </html> 
