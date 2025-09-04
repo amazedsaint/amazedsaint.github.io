@@ -10,42 +10,52 @@ title: Home
   </div>
   <div class="articles-grid">
     
-    <a href="/topologicalnn.html" class="article-tile featured research">
-      <div class="tile-category">Research Paper</div>
-      <div class="article-content">
-        <h3>Topological Transformations in Attention-Based Networks: A Systematic Analysis</h3>
-        <p>This whitepaper provides a systematic analysis of topological transformations in attention-based networks, focusing on the theoretical underpinnings of the Transformer's attention mechanism and how it reshapes data manifolds through mathematical derivations and information geometry.</p>
-        <div class="article-meta">
-          <span class="article-date">2024</span>
-          <span class="read-more">Read Paper</span>
+    {% assign sorted_posts = site.posts | sort: 'date' | reverse %}
+    {% for post in sorted_posts %}
+      {% assign category_class = post.categories[0] | default: 'general' %}
+      {% assign tile_class = '' %}
+      {% assign category_label = post.categories[0] | capitalize %}
+      
+      {% if post.categories contains 'research' %}
+        {% assign tile_class = 'research' %}
+        {% assign category_label = 'Research Paper' %}
+      {% elsif post.categories contains 'project' %}
+        {% assign tile_class = 'project' %}
+        {% assign category_label = 'Open Source' %}
+      {% elsif post.categories contains 'blog' %}
+        {% assign tile_class = 'blog' %}
+        {% assign category_label = 'Blog Post' %}
+      {% elsif post.categories contains 'software' %}
+        {% assign tile_class = 'project' %}
+        {% assign category_label = 'Software Project' %}
+      {% elsif post.categories contains 'paper' %}
+        {% assign tile_class = 'research' %}
+        {% assign category_label = 'Research Paper' %}
+      {% else %}
+        {% assign tile_class = 'theory' %}
+        {% assign category_label = 'Article' %}
+      {% endif %}
+      
+      {% if post.external_link %}
+        <a href="{{ post.external_link }}" class="article-tile {{ tile_class }} {% if post.featured %}featured{% endif %}" target="_blank" rel="noopener">
+      {% else %}
+        <a href="{{ post.url | relative_url }}" class="article-tile {{ tile_class }} {% if post.featured %}featured{% endif %}">
+      {% endif %}
+        <div class="tile-category">{{ category_label }}</div>
+        <div class="article-content">
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.description | default: post.excerpt | strip_html | truncate: 150 }}</p>
+          <div class="article-meta">
+            <span class="article-date">{{ post.date | date: "%B %Y" }}</span>
+            {% if post.external_link %}
+              <span class="read-more">View Project</span>
+            {% else %}
+              <span class="read-more">Read More</span>
+            {% endif %}
+          </div>
         </div>
-      </div>
-    </a>
-
-    <a href="https://github.com/amazedsaint/Aletheia" class="article-tile project">
-      <div class="tile-category">Open Source</div>
-      <div class="article-content">
-        <h3>Aletheia: Computational Truth Through Falsification</h3>
-        <p>An innovative software verification framework that applies Karl Popper's falsificationism to establish computational trust. Generates cryptographically-verifiable belief certificates through systematic adversarial testing.</p>
-        <div class="article-meta">
-          <span class="article-date">Active Development</span>
-          <span class="read-more">View Repository</span>
-        </div>
-      </div>
-    </a>
-
-
-    <a href="/_posts/2023-10-05-welcome-to-amazedsaint.html" class="article-tile blog">
-      <div class="tile-category">Blog Post</div>
-      <div class="article-content">
-        <h3>Welcome to AmazedSaint</h3>
-        <p>The inaugural post introducing this academic space dedicated to exploring neural networks, evolution, and consciousness. An overview of research directions and intellectual pursuits in computational intelligence.</p>
-        <div class="article-meta">
-          <span class="article-date">October 2023</span>
-          <span class="read-more">Read Post</span>
-        </div>
-      </div>
-    </a>
+      </a>
+    {% endfor %}
 
   </div>
 </div>
