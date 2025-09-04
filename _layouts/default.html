@@ -33,9 +33,20 @@ const POSTS_DATA = [
 
 </head>
 <body>
-  <div class="site-title">{{ site.title }}</div>
+  <div class="site-header">
+    <div class="site-title">{{ site.title }}</div>
+    <div class="github-info">
+      <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener">
+        @{{ site.github_username }}
+      </a>
+    </div>
+  </div>
   
   <div id="ant-world"></div>
+  
+  <div class="articles-grid" id="articles-grid">
+    <!-- Articles will be inserted here by JavaScript -->
+  </div>
   
   <main class="crazy-container">
     {{ content }}
@@ -50,7 +61,8 @@ const POSTS_DATA = [
 <script>
 class AntColony {
   constructor() {
-    this.container = document.getElementById('ant-world');
+    this.antContainer = document.getElementById('ant-world');
+    this.articlesContainer = document.getElementById('articles-grid');
     this.ants = [];
     this.articles = [];
     this.freeAnts = [];
@@ -61,21 +73,22 @@ class AntColony {
   }
 
   init() {
-    // Create articles from Jekyll posts data
+    // Create articles in the flex grid
     POSTS_DATA.forEach((post, index) => {
       this.createArticle(post, index);
     });
 
-    // Create ant groups for each article
-    this.articles.forEach(article => {
-      this.createAntGroup(article);
-    });
-
-    // Create additional free-roaming ants
-    this.createFreeAnts(50 + POSTS_DATA.length * 15);
+    // Wait for articles to be positioned, then create ants
+    setTimeout(() => {
+      this.updateArticlePositions();
+      this.articles.forEach(article => {
+        this.createAntGroup(article);
+      });
+      this.createFreeAnts(80 + POSTS_DATA.length * 12);
+    }, 100);
 
     // Add click handler for spawning ants
-    this.container.addEventListener('click', (e) => {
+    this.antContainer.addEventListener('click', (e) => {
       this.handleClick(e.clientX, e.clientY);
     });
 
@@ -86,6 +99,15 @@ class AntColony {
     window.addEventListener('resize', () => {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
+      setTimeout(() => this.updateArticlePositions(), 100);
+    });
+  }
+
+  updateArticlePositions() {
+    this.articles.forEach(article => {
+      const rect = article.element.getBoundingClientRect();
+      article.x = rect.left + rect.width / 2;
+      article.y = rect.top + rect.height / 2;
     });
   }
 
@@ -104,37 +126,24 @@ class AntColony {
       </div>
     `;
 
-    // Position articles with better spacing
-    const margin = 100;
-    const gridCols = Math.floor((this.width - 200) / 400);
-    const gridRows = Math.ceil(POSTS_DATA.length / Math.max(1, gridCols));
-    
-    const col = index % Math.max(1, gridCols);
-    const row = Math.floor(index / Math.max(1, gridCols));
-    
-    const baseX = margin + col * (400);
-    const baseY = margin + row * (300);
-    
-    // Add some randomness to the grid positions
-    const x = baseX + (Math.random() - 0.5) * 100;
-    const y = baseY + (Math.random() - 0.5) * 80;
-    
-    article.style.left = Math.max(0, Math.min(this.width - 320, x)) + 'px';
-    article.style.top = Math.max(0, Math.min(this.height - 200, y)) + 'px';
-
     // Add click handler with ant response
     article.addEventListener('click', (e) => {
       e.stopPropagation();
       
+      // Get current article position
+      const rect = article.getBoundingClientRect();
+      const articleX = rect.left + rect.width / 2;
+      const articleY = rect.top + rect.height / 2;
+      
       // Animate ants away from article briefly
-      this.ants.filter(ant => ant.article === this.articles.find(a => a.element === article))
+      this.ants.filter(ant => ant.article && ant.article.post === post)
         .forEach(ant => {
           const awayAngle = Math.random() * Math.PI * 2;
           ant.target = {
-            x: ant.x + Math.cos(awayAngle) * 30,
-            y: ant.y + Math.sin(awayAngle) * 30
+            x: articleX + Math.cos(awayAngle) * 50,
+            y: articleY + Math.sin(awayAngle) * 50
           };
-          ant.targetTime = Date.now() + 500;
+          ant.targetTime = Date.now() + 800;
         });
       
       // Navigate after brief delay
@@ -144,17 +153,16 @@ class AntColony {
         } else {
           window.location.href = post.url;
         }
-      }, 200);
+      }, 300);
     });
 
-    this.container.appendChild(article);
+    // Add to flex grid instead of absolute positioning
+    this.articlesContainer.appendChild(article);
     
     this.articles.push({
       element: article,
-      x: parseFloat(article.style.left),
-      y: parseFloat(article.style.top),
-      targetX: parseFloat(article.style.left) + (Math.random() - 0.5) * 50,
-      targetY: parseFloat(article.style.top) + (Math.random() - 0.5) * 50,
+      x: 0, // Will be updated after positioning
+      y: 0,
       post: post
     });
   }
@@ -167,7 +175,7 @@ class AntColony {
     for (let i = 0; i < numAnts; i++) {
       const ant = document.createElement('div');
       ant.className = 'ant';
-      this.container.appendChild(ant);
+      this.antContainer.appendChild(ant);
       
       const angle = (i / numAnts) * Math.PI * 2;
       const radius = 30 + Math.random() * 20;
@@ -191,7 +199,7 @@ class AntColony {
     for (let i = 0; i < count; i++) {
       const ant = document.createElement('div');
       ant.className = 'ant';
-      this.container.appendChild(ant);
+      this.antContainer.appendChild(ant);
       
       this.freeAnts.push({
         element: ant,
@@ -297,25 +305,6 @@ class AntColony {
     ant.element.style.transform = `rotate(${ant.angle}rad)`;
   }
 
-  moveArticle(article) {
-    // Slowly move article towards target
-    const dx = article.targetX - article.x;
-    const dy = article.targetY - article.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance > 5) {
-      article.x += dx * 0.002;
-      article.y += dy * 0.002;
-    } else {
-      // Choose new target
-      article.targetX = Math.random() * (this.width - 300);
-      article.targetY = Math.random() * (this.height - 200);
-    }
-    
-    // Update article position
-    article.element.style.left = article.x + 'px';
-    article.element.style.top = article.y + 'px';
-  }
 
   lerp(a, b, t) {
     // Handle angle wrapping
@@ -338,8 +327,8 @@ class AntColony {
     // Move free-roaming ants
     this.freeAnts.forEach(ant => this.moveAnt(ant));
     
-    // Move articles slowly
-    this.articles.forEach(article => this.moveArticle(article));
+    // Update article positions from DOM (articles are stationary in flex grid)
+    this.updateArticlePositions();
     
     // Continue animation
     requestAnimationFrame(() => this.animate());

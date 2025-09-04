@@ -1,6 +1,7 @@
-title: Crazy Numanism
-description: "Extreme computational madness and hyper-digital chaos"
+title: antifold
+description: "Computational research and digital experiments"
 baseurl: ""
 url: "https://amazedsaint.github.io"
 markdown: kramdown
-theme: null 
+theme: null
+github_username: amazedsaint 
