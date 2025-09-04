@@ -54,19 +54,6 @@ const POSTS_DATA = [
         <span class="value">1.0</span>
       </div>
       <div class="control-row">
-        <label>Breeding Rate</label>
-        <input type="range" id="breeding-rate" min="0" max="0.005" step="0.0001" value="0.001">
-        <span class="value">0.1%</span>
-      </div>
-      <div class="control-row">
-        <label>Collaboration</label>
-        <select id="collaboration-mode">
-          <option value="independent">Independent</option>
-          <option value="flocking">Flocking</option>
-          <option value="swarm">Swarm Intelligence</option>
-        </select>
-      </div>
-      <div class="control-row">
         <label>Ant Speed</label>
         <input type="range" id="ant-speed" min="0.1" max="2.0" step="0.1" value="0.8">
         <span class="value">0.8</span>
@@ -110,19 +97,12 @@ class AntColony {
     this.height = window.innerHeight;
     this.params = {
       foodStrength: 1.0,
-      breedingRate: 0.001, // Further reduced for sexual reproduction
-      collaborationMode: 'flocking',
       antSpeed: 0.8,
-      foodDecay: 0.995,
-      maxDensity: 8,
-      dispersalForce: 0.3,
-      breedingTime: 2000 // Time ants must be together to breed (ms)
+      foodDecay: 0.995
     };
     
     // Performance optimizations
     this.frameCount = 0;
-    this.spatialGrid = null;
-    this.gridSize = 50;
     this.lastUpdate = 0;
     this.targetFPS = 60;
     this.frameInterval = 1000 / this.targetFPS;
@@ -176,53 +156,6 @@ class AntColony {
     });
   }
 
-  buildSpatialGrid() {
-    // Create spatial grid for efficient neighbor queries
-    const cols = Math.ceil(this.width / this.gridSize);
-    const rows = Math.ceil(this.height / this.gridSize);
-    this.spatialGrid = Array(cols * rows).fill(null).map(() => []);
-    
-    // Place all ants in grid cells
-    [...this.ants, ...this.freeAnts].forEach(ant => {
-      const col = Math.floor(ant.x / this.gridSize);
-      const row = Math.floor(ant.y / this.gridSize);
-      const index = col + row * cols;
-      if (index >= 0 && index < this.spatialGrid.length) {
-        this.spatialGrid[index].push(ant);
-      }
-    });
-  }
-
-  getNearbyAnts(ant, radius) {
-    const col = Math.floor(ant.x / this.gridSize);
-    const row = Math.floor(ant.y / this.gridSize);
-    const cols = Math.ceil(this.width / this.gridSize);
-    const cellRadius = Math.ceil(radius / this.gridSize);
-    
-    const nearby = [];
-    
-    for (let dy = -cellRadius; dy <= cellRadius; dy++) {
-      for (let dx = -cellRadius; dx <= cellRadius; dx++) {
-        const checkCol = col + dx;
-        const checkRow = row + dy;
-        const index = checkCol + checkRow * cols;
-        
-        if (index >= 0 && index < this.spatialGrid.length && 
-            checkCol >= 0 && checkCol < cols) {
-          this.spatialGrid[index].forEach(other => {
-            if (other !== ant) {
-              const dist = Math.sqrt((other.x - ant.x) ** 2 + (other.y - ant.y) ** 2);
-              if (dist < radius) {
-                nearby.push({ ant: other, distance: dist });
-              }
-            }
-          });
-        }
-      }
-    }
-    
-    return nearby;
-  }
 
   createArticle(post, index) {
     const article = document.createElement('div');
@@ -287,8 +220,7 @@ class AntColony {
     
     for (let i = 0; i < numAnts; i++) {
       const ant = document.createElement('div');
-      const gender = Math.random() < 0.5 ? 'male' : 'female';
-      ant.className = `ant ${gender}`;
+      ant.className = 'ant';
       this.antContainer.appendChild(ant);
       
       const angle = (i / numAnts) * Math.PI * 2;
@@ -302,10 +234,7 @@ class AntColony {
         baseSpeed: 0.3 + Math.random() * 0.5,
         targetAngle: angle,
         orbitRadius: radius,
-        article: article,
-        gender: gender,
-        breedingPartner: null,
-        breedingStartTime: null
+        article: article
       });
     }
     
@@ -315,8 +244,7 @@ class AntColony {
   createFreeAnts(count) {
     for (let i = 0; i < count; i++) {
       const ant = document.createElement('div');
-      const gender = Math.random() < 0.5 ? 'male' : 'female';
-      ant.className = `ant ${gender}`;
+      ant.className = 'ant';
       this.antContainer.appendChild(ant);
       
       this.freeAnts.push({
@@ -326,10 +254,7 @@ class AntColony {
         angle: Math.random() * Math.PI * 2,
         baseSpeed: 0.2 + Math.random() * 0.4,
         wanderAngle: Math.random() * Math.PI * 2,
-        target: null,
-        gender: gender,
-        breedingPartner: null,
-        breedingStartTime: null
+        target: null
       });
     }
   }
@@ -398,13 +323,8 @@ class AntColony {
 
     // Bind control inputs
     this.bindControl('food-strength', 'foodStrength', (v) => v.toFixed(1));
-    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(3) + '%');
     this.bindControl('ant-speed', 'antSpeed', (v) => v.toFixed(1));
     this.bindControl('food-decay', 'foodDecay', (v) => (v * 100).toFixed(1) + '%');
-
-    document.getElementById('collaboration-mode').addEventListener('change', (e) => {
-      this.params.collaborationMode = e.target.value;
-    });
 
     document.getElementById('clear-food').addEventListener('click', () => {
       this.clearFood();
@@ -464,92 +384,68 @@ class AntColony {
   moveAnt(ant) {
     const now = Date.now();
     
-    // Density-based behavior (population control)
-    const densityResult = this.checkDensity(ant);
+    // Food seeking behavior
+    let nearestFood = null;
+    let nearestFoodDistance = Infinity;
     
-    if (densityResult.shouldDie) {
-      this.killAnt(ant);
-      return;
-    }
+    this.foodPoints.forEach(food => {
+      const dx = food.x - ant.x;
+      const dy = food.y - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < food.radius && distance < nearestFoodDistance) {
+        nearestFood = food;
+        nearestFoodDistance = distance;
+      }
+    });
     
-    if (densityResult.shouldDisperse) {
-      // Force ant to move away from crowded area
-      ant.angle = densityResult.dispersalAngle;
-      ant.baseSpeed = 1.0; // Force dispersal at full speed
-      ant.target = null; // Override other targets
-    } else {
-      // Normal behavior when not overcrowded
+    // Prioritize food over other targets
+    if (nearestFood && nearestFoodDistance < nearestFood.radius) {
+      const attraction = nearestFood.strength * (1 - nearestFoodDistance / nearestFood.radius);
+      const dx = nearestFood.x - ant.x;
+      const dy = nearestFood.y - ant.y;
+      const angleToFood = Math.atan2(dy, dx);
+      ant.angle = this.lerp(ant.angle, angleToFood, 0.1 + attraction * 0.1);
+      ant.baseSpeed = (0.4 + attraction * 0.6);
+    } else if (ant.target && now < ant.targetTime) {
+      // Move towards click target
+      const dx = ant.target.x - ant.x;
+      const dy = ant.target.y - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Food seeking behavior
-      let nearestFood = null;
-      let nearestFoodDistance = Infinity;
-      
-      this.foodPoints.forEach(food => {
-        const dx = food.x - ant.x;
-        const dy = food.y - ant.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < food.radius && distance < nearestFoodDistance) {
-          nearestFood = food;
-          nearestFoodDistance = distance;
-        }
-      });
-      
-      // Prioritize food over other targets
-      if (nearestFood && nearestFoodDistance < nearestFood.radius) {
-        const attraction = nearestFood.strength * (1 - nearestFoodDistance / nearestFood.radius);
-        const dx = nearestFood.x - ant.x;
-        const dy = nearestFood.y - ant.y;
-        const angleToFood = Math.atan2(dy, dx);
-        ant.angle = this.lerp(ant.angle, angleToFood, 0.1 + attraction * 0.1);
-        ant.baseSpeed = (0.4 + attraction * 0.6);
-      } else if (ant.target && now < ant.targetTime) {
-        // Move towards click target
-        const dx = ant.target.x - ant.x;
-        const dy = ant.target.y - ant.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 5) {
-          const angleToTarget = Math.atan2(dy, dx);
-          ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
-          ant.baseSpeed = Math.min((ant.baseSpeed || 0.5) * 1.1, 1.2);
-        } else {
-          ant.target = null;
-        }
+      if (distance > 5) {
+        const angleToTarget = Math.atan2(dy, dx);
+        ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
+        ant.baseSpeed = Math.min((ant.baseSpeed || 0.5) * 1.1, 1.2);
       } else {
         ant.target = null;
-        ant.baseSpeed = Math.max((ant.baseSpeed || 0.5) * 0.98, 0.3);
+      }
+    } else {
+      ant.target = null;
+      ant.baseSpeed = Math.max((ant.baseSpeed || 0.5) * 0.98, 0.3);
+      
+      if (ant.article) {
+        // Orbit around article
+        const article = ant.article;
+        const centerX = article.x;
+        const centerY = article.y;
         
-        // Collaboration behaviors
-        if (this.params.collaborationMode === 'flocking') {
-          this.applyFlockingBehavior(ant);
-        } else if (this.params.collaborationMode === 'swarm') {
-          this.applySwarmBehavior(ant);
-        }
+        ant.targetAngle += 0.008 + Math.random() * 0.015;
+        const targetX = centerX + Math.cos(ant.targetAngle) * ant.orbitRadius;
+        const targetY = centerY + Math.sin(ant.targetAngle) * ant.orbitRadius;
         
-        if (ant.article) {
-          // Orbit around article
-          const article = ant.article;
-          const centerX = article.x;
-          const centerY = article.y;
-          
-          ant.targetAngle += 0.008 + Math.random() * 0.015;
-          const targetX = centerX + Math.cos(ant.targetAngle) * ant.orbitRadius;
-          const targetY = centerY + Math.sin(ant.targetAngle) * ant.orbitRadius;
-          
-          const dx = targetX - ant.x;
-          const dy = targetY - ant.y;
-          const angleToOrbit = Math.atan2(dy, dx);
-          ant.angle = this.lerp(ant.angle, angleToOrbit, 0.08);
-        } else {
-          // Wander randomly
-          ant.wanderAngle += (Math.random() - 0.5) * 0.25;
-          ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.04);
-        }
+        const dx = targetX - ant.x;
+        const dy = targetY - ant.y;
+        const angleToOrbit = Math.atan2(dy, dx);
+        ant.angle = this.lerp(ant.angle, angleToOrbit, 0.08);
+      } else {
+        // Wander randomly
+        ant.wanderAngle += (Math.random() - 0.5) * 0.25;
+        ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.04);
       }
     }
     
-    // Calculate final speed with global multiplier
+    // Calculate final speed
     const finalSpeed = (ant.baseSpeed || 0.5) * this.params.antSpeed;
     
     // Move ant
@@ -566,170 +462,8 @@ class AntColony {
     ant.element.style.left = ant.x + 'px';
     ant.element.style.top = ant.y + 'px';
     ant.element.style.transform = `rotate(${ant.angle}rad)`;
-    
-    // Breeding check (only if not overcrowded)
-    if (!densityResult.shouldDisperse) {
-      this.checkBreeding(ant);
-    }
   }
 
-  checkDensity(ant) {
-    const nearby = this.getNearbyAnts(ant, 25);
-    const nearbyCount = nearby.length;
-    
-    if (nearbyCount > this.params.maxDensity) {
-      // Overcrowded - chance to die or forced dispersal
-      if (nearbyCount > this.params.maxDensity * 1.5 && Math.random() < 0.015) {
-        return { shouldDie: true };
-      }
-      
-      // Calculate dispersal direction (away from crowd center)
-      if (nearby.length > 0) {
-        let avgX = 0, avgY = 0;
-        nearby.forEach(neighbor => {
-          avgX += neighbor.ant.x;
-          avgY += neighbor.ant.y;
-        });
-        avgX /= nearby.length;
-        avgY /= nearby.length;
-        
-        const awayAngle = Math.atan2(ant.y - avgY, ant.x - avgX);
-        return { 
-          shouldDisperse: true, 
-          dispersalAngle: awayAngle + (Math.random() - 0.5) * 0.4
-        };
-      }
-    }
-    
-    return { shouldDie: false, shouldDisperse: false };
-  }
-
-  killAnt(ant) {
-    // Remove ant from arrays and DOM
-    const antIndex = this.ants.indexOf(ant);
-    if (antIndex > -1) {
-      this.ants.splice(antIndex, 1);
-    } else {
-      const freeIndex = this.freeAnts.indexOf(ant);
-      if (freeIndex > -1) {
-        this.freeAnts.splice(freeIndex, 1);
-      }
-    }
-    
-    ant.element.remove();
-  }
-
-  applyFlockingBehavior(ant) {
-    const nearby = this.getNearbyAnts(ant, 40);
-    
-    if (nearby.length > 0) {
-      let avgAngle = 0;
-      nearby.forEach(neighbor => {
-        avgAngle += neighbor.ant.angle;
-      });
-      avgAngle /= nearby.length;
-      ant.angle = this.lerp(ant.angle, avgAngle, 0.08);
-    }
-  }
-
-  applySwarmBehavior(ant) {
-    const nearby = this.getNearbyAnts(ant, 60);
-    
-    if (nearby.length > 2) {
-      let centerX = 0, centerY = 0;
-      nearby.forEach(neighbor => {
-        centerX += neighbor.ant.x;
-        centerY += neighbor.ant.y;
-      });
-      centerX /= nearby.length;
-      centerY /= nearby.length;
-      
-      const dx = centerX - ant.x;
-      const dy = centerY - ant.y;
-      const angleToCenter = Math.atan2(dy, dx);
-      ant.angle = this.lerp(ant.angle, angleToCenter, 0.06);
-    }
-  }
-
-  checkBreeding(ant) {
-    const now = Date.now();
-    
-    // Clear breeding partner if they're too far apart
-    if (ant.breedingPartner) {
-      const partner = ant.breedingPartner;
-      const dx = partner.x - ant.x;
-      const dy = partner.y - ant.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance > 20) {
-        ant.breedingPartner = null;
-        ant.breedingStartTime = null;
-        partner.breedingPartner = null;
-        partner.breedingStartTime = null;
-        return;
-      }
-      
-      // Check if they've been together long enough to breed
-      if (ant.breedingStartTime && 
-          now - ant.breedingStartTime > this.params.breedingTime &&
-          Math.random() < this.params.breedingRate * 10) { // Higher chance once requirements are met
-        
-        // Check population density before breeding
-        const nearby = this.getNearbyAnts(ant, 30);
-        if (nearby.length < this.params.maxDensity / 3) {
-          this.spawnNewAnt((ant.x + partner.x) / 2, (ant.y + partner.y) / 2);
-          
-          // Reset breeding for both partners
-          ant.breedingPartner = null;
-          ant.breedingStartTime = null;
-          partner.breedingPartner = null;
-          partner.breedingStartTime = null;
-        }
-      }
-      return;
-    }
-    
-    // Look for potential breeding partner of opposite sex
-    const nearby = this.getNearbyAnts(ant, 15);
-    const oppositeGender = ant.gender === 'male' ? 'female' : 'male';
-    
-    const potentialPartner = nearby.find(neighbor => 
-      neighbor.ant.gender === oppositeGender && 
-      !neighbor.ant.breedingPartner &&
-      neighbor.distance < 15
-    );
-    
-    if (potentialPartner) {
-      // Establish breeding pair
-      ant.breedingPartner = potentialPartner.ant;
-      ant.breedingStartTime = now;
-      potentialPartner.ant.breedingPartner = ant;
-      potentialPartner.ant.breedingStartTime = now;
-    }
-  }
-
-  spawnNewAnt(x, y) {
-    const ant = document.createElement('div');
-    const gender = Math.random() < 0.5 ? 'male' : 'female';
-    ant.className = `ant ${gender}`;
-    this.antContainer.appendChild(ant);
-    
-    const newAnt = {
-      element: ant,
-      x: x + (Math.random() - 0.5) * 25,
-      y: y + (Math.random() - 0.5) * 25,
-      angle: Math.random() * Math.PI * 2,
-      baseSpeed: 0.2 + Math.random() * 0.4,
-      wanderAngle: Math.random() * Math.PI * 2,
-      target: null,
-      article: null,
-      gender: gender,
-      breedingPartner: null,
-      breedingStartTime: null
-    };
-    
-    this.freeAnts.push(newAnt);
-  }
 
 
   lerp(a, b, t) {
@@ -749,10 +483,6 @@ class AntColony {
     this.lastUpdate = currentTime;
     this.frameCount++;
     
-    // Build spatial grid for efficient neighbor queries (every 3 frames)
-    if (this.frameCount % 3 === 0) {
-      this.buildSpatialGrid();
-    }
     
     // Update food points (every frame but optimized)
     if (this.frameCount % 2 === 0) {
@@ -779,18 +509,10 @@ class AntColony {
       this.updateArticlePositions();
     }
     
-    // Move ants (split processing across frames for large populations)
-    const allAnts = [...this.ants, ...this.freeAnts];
-    const batchSize = Math.max(10, Math.ceil(allAnts.length / 3));
-    const startIndex = (this.frameCount * batchSize) % allAnts.length;
-    
-    for (let i = 0; i < batchSize && i < allAnts.length; i++) {
-      const index = (startIndex + i) % allAnts.length;
-      const ant = allAnts[index];
-      if (ant) {
-        this.moveAnt(ant);
-      }
-    }
+    // Move all ants
+    [...this.ants, ...this.freeAnts].forEach(ant => {
+      this.moveAnt(ant);
+    });
     
     // Continue animation
     requestAnimationFrame((time) => this.animate(time));
