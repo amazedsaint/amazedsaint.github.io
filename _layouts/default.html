@@ -19,11 +19,10 @@
 <body>
   <header>
     <div class="container">
-      <div class="hero">
-        <h1><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>
-        <div class="subtitle">{{ site.description }}</div>
-        <div class="description">Academic exploration of computational intelligence, mathematical foundations, and the emergence of consciousness in artificial systems.</div>
-      </div>
+      <nav class="header-nav">
+        <a href="{{ '/' | relative_url }}" class="site-title">{{ site.title }}</a>
+        <div class="site-tagline">{{ site.description }}</div>
+      </nav>
     </div>
   </header>
   

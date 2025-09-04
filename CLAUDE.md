@@ -88,3 +88,5 @@ Configured for inline math with `$...$` and `\(...\)` delimiters, supporting mat
 ## Deployment
 
 Site automatically deploys to GitHub Pages on push to main branch. No additional build steps required as GitHub Pages handles Jekyll compilation.
+- leverage the above learnings, and always ensure new posts are created using the jekyll file structure and workflow
+- publish after all changes

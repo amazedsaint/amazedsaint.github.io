@@ -3,11 +3,12 @@ layout: default
 title: Home
 ---
 
+<div class="page-title">
+  <h1>Research & Publications</h1>
+  <p>Exploring the mathematical foundations of intelligence, consciousness, and computational truth</p>
+</div>
+
 <div class="section">
-  <div class="section-header">
-    <h2>Research & Publications</h2>
-    <p class="section-subtitle">Exploring the mathematical foundations of intelligence, consciousness, and computational truth</p>
-  </div>
   <div class="articles-grid">
     
     {% assign sorted_posts = site.posts | sort: 'date' | reverse %}
