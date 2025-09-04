@@ -781,8 +781,15 @@ const App={
 };
 
 function init(){
-  const app=document.getElementById('app');
-  const renderer=new THREE.WebGLRenderer({ antialias:true, alpha:false, logarithmicDepthBuffer:true });
+  try {
+    const app=document.getElementById('app');
+    if (!app) {
+      console.log('App container not found, retrying...');
+      setTimeout(init, 200);
+      return;
+    }
+    
+    const renderer=new THREE.WebGLRenderer({ antialias:true, alpha:false, logarithmicDepthBuffer:true });
   renderer.setSize(app.clientWidth, app.clientHeight);
   renderer.setPixelRatio(Math.min(2, devicePixelRatio));
   renderer.shadowMap.enabled=true;
@@ -834,6 +841,14 @@ function init(){
   wireUI();
   syncParams();
   animate();
+  } catch (error) {
+    console.log('Simulation setup error:', error);
+    // Fallback: show a message in the app container
+    const app = document.getElementById('app');
+    if (app) {
+      app.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#666; font-size:14px;">3D Simulation Loading...</div>';
+    }
+  }
 }
 
 function toWorldPoint(intersect){
@@ -1004,10 +1019,16 @@ function syncParams(){
   });
 }
 
-// Initialize when this specific post loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
+// Initialize when this specific post loads with error handling
+try {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+} catch (error) {
+  console.log('Simulation initialization - ignoring non-critical error:', error);
+  // Try initialization anyway
+  setTimeout(init, 100);
 }
 </script>
