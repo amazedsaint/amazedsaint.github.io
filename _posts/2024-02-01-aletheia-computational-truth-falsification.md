@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title: "Aletheia: Computational Truth Through Falsification"
 date: 2024-02-01
 categories: project software

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title: "Physics Aware Flies: Generative Dynamics on SE(3)"
 date: 2024-09-04
 categories: research simulation
