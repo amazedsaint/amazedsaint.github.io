@@ -53,8 +53,10 @@ class AntColony {
     this.container = document.getElementById('ant-world');
     this.ants = [];
     this.articles = [];
+    this.freeAnts = [];
     this.width = window.innerWidth;
     this.height = window.innerHeight;
+    this.clickedPoints = [];
     this.init();
   }
 
@@ -64,9 +66,17 @@ class AntColony {
       this.createArticle(post, index);
     });
 
-    // Create ants for each article
+    // Create ant groups for each article
     this.articles.forEach(article => {
-      this.createAnt(article);
+      this.createAntGroup(article);
+    });
+
+    // Create additional free-roaming ants
+    this.createFreeAnts(50 + POSTS_DATA.length * 15);
+
+    // Add click handler for spawning ants
+    this.container.addEventListener('click', (e) => {
+      this.handleClick(e.clientX, e.clientY);
     });
 
     // Start animation
@@ -94,17 +104,47 @@ class AntColony {
       </div>
     `;
 
-    // Position randomly
-    article.style.left = Math.random() * (this.width - 300) + 'px';
-    article.style.top = Math.random() * (this.height - 200) + 'px';
+    // Position articles with better spacing
+    const margin = 100;
+    const gridCols = Math.floor((this.width - 200) / 400);
+    const gridRows = Math.ceil(POSTS_DATA.length / Math.max(1, gridCols));
+    
+    const col = index % Math.max(1, gridCols);
+    const row = Math.floor(index / Math.max(1, gridCols));
+    
+    const baseX = margin + col * (400);
+    const baseY = margin + row * (300);
+    
+    // Add some randomness to the grid positions
+    const x = baseX + (Math.random() - 0.5) * 100;
+    const y = baseY + (Math.random() - 0.5) * 80;
+    
+    article.style.left = Math.max(0, Math.min(this.width - 320, x)) + 'px';
+    article.style.top = Math.max(0, Math.min(this.height - 200, y)) + 'px';
 
-    // Add click handler
-    article.addEventListener('click', () => {
-      if (post.external) {
-        window.open(post.url, '_blank');
-      } else {
-        window.location.href = post.url;
-      }
+    // Add click handler with ant response
+    article.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      // Animate ants away from article briefly
+      this.ants.filter(ant => ant.article === this.articles.find(a => a.element === article))
+        .forEach(ant => {
+          const awayAngle = Math.random() * Math.PI * 2;
+          ant.target = {
+            x: ant.x + Math.cos(awayAngle) * 30,
+            y: ant.y + Math.sin(awayAngle) * 30
+          };
+          ant.targetTime = Date.now() + 500;
+        });
+      
+      // Navigate after brief delay
+      setTimeout(() => {
+        if (post.external) {
+          window.open(post.url, '_blank');
+        } else {
+          window.location.href = post.url;
+        }
+      }, 200);
     });
 
     this.container.appendChild(article);
@@ -113,26 +153,78 @@ class AntColony {
       element: article,
       x: parseFloat(article.style.left),
       y: parseFloat(article.style.top),
-      targetX: Math.random() * (this.width - 300),
-      targetY: Math.random() * (this.height - 200),
+      targetX: parseFloat(article.style.left) + (Math.random() - 0.5) * 50,
+      targetY: parseFloat(article.style.top) + (Math.random() - 0.5) * 50,
       post: post
     });
   }
 
-  createAnt(article) {
-    const ant = document.createElement('div');
-    ant.className = 'ant';
+  createAntGroup(article) {
+    // Create 8-12 ants per article for better visibility
+    const numAnts = 8 + Math.floor(Math.random() * 5);
+    const ants = [];
     
-    this.container.appendChild(ant);
+    for (let i = 0; i < numAnts; i++) {
+      const ant = document.createElement('div');
+      ant.className = 'ant';
+      this.container.appendChild(ant);
+      
+      const angle = (i / numAnts) * Math.PI * 2;
+      const radius = 30 + Math.random() * 20;
+      
+      ants.push({
+        element: ant,
+        x: article.x + 150 + Math.cos(angle) * radius,
+        y: article.y + 75 + Math.sin(angle) * radius,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.3 + Math.random() * 0.5,
+        targetAngle: angle,
+        orbitRadius: radius,
+        article: article
+      });
+    }
     
-    this.ants.push({
-      element: ant,
-      x: article.x + 100,
-      y: article.y + 50,
-      angle: Math.random() * Math.PI * 2,
-      speed: 0.5 + Math.random() * 1,
-      article: article,
-      wanderAngle: Math.random() * Math.PI * 2
+    this.ants.push(...ants);
+  }
+
+  createFreeAnts(count) {
+    for (let i = 0; i < count; i++) {
+      const ant = document.createElement('div');
+      ant.className = 'ant';
+      this.container.appendChild(ant);
+      
+      this.freeAnts.push({
+        element: ant,
+        x: Math.random() * this.width,
+        y: Math.random() * this.height,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.2 + Math.random() * 0.4,
+        wanderAngle: Math.random() * Math.PI * 2,
+        target: null
+      });
+    }
+  }
+
+  handleClick(clickX, clickY) {
+    // Add click point that attracts nearby ants
+    this.clickedPoints.push({
+      x: clickX,
+      y: clickY,
+      strength: 1.0,
+      decay: 0.98,
+      radius: 80
+    });
+
+    // Attract nearby ants to the click
+    [...this.ants, ...this.freeAnts].forEach(ant => {
+      const dx = clickX - ant.x;
+      const dy = clickY - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < 150) {
+        ant.target = { x: clickX + (Math.random() - 0.5) * 40, y: clickY + (Math.random() - 0.5) * 40 };
+        ant.targetTime = Date.now() + 2000 + Math.random() * 3000; // 2-5 seconds
+      }
     });
   }
 
@@ -148,35 +240,58 @@ class AntColony {
   }
 
   moveAnt(ant) {
-    // Simple flocking behavior with wandering
-    const article = ant.article;
+    const now = Date.now();
     
-    // Calculate direction to article
-    const dx = article.x + 100 - ant.x;
-    const dy = article.y + 50 - ant.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // If far from article, move towards it
-    if (distance > 30) {
-      const angleToArticle = Math.atan2(dy, dx);
-      ant.angle = this.lerp(ant.angle, angleToArticle, 0.1);
+    // Check if ant has a click target
+    if (ant.target && now < ant.targetTime) {
+      const dx = ant.target.x - ant.x;
+      const dy = ant.target.y - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > 5) {
+        const angleToTarget = Math.atan2(dy, dx);
+        ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
+        ant.speed = Math.min(ant.speed * 1.1, 2.0); // Speed up towards target
+      } else {
+        ant.target = null; // Reached target
+      }
     } else {
-      // Wander around the article
-      ant.wanderAngle += (Math.random() - 0.5) * 0.3;
-      ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.05);
+      ant.target = null;
+      ant.speed = Math.max(ant.speed * 0.95, 0.3); // Slow back down
+      
+      if (ant.article) {
+        // Ants assigned to articles orbit around them
+        const article = ant.article;
+        const centerX = article.x + 160;
+        const centerY = article.y + 85;
+        
+        // Calculate orbital position
+        ant.targetAngle += 0.01 + Math.random() * 0.02;
+        const targetX = centerX + Math.cos(ant.targetAngle) * ant.orbitRadius;
+        const targetY = centerY + Math.sin(ant.targetAngle) * ant.orbitRadius;
+        
+        const dx = targetX - ant.x;
+        const dy = targetY - ant.y;
+        const angleToOrbit = Math.atan2(dy, dx);
+        ant.angle = this.lerp(ant.angle, angleToOrbit, 0.1);
+      } else {
+        // Free ants wander randomly
+        ant.wanderAngle += (Math.random() - 0.5) * 0.3;
+        ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.05);
+      }
     }
     
     // Move ant
     ant.x += Math.cos(ant.angle) * ant.speed;
     ant.y += Math.sin(ant.angle) * ant.speed;
     
-    // Keep ant on screen
-    if (ant.x < 0) ant.x = this.width;
-    if (ant.x > this.width) ant.x = 0;
-    if (ant.y < 0) ant.y = this.height;
-    if (ant.y > this.height) ant.y = 0;
+    // Keep ant on screen with wrapping
+    if (ant.x < -10) ant.x = this.width + 10;
+    if (ant.x > this.width + 10) ant.x = -10;
+    if (ant.y < -10) ant.y = this.height + 10;
+    if (ant.y > this.height + 10) ant.y = -10;
     
-    // Update ant element position and rotation
+    // Update ant element
     ant.element.style.left = ant.x + 'px';
     ant.element.style.top = ant.y + 'px';
     ant.element.style.transform = `rotate(${ant.angle}rad)`;
@@ -211,15 +326,25 @@ class AntColony {
   }
 
   animate() {
-    // Move all ants
+    // Update clicked points
+    this.clickedPoints = this.clickedPoints.filter(point => {
+      point.strength *= point.decay;
+      return point.strength > 0.01;
+    });
+    
+    // Move article ants
     this.ants.forEach(ant => this.moveAnt(ant));
     
-    // Move all articles slowly
+    // Move free-roaming ants
+    this.freeAnts.forEach(ant => this.moveAnt(ant));
+    
+    // Move articles slowly
     this.articles.forEach(article => this.moveArticle(article));
     
     // Continue animation
     requestAnimationFrame(() => this.animate());
   }
+}
 }
 
 // Initialize when DOM is loaded
