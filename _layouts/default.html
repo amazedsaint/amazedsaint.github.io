@@ -55,8 +55,8 @@ const POSTS_DATA = [
       </div>
       <div class="control-row">
         <label>Breeding Rate</label>
-        <input type="range" id="breeding-rate" min="0" max="0.02" step="0.001" value="0.005">
-        <span class="value">0.5%</span>
+        <input type="range" id="breeding-rate" min="0" max="0.005" step="0.0001" value="0.001">
+        <span class="value">0.1%</span>
       </div>
       <div class="control-row">
         <label>Collaboration</label>
@@ -110,12 +110,13 @@ class AntColony {
     this.height = window.innerHeight;
     this.params = {
       foodStrength: 1.0,
-      breedingRate: 0.005,
+      breedingRate: 0.001, // Further reduced for sexual reproduction
       collaborationMode: 'flocking',
       antSpeed: 0.8,
       foodDecay: 0.995,
       maxDensity: 8,
-      dispersalForce: 0.3
+      dispersalForce: 0.3,
+      breedingTime: 2000 // Time ants must be together to breed (ms)
     };
     
     // Performance optimizations
@@ -144,8 +145,12 @@ class AntColony {
       this.createFreeAnts(80 + POSTS_DATA.length * 12);
     }, 100);
 
-    // Add click handler for food placement
-    this.antContainer.addEventListener('click', (e) => {
+    // Add click handler for food placement (anywhere on page)
+    document.addEventListener('click', (e) => {
+      // Don't place food if clicking on controls
+      if (e.target.closest('.control-panel') || e.target.closest('.article-carried')) {
+        return;
+      }
       this.addFood(e.clientX, e.clientY);
     });
 
@@ -282,7 +287,8 @@ class AntColony {
     
     for (let i = 0; i < numAnts; i++) {
       const ant = document.createElement('div');
-      ant.className = 'ant';
+      const gender = Math.random() < 0.5 ? 'male' : 'female';
+      ant.className = `ant ${gender}`;
       this.antContainer.appendChild(ant);
       
       const angle = (i / numAnts) * Math.PI * 2;
@@ -296,7 +302,10 @@ class AntColony {
         speed: 0.3 + Math.random() * 0.5,
         targetAngle: angle,
         orbitRadius: radius,
-        article: article
+        article: article,
+        gender: gender,
+        breedingPartner: null,
+        breedingStartTime: null
       });
     }
     
@@ -306,7 +315,8 @@ class AntColony {
   createFreeAnts(count) {
     for (let i = 0; i < count; i++) {
       const ant = document.createElement('div');
-      ant.className = 'ant';
+      const gender = Math.random() < 0.5 ? 'male' : 'female';
+      ant.className = `ant ${gender}`;
       this.antContainer.appendChild(ant);
       
       this.freeAnts.push({
@@ -316,7 +326,10 @@ class AntColony {
         angle: Math.random() * Math.PI * 2,
         speed: 0.2 + Math.random() * 0.4,
         wanderAngle: Math.random() * Math.PI * 2,
-        target: null
+        target: null,
+        gender: gender,
+        breedingPartner: null,
+        breedingStartTime: null
       });
     }
   }
@@ -385,7 +398,7 @@ class AntColony {
 
     // Bind control inputs
     this.bindControl('food-strength', 'foodStrength', (v) => v.toFixed(1));
-    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(1) + '%');
+    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(2) + '%');
     this.bindControl('ant-speed', 'antSpeed', (v) => v.toFixed(1));
     this.bindControl('food-decay', 'foodDecay', (v) => (v * 100).toFixed(1) + '%');
 
@@ -636,31 +649,80 @@ class AntColony {
   }
 
   checkBreeding(ant) {
-    if (Math.random() > this.params.breedingRate) return;
+    const now = Date.now();
     
-    // Find nearby ants for breeding using spatial grid
+    // Clear breeding partner if they're too far apart
+    if (ant.breedingPartner) {
+      const partner = ant.breedingPartner;
+      const dx = partner.x - ant.x;
+      const dy = partner.y - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > 20) {
+        ant.breedingPartner = null;
+        ant.breedingStartTime = null;
+        partner.breedingPartner = null;
+        partner.breedingStartTime = null;
+        return;
+      }
+      
+      // Check if they've been together long enough to breed
+      if (ant.breedingStartTime && 
+          now - ant.breedingStartTime > this.params.breedingTime &&
+          Math.random() < this.params.breedingRate * 10) { // Higher chance once requirements are met
+        
+        // Check population density before breeding
+        const nearby = this.getNearbyAnts(ant, 30);
+        if (nearby.length < this.params.maxDensity / 3) {
+          this.spawnNewAnt((ant.x + partner.x) / 2, (ant.y + partner.y) / 2);
+          
+          // Reset breeding for both partners
+          ant.breedingPartner = null;
+          ant.breedingStartTime = null;
+          partner.breedingPartner = null;
+          partner.breedingStartTime = null;
+        }
+      }
+      return;
+    }
+    
+    // Look for potential breeding partner of opposite sex
     const nearby = this.getNearbyAnts(ant, 15);
+    const oppositeGender = ant.gender === 'male' ? 'female' : 'male';
     
-    if (nearby.length > 0 && nearby.length < this.params.maxDensity / 2) {
-      // Only breed if not approaching overcrowding
-      this.spawnNewAnt(ant.x, ant.y);
+    const potentialPartner = nearby.find(neighbor => 
+      neighbor.ant.gender === oppositeGender && 
+      !neighbor.ant.breedingPartner &&
+      neighbor.distance < 15
+    );
+    
+    if (potentialPartner) {
+      // Establish breeding pair
+      ant.breedingPartner = potentialPartner.ant;
+      ant.breedingStartTime = now;
+      potentialPartner.ant.breedingPartner = ant;
+      potentialPartner.ant.breedingStartTime = now;
     }
   }
 
   spawnNewAnt(x, y) {
     const ant = document.createElement('div');
-    ant.className = 'ant';
+    const gender = Math.random() < 0.5 ? 'male' : 'female';
+    ant.className = `ant ${gender}`;
     this.antContainer.appendChild(ant);
     
     const newAnt = {
       element: ant,
-      x: x + (Math.random() - 0.5) * 20,
-      y: y + (Math.random() - 0.5) * 20,
+      x: x + (Math.random() - 0.5) * 25,
+      y: y + (Math.random() - 0.5) * 25,
       angle: Math.random() * Math.PI * 2,
       speed: 0.2 + Math.random() * 0.4,
       wanderAngle: Math.random() * Math.PI * 2,
       target: null,
-      article: null
+      article: null,
+      gender: gender,
+      breedingPartner: null,
+      breedingStartTime: null
     };
     
     this.freeAnts.push(newAnt);
