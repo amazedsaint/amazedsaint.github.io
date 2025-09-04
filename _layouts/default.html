@@ -44,6 +44,45 @@ const POSTS_DATA = [
   
   <div id="ant-world"></div>
   
+  <div class="control-panel" id="control-panel">
+    <button class="panel-toggle" id="panel-toggle">⚙️</button>
+    <div class="panel-content" id="panel-content">
+      <h3>Colony Controls</h3>
+      <div class="control-row">
+        <label>Food Strength</label>
+        <input type="range" id="food-strength" min="0.1" max="2.0" step="0.1" value="1.0">
+        <span class="value">1.0</span>
+      </div>
+      <div class="control-row">
+        <label>Breeding Rate</label>
+        <input type="range" id="breeding-rate" min="0" max="0.1" step="0.01" value="0.03">
+        <span class="value">3%</span>
+      </div>
+      <div class="control-row">
+        <label>Collaboration</label>
+        <select id="collaboration-mode">
+          <option value="independent">Independent</option>
+          <option value="flocking">Flocking</option>
+          <option value="swarm">Swarm Intelligence</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Ant Speed</label>
+        <input type="range" id="ant-speed" min="0.1" max="2.0" step="0.1" value="0.8">
+        <span class="value">0.8</span>
+      </div>
+      <div class="control-row">
+        <label>Food Decay</label>
+        <input type="range" id="food-decay" min="0.95" max="0.999" step="0.001" value="0.98">
+        <span class="value">98%</span>
+      </div>
+      <div class="control-buttons">
+        <button id="clear-food">Clear Food</button>
+        <button id="reset-ants">Reset Colony</button>
+      </div>
+    </div>
+  </div>
+
   <div class="articles-grid" id="articles-grid">
     <!-- Articles will be inserted here by JavaScript -->
   </div>
@@ -66,9 +105,16 @@ class AntColony {
     this.ants = [];
     this.articles = [];
     this.freeAnts = [];
+    this.foodPoints = [];
     this.width = window.innerWidth;
     this.height = window.innerHeight;
-    this.clickedPoints = [];
+    this.params = {
+      foodStrength: 1.0,
+      breedingRate: 0.03,
+      collaborationMode: 'flocking',
+      antSpeed: 0.8,
+      foodDecay: 0.98
+    };
     this.init();
   }
 
@@ -87,10 +133,13 @@ class AntColony {
       this.createFreeAnts(80 + POSTS_DATA.length * 12);
     }, 100);
 
-    // Add click handler for spawning ants
+    // Add click handler for food placement
     this.antContainer.addEventListener('click', (e) => {
-      this.handleClick(e.clientX, e.clientY);
+      this.addFood(e.clientX, e.clientY);
     });
+
+    // Initialize control panel
+    this.initControls();
 
     // Start animation
     this.animate();
@@ -213,27 +262,101 @@ class AntColony {
     }
   }
 
-  handleClick(clickX, clickY) {
-    // Add click point that attracts nearby ants
-    this.clickedPoints.push({
-      x: clickX,
-      y: clickY,
-      strength: 1.0,
-      decay: 0.98,
-      radius: 80
-    });
+  addFood(x, y) {
+    // Create food point
+    const food = document.createElement('div');
+    food.className = 'food-point';
+    food.style.left = (x - 4) + 'px';
+    food.style.top = (y - 4) + 'px';
+    this.antContainer.appendChild(food);
 
-    // Attract nearby ants to the click
+    const foodPoint = {
+      element: food,
+      x: x,
+      y: y,
+      strength: this.params.foodStrength,
+      radius: 60,
+      id: Date.now() + Math.random()
+    };
+
+    this.foodPoints.push(foodPoint);
+
+    // Attract nearby ants to the food
     [...this.ants, ...this.freeAnts].forEach(ant => {
-      const dx = clickX - ant.x;
-      const dy = clickY - ant.y;
+      const dx = x - ant.x;
+      const dy = y - ant.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      if (distance < 150) {
-        ant.target = { x: clickX + (Math.random() - 0.5) * 40, y: clickY + (Math.random() - 0.5) * 40 };
-        ant.targetTime = Date.now() + 2000 + Math.random() * 3000; // 2-5 seconds
+      if (distance < 120) {
+        ant.target = { 
+          x: x + (Math.random() - 0.5) * 30, 
+          y: y + (Math.random() - 0.5) * 30 
+        };
+        ant.targetTime = Date.now() + 3000 + Math.random() * 4000;
       }
     });
+  }
+
+  initControls() {
+    const toggle = document.getElementById('panel-toggle');
+    const content = document.getElementById('panel-content');
+    
+    toggle.addEventListener('click', () => {
+      content.classList.toggle('open');
+    });
+
+    // Bind control inputs
+    this.bindControl('food-strength', 'foodStrength', (v) => v.toFixed(1));
+    this.bindControl('breeding-rate', 'breedingRate', (v) => (v * 100).toFixed(0) + '%');
+    this.bindControl('ant-speed', 'antSpeed', (v) => v.toFixed(1));
+    this.bindControl('food-decay', 'foodDecay', (v) => (v * 100).toFixed(1) + '%');
+
+    document.getElementById('collaboration-mode').addEventListener('change', (e) => {
+      this.params.collaborationMode = e.target.value;
+    });
+
+    document.getElementById('clear-food').addEventListener('click', () => {
+      this.clearFood();
+    });
+
+    document.getElementById('reset-ants').addEventListener('click', () => {
+      this.resetColony();
+    });
+  }
+
+  bindControl(id, param, formatter) {
+    const input = document.getElementById(id);
+    const valueSpan = input.nextElementSibling;
+    
+    input.addEventListener('input', (e) => {
+      const value = parseFloat(e.target.value);
+      this.params[param] = value;
+      valueSpan.textContent = formatter(value);
+    });
+  }
+
+  clearFood() {
+    this.foodPoints.forEach(food => {
+      food.element.remove();
+    });
+    this.foodPoints = [];
+  }
+
+  resetColony() {
+    // Remove all ants
+    [...this.ants, ...this.freeAnts].forEach(ant => {
+      ant.element.remove();
+    });
+    this.ants = [];
+    this.freeAnts = [];
+    
+    // Recreate colony
+    setTimeout(() => {
+      this.articles.forEach(article => {
+        this.createAntGroup(article);
+      });
+      this.createFreeAnts(80 + POSTS_DATA.length * 12);
+    }, 100);
   }
 
   getCategoryLabel(category) {
@@ -250,8 +373,30 @@ class AntColony {
   moveAnt(ant) {
     const now = Date.now();
     
-    // Check if ant has a click target
-    if (ant.target && now < ant.targetTime) {
+    // Food seeking behavior
+    let nearestFood = null;
+    let nearestFoodDistance = Infinity;
+    
+    this.foodPoints.forEach(food => {
+      const dx = food.x - ant.x;
+      const dy = food.y - ant.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < food.radius && distance < nearestFoodDistance) {
+        nearestFood = food;
+        nearestFoodDistance = distance;
+      }
+    });
+    
+    // Prioritize food over other targets
+    if (nearestFood && nearestFoodDistance < 100) {
+      const dx = nearestFood.x - ant.x;
+      const dy = nearestFood.y - ant.y;
+      const angleToFood = Math.atan2(dy, dx);
+      ant.angle = this.lerp(ant.angle, angleToFood, 0.2);
+      ant.speed = Math.min(ant.speed * 1.2, 2.0) * this.params.antSpeed;
+    } else if (ant.target && now < ant.targetTime) {
+      // Move towards click target
       const dx = ant.target.x - ant.x;
       const dy = ant.target.y - ant.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -259,21 +404,27 @@ class AntColony {
       if (distance > 5) {
         const angleToTarget = Math.atan2(dy, dx);
         ant.angle = this.lerp(ant.angle, angleToTarget, 0.15);
-        ant.speed = Math.min(ant.speed * 1.1, 2.0); // Speed up towards target
+        ant.speed = Math.min(ant.speed * 1.1, 1.5) * this.params.antSpeed;
       } else {
-        ant.target = null; // Reached target
+        ant.target = null;
       }
     } else {
       ant.target = null;
-      ant.speed = Math.max(ant.speed * 0.95, 0.3); // Slow back down
+      ant.speed = Math.max(ant.speed * 0.95, 0.3) * this.params.antSpeed;
+      
+      // Collaboration behaviors
+      if (this.params.collaborationMode === 'flocking') {
+        this.applyFlockingBehavior(ant);
+      } else if (this.params.collaborationMode === 'swarm') {
+        this.applySwarmBehavior(ant);
+      }
       
       if (ant.article) {
-        // Ants assigned to articles orbit around them
+        // Orbit around article
         const article = ant.article;
-        const centerX = article.x + 160;
-        const centerY = article.y + 85;
+        const centerX = article.x;
+        const centerY = article.y;
         
-        // Calculate orbital position
         ant.targetAngle += 0.01 + Math.random() * 0.02;
         const targetX = centerX + Math.cos(ant.targetAngle) * ant.orbitRadius;
         const targetY = centerY + Math.sin(ant.targetAngle) * ant.orbitRadius;
@@ -283,7 +434,7 @@ class AntColony {
         const angleToOrbit = Math.atan2(dy, dx);
         ant.angle = this.lerp(ant.angle, angleToOrbit, 0.1);
       } else {
-        // Free ants wander randomly
+        // Wander randomly
         ant.wanderAngle += (Math.random() - 0.5) * 0.3;
         ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.05);
       }
@@ -293,16 +444,97 @@ class AntColony {
     ant.x += Math.cos(ant.angle) * ant.speed;
     ant.y += Math.sin(ant.angle) * ant.speed;
     
-    // Keep ant on screen with wrapping
+    // Screen wrapping
     if (ant.x < -10) ant.x = this.width + 10;
     if (ant.x > this.width + 10) ant.x = -10;
     if (ant.y < -10) ant.y = this.height + 10;
     if (ant.y > this.height + 10) ant.y = -10;
     
-    // Update ant element
+    // Update visual
     ant.element.style.left = ant.x + 'px';
     ant.element.style.top = ant.y + 'px';
     ant.element.style.transform = `rotate(${ant.angle}rad)`;
+    
+    // Breeding check
+    this.checkBreeding(ant);
+  }
+
+  applyFlockingBehavior(ant) {
+    let nearbyAnts = [...this.ants, ...this.freeAnts].filter(other => {
+      if (other === ant) return false;
+      const dx = other.x - ant.x;
+      const dy = other.y - ant.y;
+      return Math.sqrt(dx * dx + dy * dy) < 40;
+    });
+
+    if (nearbyAnts.length > 0) {
+      let avgAngle = 0;
+      nearbyAnts.forEach(other => {
+        avgAngle += other.angle;
+      });
+      avgAngle /= nearbyAnts.length;
+      ant.angle = this.lerp(ant.angle, avgAngle, 0.1);
+    }
+  }
+
+  applySwarmBehavior(ant) {
+    // Move towards center of nearby ants
+    let nearbyAnts = [...this.ants, ...this.freeAnts].filter(other => {
+      if (other === ant) return false;
+      const dx = other.x - ant.x;
+      const dy = other.y - ant.y;
+      return Math.sqrt(dx * dx + dy * dy) < 60;
+    });
+
+    if (nearbyAnts.length > 2) {
+      let centerX = 0, centerY = 0;
+      nearbyAnts.forEach(other => {
+        centerX += other.x;
+        centerY += other.y;
+      });
+      centerX /= nearbyAnts.length;
+      centerY /= nearbyAnts.length;
+      
+      const dx = centerX - ant.x;
+      const dy = centerY - ant.y;
+      const angleToCenter = Math.atan2(dy, dx);
+      ant.angle = this.lerp(ant.angle, angleToCenter, 0.08);
+    }
+  }
+
+  checkBreeding(ant) {
+    if (Math.random() > this.params.breedingRate) return;
+    
+    // Find nearby ants for breeding
+    let nearbyAnts = [...this.ants, ...this.freeAnts].filter(other => {
+      if (other === ant) return false;
+      const dx = other.x - ant.x;
+      const dy = other.y - ant.y;
+      return Math.sqrt(dx * dx + dy * dy) < 15;
+    });
+
+    if (nearbyAnts.length > 0) {
+      this.spawnNewAnt(ant.x, ant.y);
+    }
+  }
+
+  spawnNewAnt(x, y) {
+    const ant = document.createElement('div');
+    ant.className = 'ant';
+    this.antContainer.appendChild(ant);
+    
+    const newAnt = {
+      element: ant,
+      x: x + (Math.random() - 0.5) * 20,
+      y: y + (Math.random() - 0.5) * 20,
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.2 + Math.random() * 0.4,
+      wanderAngle: Math.random() * Math.PI * 2,
+      target: null,
+      article: null
+    };
+    
+    this.freeAnts.push(newAnt);
   }
 
 
@@ -315,10 +547,22 @@ class AntColony {
   }
 
   animate() {
-    // Update clicked points
-    this.clickedPoints = this.clickedPoints.filter(point => {
-      point.strength *= point.decay;
-      return point.strength > 0.01;
+    // Update food points (decay over time)
+    this.foodPoints = this.foodPoints.filter(food => {
+      food.strength *= this.params.foodDecay;
+      
+      if (food.strength < 0.1) {
+        food.element.remove();
+        return false;
+      }
+      
+      // Visual feedback for food strength
+      const opacity = Math.min(1, food.strength);
+      const scale = 0.5 + food.strength * 0.5;
+      food.element.style.opacity = opacity;
+      food.element.style.transform = `scale(${scale})`;
+      
+      return true;
     });
     
     // Move article ants
