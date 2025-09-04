@@ -15,8 +15,28 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 
+<script>
+// Jekyll posts data (dynamically rendered)
+const POSTS_DATA = [
+  {% for post in site.posts %}
+  {
+    title: {{ post.title | jsonify }},
+    description: {{ post.description | default: post.excerpt | strip_html | truncate: 120 | jsonify }},
+    url: {% if post.external_link %}"{{ post.external_link }}"{% else %}"{{ post.url | relative_url }}"{% endif %},
+    date: "{{ post.date | date: '%B %Y' }}",
+    categories: {{ post.categories | jsonify }},
+    external: {% if post.external_link %}true{% else %}false{% endif %}
+  }{% unless forloop.last %},{% endunless %}
+  {% endfor %}
+];
+</script>
+
 </head>
 <body>
+  <div class="site-title">{{ site.title }}</div>
+  
+  <div id="ant-world"></div>
+  
   <main class="crazy-container">
     {{ content }}
   </main>
@@ -26,5 +46,187 @@
       <p>&copy; {{ site.time | date: '%Y' }} {{ site.title }}. All rights reserved.</p>
     </div>
   </footer>
+
+<script>
+class AntColony {
+  constructor() {
+    this.container = document.getElementById('ant-world');
+    this.ants = [];
+    this.articles = [];
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.init();
+  }
+
+  init() {
+    // Create articles from Jekyll posts data
+    POSTS_DATA.forEach((post, index) => {
+      this.createArticle(post, index);
+    });
+
+    // Create ants for each article
+    this.articles.forEach(article => {
+      this.createAnt(article);
+    });
+
+    // Start animation
+    this.animate();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+    });
+  }
+
+  createArticle(post, index) {
+    const article = document.createElement('div');
+    article.className = `article-carried ${post.categories[0] || 'general'}`;
+    
+    const categoryLabel = this.getCategoryLabel(post.categories[0]);
+    
+    article.innerHTML = `
+      <h3>${post.title}</h3>
+      <p>${post.description}</p>
+      <div class="meta">
+        <span class="category">${categoryLabel}</span>
+        <span class="date">${post.date}</span>
+      </div>
+    `;
+
+    // Position randomly
+    article.style.left = Math.random() * (this.width - 300) + 'px';
+    article.style.top = Math.random() * (this.height - 200) + 'px';
+
+    // Add click handler
+    article.addEventListener('click', () => {
+      if (post.external) {
+        window.open(post.url, '_blank');
+      } else {
+        window.location.href = post.url;
+      }
+    });
+
+    this.container.appendChild(article);
+    
+    this.articles.push({
+      element: article,
+      x: parseFloat(article.style.left),
+      y: parseFloat(article.style.top),
+      targetX: Math.random() * (this.width - 300),
+      targetY: Math.random() * (this.height - 200),
+      post: post
+    });
+  }
+
+  createAnt(article) {
+    const ant = document.createElement('div');
+    ant.className = 'ant';
+    
+    this.container.appendChild(ant);
+    
+    this.ants.push({
+      element: ant,
+      x: article.x + 100,
+      y: article.y + 50,
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.5 + Math.random() * 1,
+      article: article,
+      wanderAngle: Math.random() * Math.PI * 2
+    });
+  }
+
+  getCategoryLabel(category) {
+    const labels = {
+      'research': 'Research Paper',
+      'project': 'Open Source',
+      'blog': 'Blog Post',
+      'software': 'Software Project',
+      'paper': 'Research Paper'
+    };
+    return labels[category] || 'Article';
+  }
+
+  moveAnt(ant) {
+    // Simple flocking behavior with wandering
+    const article = ant.article;
+    
+    // Calculate direction to article
+    const dx = article.x + 100 - ant.x;
+    const dy = article.y + 50 - ant.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // If far from article, move towards it
+    if (distance > 30) {
+      const angleToArticle = Math.atan2(dy, dx);
+      ant.angle = this.lerp(ant.angle, angleToArticle, 0.1);
+    } else {
+      // Wander around the article
+      ant.wanderAngle += (Math.random() - 0.5) * 0.3;
+      ant.angle = this.lerp(ant.angle, ant.wanderAngle, 0.05);
+    }
+    
+    // Move ant
+    ant.x += Math.cos(ant.angle) * ant.speed;
+    ant.y += Math.sin(ant.angle) * ant.speed;
+    
+    // Keep ant on screen
+    if (ant.x < 0) ant.x = this.width;
+    if (ant.x > this.width) ant.x = 0;
+    if (ant.y < 0) ant.y = this.height;
+    if (ant.y > this.height) ant.y = 0;
+    
+    // Update ant element position and rotation
+    ant.element.style.left = ant.x + 'px';
+    ant.element.style.top = ant.y + 'px';
+    ant.element.style.transform = `rotate(${ant.angle}rad)`;
+  }
+
+  moveArticle(article) {
+    // Slowly move article towards target
+    const dx = article.targetX - article.x;
+    const dy = article.targetY - article.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 5) {
+      article.x += dx * 0.002;
+      article.y += dy * 0.002;
+    } else {
+      // Choose new target
+      article.targetX = Math.random() * (this.width - 300);
+      article.targetY = Math.random() * (this.height - 200);
+    }
+    
+    // Update article position
+    article.element.style.left = article.x + 'px';
+    article.element.style.top = article.y + 'px';
+  }
+
+  lerp(a, b, t) {
+    // Handle angle wrapping
+    let diff = b - a;
+    if (diff > Math.PI) diff -= Math.PI * 2;
+    if (diff < -Math.PI) diff += Math.PI * 2;
+    return a + diff * t;
+  }
+
+  animate() {
+    // Move all ants
+    this.ants.forEach(ant => this.moveAnt(ant));
+    
+    // Move all articles slowly
+    this.articles.forEach(article => this.moveArticle(article));
+    
+    // Continue animation
+    requestAnimationFrame(() => this.animate());
+  }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  new AntColony();
+});
+</script>
+
 </body>
 </html> 
