@@ -1,0 +1,507 @@
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.6;
+  color: #242424;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  font-size: 18px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header */
+.header {
+  background: #ffffff;
+  padding: 32px 0;
+  border-bottom: 1px solid #e6e6e6;
+  margin-bottom: 48px;
+}
+
+.site-title {
+  color: #242424;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.site-subtitle {
+  color: #757575;
+  font-size: 18px;
+  margin: 0;
+  font-weight: 400;
+}
+
+.nav {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.nav a {
+  color: #757575;
+  text-decoration: none;
+  margin-right: 32px;
+  font-weight: 500;
+  font-size: 16px;
+  transition: color 0.2s ease;
+}
+
+.nav a:hover {
+  color: #242424;
+}
+
+/* Featured Simulation Section */
+.featured-simulation {
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: 64px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.simulation-header {
+  padding: 32px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.simulation-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: #242424;
+  letter-spacing: -0.3px;
+}
+
+.simulation-description {
+  color: #757575;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.simulation-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: #999999;
+}
+
+.simulation-category {
+  background: #f0f0f0;
+  color: #666666;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.simulation-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
+}
+
+.btn-primary {
+  background: #242424;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 24px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #757575;
+  padding: 12px 24px;
+  border: 1px solid #e6e6e6;
+  border-radius: 24px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  border-color: #242424;
+  color: #242424;
+}
+
+/* Simulation Container */
+.simulation-container {
+  width: 100%;
+  height: 600px;
+  position: relative;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+#app { 
+  position: absolute; 
+  inset: 0; 
+}
+
+/* Research Section */
+.research-section {
+  margin-bottom: 64px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 32px 0;
+  color: #242424;
+  letter-spacing: -0.3px;
+}
+
+.research-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.research-item {
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  padding: 32px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.research-item:hover {
+  border-color: #242424;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.research-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #242424;
+  line-height: 1.3;
+}
+
+.research-description {
+  color: #757575;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.research-meta {
+  font-size: 14px;
+  color: #999999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.read-more {
+  color: #242424;
+  font-weight: 600;
+}
+
+/* About Section */
+.about-section {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 48px 32px;
+  margin: 64px 0;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: #242424;
+}
+
+.about-description {
+  color: #757575;
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto 32px auto;
+}
+
+.contact-link {
+  color: #242424;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 2px solid #242424;
+  transition: opacity 0.2s ease;
+}
+
+.contact-link:hover {
+  opacity: 0.7;
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid #e6e6e6;
+  padding: 32px 0;
+  text-align: center;
+  color: #999999;
+  font-size: 14px;
+}
+
+.footer a {
+  color: #757575;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: #242424;
+}
+
+/* Simulation Fullscreen Support */
+.simulation-container {
+  transition: all 0.3s ease;
+}
+
+.simulation-container.fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border: none !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  margin: 0 !important;
+}
+
+.fullscreen-btn {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: #242424;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+.fullscreen-btn:hover {
+  background: rgba(255,255,255,1);
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.fullscreen-btn:active {
+  transform: translateX(-50%) translateY(0px);
+  transition: none;
+}
+
+/* Typography for Articles */
+.article-content {
+  background: #ffffff;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.article-header {
+  text-align: left;
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.article-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #242424;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.article-meta {
+  color: #757575;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.article-description {
+  font-size: 20px;
+  color: #757575;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Article Typography */
+.article-content h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 48px 0 24px 0;
+  color: #242424;
+  letter-spacing: -0.3px;
+}
+
+.article-content h2 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 40px 0 20px 0;
+  color: #242424;
+  letter-spacing: -0.3px;
+}
+
+.article-content h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 32px 0 16px 0;
+  color: #242424;
+}
+
+.article-content p {
+  margin-bottom: 20px;
+  color: #242424;
+  line-height: 1.6;
+}
+
+.article-content a {
+  color: #242424;
+  text-decoration: none;
+  border-bottom: 1px solid #242424;
+  transition: opacity 0.2s ease;
+}
+
+.article-content a:hover {
+  opacity: 0.7;
+}
+
+.article-content ul, 
+.article-content ol {
+  margin-bottom: 20px;
+  padding-left: 24px;
+  color: #242424;
+}
+
+.article-content li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.article-content code {
+  background: #f5f5f5;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  color: #242424;
+}
+
+.article-content pre {
+  background: #f8f8f8;
+  padding: 24px;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid #e6e6e6;
+  margin: 24px 0;
+}
+
+.article-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.article-content blockquote {
+  border-left: 4px solid #e6e6e6;
+  padding-left: 24px;
+  margin: 24px 0;
+  color: #757575;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+  
+  .site-title {
+    font-size: 28px;
+  }
+  
+  .site-subtitle {
+    font-size: 16px;
+  }
+  
+  .simulation-container {
+    height: 400px;
+  }
+  
+  .simulation-header {
+    padding: 24px;
+  }
+  
+  .simulation-title {
+    font-size: 24px;
+  }
+  
+  .simulation-description {
+    font-size: 16px;
+  }
+  
+  .article-title {
+    font-size: 28px;
+  }
+  
+  .article-content h1 {
+    font-size: 28px;
+  }
+  
+  .article-content h2 {
+    font-size: 24px;
+  }
+  
+  .nav a {
+    margin-right: 16px;
+    font-size: 14px;
+  }
+}

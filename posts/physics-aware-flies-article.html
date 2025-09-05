@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Aware Flies: Research Article - antifold</title>
+    <meta name="description" content="Research article on SE(3) group dynamics and generative models for autonomous agents.">
+    <link rel="stylesheet" href="../style.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="site-title">antifold</h1>
+            <nav class="nav">
+                <a href="../index.html">← Home</a>
+                <a href="physics-aware-flies-simulation.html">🎮 Simulation</a>
+                <a href="../posts/">All Research</a>
+            </nav>
+        </header>
+
+        <article class="article-content">
+            <div class="article-header">
+                <span class="tile-category">Research</span>
+                <h1 class="article-title">Physics Aware Flies: Generative Dynamics on SE(3)</h1>
+                <div class="article-meta">August 28, 2024 • Research • Simulation</div>
+                <p class="article-description">How symmetry, noise and reward shape motion when treated as group dynamics rather than vector space operations.</p>
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="physics-aware-flies-simulation.html" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: 600;">🎮 Experience the Interactive Simulation</a>
+                </div>
+            </div>
+
+            <h2>Generative dynamics on SE(3) reveal how symmetry, noise and reward shape motion</h2>
+
+            <h3>Abstract</h3>
+            <p>Motion in three dimensions is naturally expressed on the Lie group $SE(3)$, the set of rigid transforms combining rotations $SO(3)$ with translations $\mathbb{R}^3$. Here we present an interactive swarm in which each agent ("fly") evolves by sampling infinitesimal <strong>on-manifold</strong> increments and applying them by left multiplication. A small <strong>generative prior</strong> supplies candidate increments; a <strong>GAN-like critic</strong> assigns rewards tied to user-placed attractors, repellents and a diffusing scalar "plume". Selecting and reinforcing high-reward proposals produces structured transport while preserving the symmetries of space.</p>
+
+            <h3>Main</h3>
+            <p>The pose of each agent is a homogeneous transform</p>
+
+            $$T=\begin{pmatrix}R & t \\ 0 & 1\end{pmatrix}\in SE(3),\quad R\in SO(3),\ t\in\mathbb{R}^3.$$
+
+            <p>Updates are performed in the tangent space $\mathfrak{se}(3)$: we draw a <strong>twist</strong> $\xi=[\rho,\omega]\in\mathbb{R}^6$ and advance</p>
+
+            $$T_{t+1} \;=\; \exp(\xi_t)\,T_t.$$
+
+            <p>The exponential map uses the classical Rodrigues form for rotations,</p>
+
+            $$R(\omega)=\exp(\widehat{\omega})=I+\frac{\sin\theta}{\theta}\widehat{\omega}+\frac{1-\cos\theta}{\theta^2}\widehat{\omega}^2,\quad \theta=\|\omega\|,$$
+
+            <p>and a coupled translation via</p>
+
+            $$\exp\!\begin{pmatrix}\widehat{\omega}&\rho\\0&0\end{pmatrix}
+            =
+            \begin{pmatrix}
+            R(\omega) & V(\omega)\rho\\ 0 & 1
+            \end{pmatrix},\quad
+            V(\omega)=I+\frac{1-\cos\theta}{\theta^2}\widehat{\omega}+\frac{\theta-\sin\theta}{\theta^3}\widehat{\omega}^2.$$
+
+            <p>In this formulation, orientation and position evolve coherently and never leave the manifold; there are no parameterization artefacts.</p>
+
+            <p>Candidate increments are drawn from a <strong>mixture prior</strong> with four physically interpretable components. A <strong>Haar-uniform</strong> term supplies orientation noise that is truly uniform on $SO(3)$—a symmetry-respecting baseline for exploration. A <strong>goal-seeking</strong> term concentrates proposals toward the nearest user-placed attractor (implemented as a von-Mises–Fisher-like directional sampler). A <strong>plume-following</strong> term aligns proposals with the gradient of a diffusing, decaying scalar field seeded by clicks. A small <strong>exploration</strong> term contributes body-frame jitter. Visual "ghost" segments in the scene show these one-step proposals, making the prior itself observable.</p>
+
+            <p>A lightweight <strong>critic</strong> converts a proposed next state $T'$ into a scalar reward,</p>
+
+            $$R(T') \;=\; w_g\,\phi_{\mathrm{goal}}(T') + w_p\,\phi_{\mathrm{plume}}(T') - w_r\,\phi_{\mathrm{repel}}(T') - w_w\,\phi_{\mathrm{wall}}(T') - w_c\,\phi_{\mathrm{collision}}(T'),$$
+
+            <p>favoring proximity to attractors and strong plume signal, while penalizing walls, repellents and crowding. At each step, the agent selects the highest-reward proposal (a one-step free-energy descent) and updates its mixture weights by a small <strong>policy-gradient</strong> correction,</p>
+
+            $$\Delta \alpha_c \;\propto\; \eta\,\big(\mathbf{1}\{c=c^\star\}-\pi_\alpha(c)\big)\,R(T^\star),$$
+
+            <p>where $\alpha$ are component logits and $\pi_\alpha$ their softmax. Components that repeatedly yield good moves grow in prevalence; those that do not recede. This "GAN-like" loop is intentionally modest: it shapes behaviour without heavy function approximation, and it leaves the manifold geometry intact.</p>
+
+            <p>The resulting dynamics resemble <strong>Langevin motion on a symmetry manifold</strong>: symmetric noise (Haar on $SO(3)$) plus <strong>potential-driven drift</strong> derived from user-defined fields. The white box acts as a boundary condition; reflections model elastic encounters. The plume field provides an intuitive language for exogenous information—clicks inject localized sources into a diffusion equation that then spreads and decays. Because all updates are computed in $\mathfrak{se}(3)$ and applied via the exponential map, the simulation respects the kinematics of rigid bodies used in robotics, vision and molecular modelling.</p>
+
+            <h3>Key Observations</h3>
+
+            <p>Several observations follow. First, <strong>geometry matters</strong>: using $SE(3)$ directly avoids the biases and singularities of Euclidean parameterizations, and the Haar component prevents covert frame preferences. Second, <strong>structure can be light</strong>: a small set of task-aligned directions, blended with symmetry-respecting noise, already produces rich transport. Third, <strong>the prior should be visible</strong>: rendering proposals exposes failure modes (e.g. collapsed headings or wall hugging) and makes tuning ethical—users can see what the model intends to do before it acts. Finally, <strong>fields are a programmable substrate</strong>: attractors, repellents and plumes offer a compact way to sculpt behaviour without specifying policies explicitly.</p>
+
+            <p>Although the present implementation is pedagogical, the ingredients align with practice: manifold-correct motion models for tracking, proposal priors for 6-DoF pose estimation, and energy-shaping controllers for navigation. The interactive setting highlights the unifying theme: <strong>symmetry, noise and reward</strong> can be composed cleanly when the state space is treated as a group, not a vector space.</p>
+
+            <h3>Technical Implementation</h3>
+
+            <p>The simulation demonstrates several key technical concepts:</p>
+
+            <ul>
+                <li><strong>SE(3) Lie Group Operations</strong>: All motion updates respect the group structure through proper exponential map computations</li>
+                <li><strong>Haar Measure Preservation</strong>: Uniform sampling on SO(3) maintains rotational symmetries</li>
+                <li><strong>von Mises-Fisher Distributions</strong>: Concentrated directional sampling for goal-oriented behavior</li>
+                <li><strong>Diffusion-Reaction Fields</strong>: 3D scalar field dynamics for information propagation</li>
+                <li><strong>REINFORCE Learning</strong>: Online mixture weight adaptation through policy gradients</li>
+            </ul>
+
+            <h3>Applications and Extensions</h3>
+
+            <p>This framework has implications for:</p>
+
+            <ul>
+                <li><strong>Robotics</strong>: 6-DoF motion planning with proper geometric constraints</li>
+                <li><strong>Computer Vision</strong>: Pose estimation and tracking on manifolds</li>
+                <li><strong>Molecular Dynamics</strong>: Rigid body simulations with correct geometric properties</li>
+                <li><strong>Generative Models</strong>: Sampling and optimization on Lie groups</li>
+                <li><strong>Multi-Agent Systems</strong>: Distributed coordination with geometric constraints</li>
+            </ul>
+
+            <div style="background: rgba(102, 126, 234, 0.1); padding: 20px; border-radius: 10px; margin: 30px 0;">
+                <h4>🎮 Interactive Exploration</h4>
+                <p>Experience the concepts firsthand in our <a href="physics-aware-flies-simulation.html" style="color: #667eea; font-weight: 600;">interactive simulation</a>. Click to add attractors (gold), repellents (red), and plumes (blue). Watch how the ghost segments reveal the generative prior's proposals, and observe how the flies adapt their behavior through online learning.</p>
+            </div>
+
+        </article>
+
+        <footer class="footer">
+            <p><a href="../index.html">← Back to Home</a> | <a href="physics-aware-flies-simulation.html">🎮 Try the Simulation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

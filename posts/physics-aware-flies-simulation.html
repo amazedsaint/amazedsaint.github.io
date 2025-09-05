@@ -1,21 +1,34 @@
----
-layout: post
-title: "Physics Aware Flies: Generative Dynamics on SE(3)"
-date: 2024-09-04
-categories: research simulation
-author: amazedsaint
-description: "A clickable 3D swarm demonstrates Langevin-like dynamics on a Lie group: Haar-respecting exploration, potential-driven drift, and online adaptation via a lightweight critic."
-tags: [SE3, Lie groups, generative-models, robotics, stochastic-processes, geometry]
-math: true
-featured: true
----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Aware Flies: Interactive Simulation - antifold</title>
+    <meta name="description" content="Interactive 3D simulation of flies with SE(3) dynamics - click to add attractors, repellents, and plumes.">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="site-title">antifold</h1>
+            <nav class="nav">
+                <a href="../index.html">← Home</a>
+                <a href="physics-aware-flies-article.html">📖 Research Article</a>
+                <a href="../posts/">All Research</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="content-card" style="text-align: center; margin-bottom: 20px;">
+                <h1>Physics Aware Flies: Interactive Simulation</h1>
+                <p>Experience SE(3) group dynamics in action. Click inside the simulation to add attractors, repellents, and plumes.</p>
+                <a href="physics-aware-flies-article.html" style="background: #667eea; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; display: inline-block; margin: 10px;">📖 Read the Full Research Article</a>
+            </div>
 
 <style>
-  html, body { margin:0; color:#111; font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif;}
-  
   .simulation-container {
     width: 100%;
-    height: 70vh;
+    height: 80vh;
     position: relative;
     border: 2px solid #ddd;
     border-radius: 12px;
@@ -25,52 +38,6 @@ featured: true
   }
   
   #app { position: absolute; inset: 0; }
-  
-  .article-toggle {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2000;
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid #2c3e50;
-    border-radius: 25px;
-    padding: 12px 20px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    font-weight: 600;
-    color: #2c3e50;
-    transition: all 0.3s ease;
-  }
-  
-  .article-toggle:hover {
-    background: #2c3e50;
-    color: white;
-    transform: translateX(-50%) scale(1.05);
-  }
-  
-  .article-content {
-    display: none;
-    padding: 40px;
-    background: white;
-    margin-top: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 2px solid #e9ecef;
-  }
-  
-  .article-content.expanded {
-    display: block;
-  }
-  
-  .arrow {
-    margin-left: 10px;
-    transition: transform 0.3s ease;
-  }
-  
-  .arrow.rotated {
-    transform: rotate(180deg);
-  }
   
   .hud {
     position: absolute; left: 12px; bottom: 12px; background: rgba(0,0,0,0.12);
@@ -112,17 +79,13 @@ featured: true
       width: 320px;
       max-width: 90%;
     }
-    
-    .article-toggle {
-      padding: 10px 16px;
-      font-size: 0.9rem;
-    }
   }
 </style>
 
-<div class="simulation-container">
+<div class="simulation-container" id="simulationContainer">
   <div id="app"></div>
   
+  <button class="fullscreen-btn" id="fullscreenBtn">⛶ Fullscreen</button>
   <button class="btn secondary helptoggle" id="toggleHelp">Help</button>
   <div class="help" id="help">
     <b>Simulator ↔ Ideas</b>
@@ -219,72 +182,12 @@ featured: true
   <div class="hud" id="hud">t=0 | flies=0 | proposals=0 | reward=0.00 | haarΔ(yaw)=0.00</div>
 </div>
 
-<button class="article-toggle" id="article-toggle">
-  Read Full Article <span class="arrow">▼</span>
-</button>
+        </main>
 
-<div class="article-content" id="article-content">
-
-# Generative dynamics on SE(3) reveal how symmetry, noise and reward shape motion
-
-**Abstract.**
-Motion in three dimensions is naturally expressed on the Lie group $SE(3)$, the set of rigid transforms combining rotations $SO(3)$ with translations $\mathbb{R}^3$. Here we present an interactive swarm in which each agent ("fly") evolves by sampling infinitesimal **on-manifold** increments and applying them by left multiplication. A small **generative prior** supplies candidate increments; a **GAN-like critic** assigns rewards tied to user-placed attractors, repellents and a diffusing scalar "plume". Selecting and reinforcing high-reward proposals produces structured transport while preserving the symmetries of space.
-
-**Main.**
-The pose of each agent is a homogeneous transform
-
-$$
-T=\begin{pmatrix}R & t \\ 0 & 1\end{pmatrix}\in SE(3),\quad R\in SO(3),\ t\in\mathbb{R}^3.
-$$
-
-Updates are performed in the tangent space $\mathfrak{se}(3)$: we draw a **twist** $\xi=[\rho,\omega]\in\mathbb{R}^6$ and advance
-
-$$
-T_{t+1} \;=\; \exp(\xi_t)\,T_t.
-$$
-
-The exponential map uses the classical Rodrigues form for rotations,
-
-$$
-R(\omega)=\exp(\widehat{\omega})=I+\frac{\sin\theta}{\theta}\widehat{\omega}+\frac{1-\cos\theta}{\theta^2}\widehat{\omega}^2,\quad \theta=\|\omega\|,
-$$
-
-and a coupled translation via
-
-$$
-\exp\!\begin{pmatrix}\widehat{\omega}&\rho\\0&0\end{pmatrix}
-=
-\begin{pmatrix}
-R(\omega) & V(\omega)\rho\\ 0 & 1
-\end{pmatrix},\quad
-V(\omega)=I+\frac{1-\cos\theta}{\theta^2}\widehat{\omega}+\frac{\theta-\sin\theta}{\theta^3}\widehat{\omega}^2.
-$$
-
-In this formulation, orientation and position evolve coherently and never leave the manifold; there are no parameterization artefacts.
-
-Candidate increments are drawn from a **mixture prior** with four physically interpretable components. A **Haar-uniform** term supplies orientation noise that is truly uniform on $SO(3)$—a symmetry-respecting baseline for exploration. A **goal-seeking** term concentrates proposals toward the nearest user-placed attractor (implemented as a von-Mises–Fisher-like directional sampler). A **plume-following** term aligns proposals with the gradient of a diffusing, decaying scalar field seeded by clicks. A small **exploration** term contributes body-frame jitter. Visual "ghost" segments in the scene show these one-step proposals, making the prior itself observable.
-
-A lightweight **critic** converts a proposed next state $T'$ into a scalar reward,
-
-$$
-R(T') \;=\; w_g\,\phi_{\mathrm{goal}}(T') + w_p\,\phi_{\mathrm{plume}}(T') - w_r\,\phi_{\mathrm{repel}}(T') - w_w\,\phi_{\mathrm{wall}}(T') - w_c\,\phi_{\mathrm{collision}}(T'),
-$$
-
-favoring proximity to attractors and strong plume signal, while penalizing walls, repellents and crowding. At each step, the agent selects the highest-reward proposal (a one-step free-energy descent) and updates its mixture weights by a small **policy-gradient** correction,
-
-$$
-\Delta \alpha_c \;\propto\; \eta\,\big(\mathbf{1}\{c=c^\star\}-\pi_\alpha(c)\big)\,R(T^\star),
-$$
-
-where $\alpha$ are component logits and $\pi_\alpha$ their softmax. Components that repeatedly yield good moves grow in prevalence; those that do not recede. This "GAN-like" loop is intentionally modest: it shapes behaviour without heavy function approximation, and it leaves the manifold geometry intact.
-
-The resulting dynamics resemble **Langevin motion on a symmetry manifold**: symmetric noise (Haar on $SO(3)$) plus **potential-driven drift** derived from user-defined fields. The white box acts as a boundary condition; reflections model elastic encounters. The plume field provides an intuitive language for exogenous information—clicks inject localized sources into a diffusion equation that then spreads and decays. Because all updates are computed in $\mathfrak{se}(3)$ and applied via the exponential map, the simulation respects the kinematics of rigid bodies used in robotics, vision and molecular modelling.
-
-Several observations follow. First, **geometry matters**: using $SE(3)$ directly avoids the biases and singularities of Euclidean parameterizations, and the Haar component prevents covert frame preferences. Second, **structure can be light**: a small set of task-aligned directions, blended with symmetry-respecting noise, already produces rich transport. Third, **the prior should be visible**: rendering proposals exposes failure modes (e.g. collapsed headings or wall hugging) and makes tuning ethical—users can see what the model intends to do before it acts. Finally, **fields are a programmable substrate**: attractors, repellents and plumes offer a compact way to sculpt behaviour without specifying policies explicitly.
-
-Although the present implementation is pedagogical, the ingredients align with practice: manifold-correct motion models for tracking, proposal priors for 6-DoF pose estimation, and energy-shaping controllers for navigation. The interactive setting highlights the unifying theme: **symmetry, noise and reward** can be composed cleanly when the state space is treated as a group, not a vector space.
-
-</div>
+        <footer class="footer">
+            <p><a href="../index.html">← Back to Home</a> | <a href="physics-aware-flies-article.html">📖 Read Full Article</a></p>
+        </footer>
+    </div>
 
 <script type="importmap">
 {
@@ -298,21 +201,6 @@ Although the present implementation is pedagogical, the ingredients align with p
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-// Article toggle functionality
-document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.getElementById('article-toggle');
-  const content = document.getElementById('article-content');
-  const arrow = toggle.querySelector('.arrow');
-  
-  toggle.addEventListener('click', () => {
-    content.classList.toggle('expanded');
-    arrow.classList.toggle('rotated');
-    toggle.innerHTML = content.classList.contains('expanded') 
-      ? 'Hide Article <span class="arrow rotated">▼</span>'
-      : 'Read Full Article <span class="arrow">▼</span>';
-  });
-});
 
 ////////////////////////////////////////////////////////////////////////////////
 // Small helpers
@@ -1019,16 +907,86 @@ function syncParams(){
   });
 }
 
+// Fullscreen functionality
+let isFullscreen = false;
+let isToggling = false;
+function toggleFullscreen() {
+  if (isToggling) return; // Prevent rapid clicking
+  isToggling = true;
+  
+  const container = document.getElementById('simulationContainer');
+  const btn = document.getElementById('fullscreenBtn');
+  
+  if (!isFullscreen) {
+    // Enter fullscreen
+    container.classList.add('fullscreen');
+    btn.textContent = '✕ Exit Fullscreen';
+    isFullscreen = true;
+    
+    // Hide page scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Resize renderer if app exists
+    if (App.renderer && App.camera) {
+      setTimeout(() => {
+        App.renderer.setSize(window.innerWidth, window.innerHeight);
+        App.camera.aspect = window.innerWidth / window.innerHeight;
+        App.camera.updateProjectionMatrix();
+      }, 300);
+    }
+  } else {
+    // Exit fullscreen  
+    container.classList.remove('fullscreen');
+    btn.textContent = '⛶ Fullscreen';
+    isFullscreen = false;
+    
+    // Restore page scroll
+    document.body.style.overflow = '';
+    
+    // Resize renderer back
+    if (App.renderer && App.camera) {
+      setTimeout(() => {
+        const app = document.getElementById('app');
+        App.renderer.setSize(app.clientWidth, app.clientHeight);
+        App.camera.aspect = app.clientWidth / app.clientHeight;
+        App.camera.updateProjectionMatrix();
+      }, 300);
+    }
+  }
+  
+  // Allow toggling again after animation completes
+  setTimeout(() => {
+    isToggling = false;
+  }, 400);
+}
+
+// ESC key to exit fullscreen
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isFullscreen) {
+    toggleFullscreen();
+  }
+});
+
 // Initialize when this specific post loads with error handling
 try {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+    });
   } else {
     init();
+    document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
   }
 } catch (error) {
   console.log('Simulation initialization - ignoring non-critical error:', error);
   // Try initialization anyway
-  setTimeout(init, 100);
+  setTimeout(() => {
+    init();
+    document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+  }, 100);
 }
 </script>
+
+</body>
+</html>
