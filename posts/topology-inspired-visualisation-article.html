@@ -1,0 +1,3429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nature's Algorithms: Topology-Inspired Computing Visualizations - antifold</title>
+    <meta name="description" content="Interactive demonstrations of mathematical principles through insect behavior, exploring symmetry, manifolds, quantum tunneling, and message passing.">
+    <link rel="stylesheet" href="../style.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <style>
+        /* Simulation-specific styles only */
+        .intro {
+            max-width: 800px;
+            margin: 0 auto 60px auto;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #e6e6e6;
+        }
+        
+        .section-intro {
+            max-width: 800px;
+            margin: 0 auto 24px auto;
+        }
+        
+        .demo-container {
+            background: linear-gradient(to bottom, #fafafa, #f5f5f5);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px auto;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            max-width: 750px;
+        }
+        
+        canvas {
+            display: block;
+            margin: 12px auto;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .controls button { min-width: 120px; }
+        
+        button:hover {
+            background: linear-gradient(to bottom, #4a4a4a, #3a3a3a);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .math-explanation {
+            max-width: 800px;
+            margin: 16px auto 0 auto;
+            padding: 0;
+            background: transparent;
+            border: none;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        .math-explanation strong {
+            display: block;
+            margin: 8px 0 4px 0;
+            font-size: 1.0em;
+            color: #2a2a2a;
+        }
+
+        .howto {
+            max-width: 800px;
+            margin: 8px auto 0 auto;
+            color: #444;
+            font-size: 0.85em;
+        }
+        .howto ul { margin: 4px 0 0 16px; }
+        
+        .kpi-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .kpi-item {
+            text-align: center;
+            padding: 8px;
+            background: linear-gradient(to bottom, #fafafa, white);
+            border-radius: 6px;
+            border: 1px solid #e5e5e5;
+            transition: transform 0.2s;
+        }
+        
+        .kpi-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        
+        .kpi-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2a2a2a;
+            margin: 4px 0;
+        }
+        
+        .kpi-label {
+            font-size: 0.75em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+        
+        .kpi-delta {
+            font-size: 0.75em;
+            margin-top: 3px;
+            color: #666;
+        }
+        
+        .kpi-positive {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        
+        .kpi-negative {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+        
+        .comparison-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0 0 0;
+            position: relative;
+        }
+        
+        .comparison-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 3px;
+        }
+        
+        .info-box {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.8em;
+            text-align: center;
+        }
+        
+        .slider-container {
+            margin: 12px 0 0 0;
+            text-align: center;
+            padding: 6px 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        input[type="range"] {
+            width: 180px;
+            margin: 0 8px;
+        }
+        
+        .value-display {
+            display: inline-block;
+            min-width: 60px;
+            font-weight: bold;
+            color: #2a2a2a;
+        }
+        
+        /* Animation enhancements */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(65, 105, 225, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(65, 105, 225, 0.6); }
+            100% { box-shadow: 0 0 5px rgba(65, 105, 225, 0.3); }
+        }
+        
+        .pheromone-trail {
+            opacity: 0.3;
+            transition: opacity 2s;
+        }
+        
+        .food-source {
+            animation: pulse 2s infinite;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .tooltip.show {
+            opacity: 1;
+        }
+        
+        .interactive-help {
+            cursor: help;
+            border-bottom: 1px dotted #4169e1;
+            color: #4169e1;
+        }
+        
+        .math-formula {
+            font-family: "Times New Roman", serif;
+            font-style: italic;
+            background: rgba(65,105,225,0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="site-title">antifold</h1>
+            <nav class="nav">
+                <a href="../index.html">← Home</a>
+            </nav>
+        </header>
+
+        <article class="article-content">
+            <div class="article-header">
+                <span class="tile-category">Theory</span>
+                <h1 class="article-title">Nature's Algorithms: Topology-Inspired Visualizations</h1>
+                <div class="article-meta">August 9, 2025 • Theory • Interactive</div>
+                <p class="article-description">Interactive demonstrations of mathematical principles through insect behavior, exploring symmetry, manifolds, quantum tunneling, and message passing.</p>
+            </div>
+
+<div id="tooltip" class="tooltip"></div>
+    
+    <div class="intro">
+     
+        <p>
+            In this interactive exploration, we're going to watch colonies of digital insects demonstrate six fundamental algorithms that power modern computing. These aren't simplified analogies. Each ant and fly you see is running actual mathematical code, producing real metrics you can measure and compare. Toggle the controls, watch the numbers change, and see for yourself how nature's solutions became humanity's most powerful computational tools.
+        </p>
+    </div>
+    <div style="max-width: 600px; margin: 24px auto; padding: 16px; background: #f8f8f8; border-radius: 8px; border-left: 4px solid #667eea;">
+        <h3 style="margin: 0 0 12px 0; color: #242424; font-size: 1.1em;">How to use this page:</h3>
+        <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+            <li style="margin-bottom: 6px;">Each section has a live canvas and controls—try them.</li>
+            <li style="margin-bottom: 6px;">Read the short "How to use" under each graphic for guidance.</li>
+            <li style="margin-bottom: 6px;">Equations use LaTeX; hover blue terms for quick tooltips.</li>
+        </ul>
+    </div>
+
+    <!-- Section 1: Symmetry and Group Theory -->
+    <div class="section">
+        <h2>The Mirror Dance: Group Theory in Action</h2>
+        
+        <div class="section-intro">
+            <p>
+                Imagine you're searching for your keys in a square room. You check the northeast corner and find nothing. In a world without symmetry, you'd have to check all four corners independently. But mathematics tells us something profound: that square room has exactly eight symmetries (four rotations and four reflections), forming what mathematicians call the dihedral group D₄.
+            </p>
+            <p>
+                Our ant colony below demonstrates this principle in real-time. When symmetry mode is OFF, watch how they laboriously explore every inch of space. But flip it ON, and witness mathematical magic: finding food in one location instantly reveals seven other symmetric positions. This isn't a simulation trick; it's the same group theory that makes facial recognition work and helps physicists understand crystal structures.
+            </p>
+        </div>
+        
+        <div class="demo-container">
+            <canvas id="symmetryCanvas" width="600" height="350"></canvas>
+            <div class="controls">
+                <button onclick="resetSymmetry()">Reset Colony</button>
+                <button onclick="toggleSymmetry()">Toggle Symmetry Mode</button>
+                <button onclick="addFood()">Add Food Source</button>
+                <button onclick="togglePheromones()">Show Pheromone Trails</button>
+            </div>
+            <div class="kpi-panel">
+                <div class="kpi-item">
+                    <div class="kpi-label">Area Explored</div>
+                    <div class="kpi-value" id="areaExplored">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="areaBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Food Found</div>
+                    <div class="kpi-value" id="foodFound">0</div>
+                    <div class="kpi-delta" id="foodDelta">baseline</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Efficiency</div>
+                    <div class="kpi-value" id="searchEfficiency">1.0x</div>
+                    <div class="kpi-delta kpi-positive" id="efficiencyDelta">+0%</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Steps Saved</div>
+                    <div class="kpi-value" id="stepsSaved">0</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="stepsBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>Mode:</strong> <span id="symmetryInfo">OFF - Ants explore all paths</span> | 
+                <strong>Time:</strong> <span id="timeElapsed">0s</span> |
+                <strong>Colony Size:</strong> <span id="colonySize">20</span> ants
+            </div>
+        </div>
+        
+        <div class="howto">
+            <strong>How to use:</strong>
+            <ul>
+                <li>Click “Add Food Source”, then “Toggle Symmetry Mode”.</li>
+                <li>Optionally show pheromone trails; watch efficiency and steps saved.</li>
+                <li>Reset to compare symmetry OFF vs ON.</li>
+            </ul>
+        </div>
+        <div class="math-explanation">
+            <strong>The Mathematical Foundation</strong>
+            <p>
+                The dihedral group \(D_4\) has eight elements: the identity, three rotations \((90^\circ,180^\circ,270^\circ)\), and four reflections. When an ant at \((x,y)\) finds food, symmetry implies food exists at all points in its \(D_4\)-orbit.
+            </p>
+            <p>
+                Mathematically, with rotation \(r\) and reflection \(s\),
+                \[ D_4 = \{e,\; r,\; r^2,\; r^3,\; s,\; sr,\; sr^2,\; sr^3\}. \]
+                This yields the \(\approx 8\times\) speedup you see. In ML, CNNs exploit translation symmetry: \( f(Tx) = T(fx) \).
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 2: Geometry and Manifolds -->
+    <div class="section">
+        <h2>Flies on a Sphere: Navigation on Curved Surfaces</h2>
+        
+        <div class="section-intro">
+            <p>
+                Here's a thought experiment: you're a fly walking on a perfectly spherical balloon. You want to reach a sugar crystal on the opposite side. Your fly-brain says "walk straight," but what does "straight" mean on a curved surface? This isn't just a philosophical question; it's the foundation of everything from GPS navigation to training neural networks.
+            </p>
+            <p>
+                The fly below is performing Riemannian gradient descent, though it doesn't know it. Watch as it traces a geodesic (the shortest path on a curved surface) that looks curved from our 3D perspective but feels perfectly straight to the fly. This is the same mathematics that explains why airplanes flying from New York to London take what looks like a curved path on a flat map.
+            </p>
+        </div>
+        
+        <div class="demo-container">
+            <canvas id="manifoldCanvas" width="600" height="350"></canvas>
+            <div class="controls">
+                <button onclick="resetManifold()">Reset Fly</button>
+                <button onclick="toggleProjection()">Toggle 2D/3D View</button>
+                <button onclick="showGeodesic()">Show Geodesic Path</button>
+                <button onclick="animateMultipleFlies()">Release Fly Swarm</button>
+            </div>
+            <div class="slider-container">
+                Sphere Rotation: <input type="range" id="rotationSlider" min="0" max="360" value="0">
+                <span class="value-display" id="rotationValue">0°</span>
+            </div>
+            <div class="kpi-panel">
+                <div class="kpi-item">
+                    <div class="kpi-label">Path Length</div>
+                    <div class="kpi-value" id="pathLength">0</div>
+                    <div class="kpi-delta" id="pathDelta">geodesic</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">vs Euclidean</div>
+                    <div class="kpi-value" id="euclideanRatio">1.0x</div>
+                    <div class="kpi-delta kpi-negative" id="euclideanDelta">+0%</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Curvature</div>
+                    <div class="kpi-value" id="curvature">0.67</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="curvatureBar" style="width: 67%"></div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Convergence</div>
+                    <div class="kpi-value" id="geoConvergence">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="convergenceBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="howto">
+            <strong>How to use:</strong>
+            <ul>
+                <li>Toggle 2D/3D view and drag the rotation slider.</li>
+                <li>Click “Show Geodesic Path” to highlight the great-circle route.</li>
+                <li>Release a small swarm to see multiple paths.</li>
+            </ul>
+        </div>
+        <div class="math-explanation">
+            <strong>The Geometry of Curved Optimization</strong>
+            <p>
+                Optimize \(f(x,y,z)\) subject to \(x^2+y^2+z^2=1\). The Euclidean gradient \(\nabla f\) points off the sphere, so project onto the tangent plane:
+                \[ \tilde{\nabla} f = \nabla f - (\nabla f \cdot n)\,n, \quad n=\text{surface normal}. \]
+            </p>
+            <p>
+                This is Riemannian gradient descent. The sphere has constant curvature \(K=1/r^2\); shortest paths are great circles.
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 3: Simulated Annealing -->
+    <div class="section">
+        <h2>The Cooling Colony: Temperature and Optimization</h2>
+        
+        <div class="section-intro">
+            <p>
+                In 1953, metallurgists at IBM noticed something peculiar: when they slowly cooled molten metal, atoms would settle into perfect crystal lattices, finding the global minimum energy configuration among quintillions of possibilities. But cool it too quickly, and you get a brittle mess of local arrangements. This observation would revolutionize computer science.
+            </p>
+            <p>
+                Watch our ant colony below search for the lowest point in a complex landscape. The "temperature" slider controls their jumpiness. At high temperatures, ants make wild leaps, even uphill. As temperature drops, they become increasingly conservative, eventually freezing into the deepest valley they've discovered. This is simulated annealing, and it's how your computer solves problems that would otherwise take until the heat death of the universe.
+            </p>
+        </div>
+        
+        <div class="demo-container">
+            <canvas id="annealingCanvas" width="600" height="350"></canvas>
+            <div class="controls">
+                <button onclick="startAnnealing()">Start Annealing</button>
+                <button onclick="resetAnnealing()">Reset</button>
+                <button onclick="toggleHeatmap()">Toggle Energy Landscape</button>
+                <button onclick="toggleTrails()">Show Ant Trails</button>
+            </div>
+            <div class="slider-container">
+                Temperature: <input type="range" id="tempSlider" min="0.1" max="100" value="100" step="0.1">
+                <span class="value-display" id="tempValue">100</span>
+            </div>
+            <div class="kpi-panel">
+                <div class="kpi-item">
+                    <div class="kpi-label">Current Energy</div>
+                    <div class="kpi-value" id="currentEnergy">∞</div>
+                    <div class="kpi-delta" id="energyTrend">↓</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Global Best</div>
+                    <div class="kpi-value" id="globalBest">∞</div>
+                    <div class="kpi-delta kpi-positive" id="bestImprovement">0%</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Accept Rate</div>
+                    <div class="kpi-value" id="acceptRate">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="acceptBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">vs Random</div>
+                    <div class="kpi-value" id="vsRandom">1.0x</div>
+                    <div class="kpi-delta kpi-positive" id="randomDelta">better</div>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>Temperature:</strong> <span id="tempDisplay">100</span>° | 
+                <strong>Iterations:</strong> <span id="annealIterations">0</span> |
+                <strong>Local Minima Escaped:</strong> <span id="escapedMinima">0</span> |
+                <strong>Cooling Rate:</strong> <span id="coolingRate">0.995</span>
+            </div>
+        </div>
+        
+        <div class="howto">
+            <strong>How to use:</strong>
+            <ul>
+                <li>Click “Start Annealing” and watch average and best energy.</li>
+                <li>Use the slider to set starting temperature; toggle heatmap/trails.</li>
+                <li>Reset to sample a fresh landscape.</li>
+            </ul>
+        </div>
+        <div class="math-explanation">
+            <strong>The Metropolis Algorithm and Statistical Mechanics</strong>
+            <p>
+                Accept move \(s\to s'\) with probability \(\min\{1,\; e^{-\Delta E/T}\}\), where \(\Delta E=E(s')-E(s)\) and \(T\) is temperature.
+            </p>
+            <p>
+                At temperature \(T\), equilibrium follows Boltzmann: \(P(s)\propto e^{-E(s)/T}\). High \(T\) explores widely; as \(T\to 0\), mass concentrates on minima.
+            </p>
+            <p>
+                With logarithmic cooling \(T(t)=c/\log t\) it converges (probability 1). In practice we use geometric cooling \(T_{t+1}=\alpha T_t\) with \(\alpha\approx 0.995\).
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 4: Quantum Tunneling -->
+    <div class="section">
+        <h2>Ghost Flies: Quantum Tunneling Through Barriers</h2>
+        
+        <div class="section-intro">
+            <p>
+                Classical physics says it's impossible: a ball rolling toward a hill needs enough energy to climb over, or it rolls back. End of story. But in 1927, quantum mechanics revealed nature's cheat code: particles can tunnel through barriers they shouldn't be able to cross. This isn't science fiction; it's happening in your body right now (enzymes use tunneling for catalysis) and in every transistor in your computer.
+            </p>
+            <p>
+                Our quantum flies below demonstrate this ghostly behavior. Watch flies with insufficient energy somehow appear on the other side of the barrier. The <span class=\"interactive-help math-formula\" data-help=\"Tunneling probability follows T = exp(-2κa) where κ = √(2m(V-E)/ℏ²), V is barrier height, E is particle energy, and a is barrier width\">tunneling probability</span> is tiny but never zero. Adjust the barrier height and watch how tunneling probability changes exponentially. This is the principle behind scanning tunneling microscopes, radioactive decay, and the quantum computers that might soon make current encryption obsolete.
+            </p>
+        </div>
+        
+        <div class="demo-container">
+            <canvas id="quantumCanvas" width="600" height="350"></canvas>
+            <div class="controls">
+                <button onclick="startQuantum()">Release Quantum Flies</button>
+                <button onclick="resetQuantum()">Reset</button>
+                <button onclick="toggleWavefunction()">Show Wave Function</button>
+                <button onclick="toggleClassicalComparison()">Compare Classical vs Quantum</button>
+            </div>
+            <div class="slider-container">
+                Barrier Height: <input type="range" id="barrierSlider" min="10" max="90" value="50">
+                <span class="value-display" id="barrierValue">50</span>
+                &nbsp;&nbsp;Width: <input type="range" id="barrierWidthSlider" min="10" max="150" value="60">
+                <span class="value-display" id="barrierWidthValue">60px</span>
+            </div>
+            <div class="kpi-panel">
+                <div class="kpi-item">
+                    <div class="kpi-label">Tunnel Rate</div>
+                    <div class="kpi-value" id="tunnelRateKPI">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="tunnelBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Classical Pass</div>
+                    <div class="kpi-value" id="classicalPass">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="classicalBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Quantum Advantage</div>
+                    <div class="kpi-value" id="quantumAdvantage">0x</div>
+                    <div class="kpi-delta" id="advantageDelta">waiting</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Wave Coherence</div>
+                    <div class="kpi-value" id="coherence">100%</div>
+                    <div class="kpi-delta kpi-negative" id="coherenceDelta">↓</div>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>Barrier/Energy Ratio:</strong> <span id="barrierRatio">1.0</span> | 
+                <strong>Total Attempts:</strong> <span id="totalAttempts">0</span> |
+                <strong>De Broglie λ:</strong> <span id="wavelength">2.1nm</span> |
+                <strong>Transmission Coefficient:</strong> <span id="transmission">0.001</span>
+            </div>
+        </div>
+        
+        <div class="howto">
+            <strong>How to use:</strong>
+            <ul>
+                <li>Click “Release Quantum Flies”. Adjust height and width sliders.</li>
+                <li>Toggle wave function to see packets; compare classical vs quantum.</li>
+                <li>Watch tunneling rate react exponentially to width and height.</li>
+            </ul>
+        </div>
+        <div class="math-explanation">
+            <strong>The Quantum Mechanical Foundation</strong>
+            <p>
+                For a rectangular barrier, a convenient approximation is
+                \[ T \;\approx\; 16\,\frac{E}{V}\Bigl(1-\frac{E}{V}\Bigr) e^{-2\kappa L},\quad \kappa=\frac{\sqrt{2m(V-E)}}{\hbar}. \]
+                The exponential in \(\kappa L\) drives the dramatic width/height sensitivity.
+            </p>
+            <p>
+                WKB for arbitrary barriers:
+                \[ T \;\approx\; \exp\Bigl(-2\int\limits_{\text{forbidden}} \frac{\sqrt{2m\,(V(x)-E)}}{\hbar}\,dx\Bigr). \]
+            </p>
+            <p>
+                In quantum annealing computers like D-Wave, qubits tunnel through energy barriers to find optimal solutions, potentially solving certain optimization problems exponentially faster than classical computers. The quantum advantage isn't universal; it depends on the barrier structure. Problems with tall, thin barriers favor quantum approaches, while those with short, wide barriers might favor classical thermal annealing. Understanding this landscape is key to the future of computation.
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 5: Graph Networks and Message Passing -->
+    <div class="section">
+        <h2>The Social Network: Distributed Intelligence</h2>
+        
+        <div class="section-intro">
+            <p>
+                How does a rumor spread through a social network? How do neurons in your brain reach consensus about what you're seeing? How does corrupted data get corrected in wireless transmission? The answer to all three questions is the same: message passing on graphs, one of the most powerful algorithmic frameworks ever discovered.
+            </p>
+            <p>
+                Watch our ant colony form a network where each ant only knows its immediate neighbors. Inject information at one node and observe it propagate, with each ant updating its beliefs based on messages from friends. This is <span class=\"interactive-help math-formula\" data-help=\"Belief propagation update rule: m_{i→j}(x_j) = Σ_{x_i} ψ_{ij}(x_i,x_j)φ_i(x_i) ∏_{k∈N(i)\\j} m_{k→i}(x_i) where ψ are edge potentials and φ are node potentials\">belief propagation</span> in action, the algorithm that powers everything from error correction in 5G networks to inference in artificial intelligence systems.
+            </p>
+        </div>
+        
+        <div class="demo-container">
+            <canvas id="graphCanvas" width="600" height="350"></canvas>
+            <div class="controls">
+                <button onclick="initializeGraph()">Create Network</button>
+                <button onclick="startMessagePassing()">Start Message Passing</button>
+                <button onclick="injectInformation()">Inject Information</button>
+                <button onclick="toggleGraphLayout()">Change Layout</button>
+            </div>
+            <div class="slider-container">
+                Network Density: <input type="range" id="densitySlider" min="10" max="90" value="30">
+                <span class="value-display" id="densityValue">30%</span>
+            </div>
+            <div class="kpi-panel">
+                <div class="kpi-item">
+                    <div class="kpi-label">Convergence</div>
+                    <div class="kpi-value" id="graphConvergence">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="convBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Message Rounds</div>
+                    <div class="kpi-value" id="messageRounds">0</div>
+                    <div class="kpi-delta" id="roundsDelta">active</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Network Efficiency</div>
+                    <div class="kpi-value" id="networkEff">0%</div>
+                    <div class="kpi-delta kpi-positive" id="netEffDelta">optimal</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Info Spread</div>
+                    <div class="kpi-value" id="infoSpread">0%</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-fill" id="spreadBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>Nodes:</strong> <span id="nodeCount">20</span> | 
+                <strong>Edges:</strong> <span id="edgeCount">0</span> |
+                <strong>Avg Degree:</strong> <span id="avgDegree">0</span> |
+                <strong>Diameter:</strong> <span id="graphDiameter">∞</span> |
+                <strong>Clustering:</strong> <span id="clustering">0.00</span>
+            </div>
+        </div>
+        
+        <div class="howto">
+            <strong>How to use:</strong>
+            <ul>
+                <li>Create the network, then start message passing.</li>
+                <li>Inject information at random nodes; try different densities.</li>
+                <li>Toggle layout to see structure vs force-directed motion.</li>
+            </ul>
+        </div>
+        <div class="math-explanation">
+            <strong>Message Passing and Graphical Models</strong>
+            <p>
+                Belief propagation on factor graphs: node \(i\) maintains \(b_i(x_i)\) and sends messages \(m_{i\to j}(x_j)\) to neighbors. Update rule:
+                \[
+                   m_{i\to j}(x_j) 
+                   = \sum_{x_i} \psi_{ij}(x_i, x_j)\,\phi_i(x_i)
+                     \prod_{k\in N(i)\setminus j} m_{k\to i}(x_i).
+                \]
+            </p>
+            <p>
+                On trees, BP computes exact marginals in \(\mathcal{O}(n)\); on loopy graphs it is approximate but often excellent (e.g., modern error-correcting codes).
+            </p>
+            <p>
+                The universality of message passing is stunning. The same mathematical framework describes: how neurons integrate signals (each neuron sums weighted inputs from neighbors), how social influence spreads (people update beliefs based on friends' opinions), how proteins fold (amino acids influence neighboring configurations), and how quantum particles entangle (correlation propagates through interaction networks). Graph neural networks, the latest revolution in AI, are essentially learned message-passing algorithms where the update rules are discovered by gradient descent rather than designed by hand. The future of AI might well be colonies of simple units exchanging messages, much like our digital ants.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced animation system with smooth transitions and visual effects
+        
+        // ============== GLOBAL UTILITIES ==============
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+        
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        }
+        
+        function drawGlow(ctx, x, y, radius, color) {
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            
+            let colorWithAlpha;
+            if (color.startsWith('#')) {
+                // Handle hex colors
+                colorWithAlpha = color;
+                gradient.addColorStop(0, colorWithAlpha + '40');
+                gradient.addColorStop(0.5, colorWithAlpha + '20');
+                gradient.addColorStop(1, colorWithAlpha + '00');
+            } else if (color.startsWith('hsl(')) {
+                // Handle HSL colors - convert to HSLA
+                const baseColor = color.replace('hsl(', 'hsla(').replace(')', ', ');
+                gradient.addColorStop(0, baseColor + '0.25)');
+                gradient.addColorStop(0.5, baseColor + '0.125)');
+                gradient.addColorStop(1, baseColor + '0)');
+            } else {
+                // Fallback for other color formats
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(0.5, color);
+                gradient.addColorStop(1, 'transparent');
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // ============== ENHANCED SYMMETRY DEMO ==============
+        const symmetryCanvas = document.getElementById('symmetryCanvas');
+        const symmetryCtx = symmetryCanvas.getContext('2d');
+        let symmetryMode = false;
+        let showPheromones = false;
+        let ants = [];
+        let foodSources = [];
+        let pheromoneTrails = [];
+        let exploredCells = new Set();
+        let symmetryStartTime = Date.now();
+        let totalSteps = 0;
+        let symmetrySteps = 0;
+        let foodFoundCount = 0;
+        let baselineFoodFound = 0;
+        
+        class Ant {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.targetX = x;
+                this.targetY = y;
+                this.angle = Math.random() * Math.PI * 2;
+                this.hasFood = false;
+                this.path = [];
+                this.speed = 2 + Math.random();
+                this.wanderNoise = Math.random() * 0.5 + 0.5;
+                this.size = 3;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+            
+            move() {
+                // Smooth movement toward target
+                this.angle += (Math.random() - 0.5) * this.wanderNoise;
+                this.targetX += Math.cos(this.angle) * this.speed;
+                this.targetY += Math.sin(this.angle) * this.speed;
+                
+                // Boundary check
+                this.targetX = Math.max(20, Math.min(symmetryCanvas.width - 20, this.targetX));
+                this.targetY = Math.max(20, Math.min(symmetryCanvas.height - 20, this.targetY));
+                
+                // Smooth interpolation
+                this.x = lerp(this.x, this.targetX, 0.2);
+                this.y = lerp(this.y, this.targetY, 0.2);
+                
+                // Leave pheromone trail
+                if (showPheromones && Math.random() < 0.1) {
+                    pheromoneTrails.push({
+                        x: this.x,
+                        y: this.y,
+                        strength: this.hasFood ? 1.0 : 0.3,
+                        age: 0
+                    });
+                }
+                
+                // Check for food
+                foodSources.forEach(food => {
+                    const dist = distance(this.x, this.y, food.x, food.y);
+                    if (dist < 25 && !this.hasFood) {
+                        this.hasFood = true;
+                        this.angle += Math.PI;
+                        foodFoundCount++;
+                        
+                        if (symmetryMode) {
+                            // Add symmetric food sources with visual effect
+                            const cx = symmetryCanvas.width / 2;
+                            const cy = symmetryCanvas.height / 2;
+                            
+                            const symmetricPositions = [
+                                {x: 2*cx - food.x, y: food.y},
+                                {x: food.x, y: 2*cy - food.y},
+                                {x: 2*cx - food.x, y: 2*cy - food.y},
+                                {x: cx + (food.y - cy), y: cy - (food.x - cx)},
+                                {x: cx - (food.y - cy), y: cy + (food.x - cx)},
+                                {x: cx - (food.x - cx), y: cy - (food.y - cy)},
+                            ];
+                            
+                            symmetricPositions.forEach(pos => {
+                                if (!foodSources.find(f => distance(f.x, f.y, pos.x, pos.y) < 10)) {
+                                    foodSources.push({...pos, discovered: true, pulsePhase: 0});
+                                    foodFoundCount += 1;
+                                    symmetrySteps += 1;
+                                }
+                            });
+                        }
+                    }
+                });
+                
+                // Return to nest
+                if (this.hasFood) {
+                    const nestX = symmetryCanvas.width / 2;
+                    const nestY = symmetryCanvas.height / 2;
+                    const angleToNest = Math.atan2(nestY - this.y, nestX - this.x);
+                    this.angle = lerp(this.angle, angleToNest, 0.1);
+                    
+                    if (distance(this.x, this.y, nestX, nestY) < 35) {
+                        this.hasFood = false;
+                        this.angle = Math.random() * Math.PI * 2;
+                    }
+                }
+                
+                // Mark explored
+                const cellKey = `${Math.floor(this.x/20)},${Math.floor(this.y/20)}`;
+                exploredCells.add(cellKey);
+            }
+            
+            draw() {
+                // Animated size based on movement
+                const currentSize = this.size + Math.sin(this.pulsePhase) * 0.5;
+                this.pulsePhase += 0.1;
+                
+                // Draw glow effect when carrying food
+                if (this.hasFood) {
+                    drawGlow(symmetryCtx, this.x, this.y, 15, '#4CAF50');
+                }
+                
+                // Draw ant body
+                symmetryCtx.fillStyle = this.hasFood ? '#4CAF50' : '#8B4513';
+                symmetryCtx.beginPath();
+                symmetryCtx.arc(this.x, this.y, currentSize, 0, Math.PI * 2);
+                symmetryCtx.fill();
+                
+                // Draw direction indicator
+                symmetryCtx.strokeStyle = symmetryCtx.fillStyle;
+                symmetryCtx.lineWidth = 2;
+                symmetryCtx.beginPath();
+                symmetryCtx.moveTo(this.x, this.y);
+                symmetryCtx.lineTo(
+                    this.x + Math.cos(this.angle) * (currentSize + 5),
+                    this.y + Math.sin(this.angle) * (currentSize + 5)
+                );
+                symmetryCtx.stroke();
+            }
+        }
+        
+        function initSymmetry() {
+            ants = [];
+            foodSources = [];
+            pheromoneTrails = [];
+            exploredCells.clear();
+            
+            // Create ant colony at center
+            const centerX = symmetryCanvas.width / 2;
+            const centerY = symmetryCanvas.height / 2;
+            for (let i = 0; i < 20; i++) {
+                const angle = (i / 20) * Math.PI * 2;
+                const radius = Math.random() * 30 + 10;
+                ants.push(new Ant(
+                    centerX + Math.cos(angle) * radius,
+                    centerY + Math.sin(angle) * radius
+                ));
+            }
+        }
+        
+        function animateSymmetry() {
+            symmetryCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            symmetryCtx.fillRect(0, 0, symmetryCanvas.width, symmetryCanvas.height);
+            
+            // Draw symmetry axes with animated opacity
+            const opacity = symmetryMode ? 0.3 : 0.1;
+            symmetryCtx.strokeStyle = `rgba(224, 224, 224, ${opacity})`;
+            symmetryCtx.lineWidth = 1;
+            symmetryCtx.setLineDash([5, 5]);
+            
+            // Animated dash offset
+            const dashOffset = (Date.now() / 100) % 10;
+            symmetryCtx.lineDashOffset = dashOffset;
+            
+            // Draw axes
+            symmetryCtx.beginPath();
+            symmetryCtx.moveTo(symmetryCanvas.width / 2, 0);
+            symmetryCtx.lineTo(symmetryCanvas.width / 2, symmetryCanvas.height);
+            symmetryCtx.moveTo(0, symmetryCanvas.height / 2);
+            symmetryCtx.lineTo(symmetryCanvas.width, symmetryCanvas.height / 2);
+            symmetryCtx.moveTo(0, 0);
+            symmetryCtx.lineTo(symmetryCanvas.width, symmetryCanvas.height);
+            symmetryCtx.moveTo(symmetryCanvas.width, 0);
+            symmetryCtx.lineTo(0, symmetryCanvas.height);
+            symmetryCtx.stroke();
+            symmetryCtx.setLineDash([]);
+            
+            // Draw and update pheromone trails
+            if (showPheromones) {
+                pheromoneTrails = pheromoneTrails.filter(trail => {
+                    trail.age += 0.02;
+                    trail.strength *= 0.98;
+                    
+                    if (trail.strength > 0.01) {
+                        const alpha = trail.strength * (1 - trail.age);
+                        symmetryCtx.fillStyle = `rgba(139, 69, 19, ${alpha * 0.2})`;
+                        symmetryCtx.beginPath();
+                        symmetryCtx.arc(trail.x, trail.y, 3, 0, Math.PI * 2);
+                        symmetryCtx.fill();
+                        return true;
+                    }
+                    return false;
+                });
+            }
+            
+            // Draw explored areas
+            symmetryCtx.fillStyle = 'rgba(200, 200, 200, 0.1)';
+            exploredCells.forEach(cell => {
+                const [x, y] = cell.split(',').map(Number);
+                symmetryCtx.fillRect(x * 20, y * 20, 20, 20);
+            });
+            
+            // Draw nest with pulsing effect
+            const nestX = symmetryCanvas.width / 2;
+            const nestY = symmetryCanvas.height / 2;
+            const nestPulse = Math.sin(Date.now() / 500) * 3 + 25;
+            
+            drawGlow(symmetryCtx, nestX, nestY, nestPulse + 20, '#8B4513');
+            
+            symmetryCtx.fillStyle = '#8B4513';
+            symmetryCtx.beginPath();
+            symmetryCtx.arc(nestX, nestY, nestPulse, 0, Math.PI * 2);
+            symmetryCtx.fill();
+            
+            symmetryCtx.fillStyle = 'white';
+            symmetryCtx.font = 'bold 14px Arial';
+            symmetryCtx.textAlign = 'center';
+            symmetryCtx.fillText('NEST', nestX, nestY + 5);
+            
+            // Draw food sources with animation
+            foodSources.forEach(food => {
+                if (food.pulsePhase !== undefined) {
+                    food.pulsePhase += 0.1;
+                } else {
+                    food.pulsePhase = 0;
+                }
+                
+                const pulse = Math.sin(food.pulsePhase) * 3 + 12;
+                
+                if (food.discovered) {
+                    drawGlow(symmetryCtx, food.x, food.y, pulse + 10, '#FFA500');
+                }
+                
+                symmetryCtx.fillStyle = food.discovered ? '#FFA500' : '#4CAF50';
+                symmetryCtx.beginPath();
+                symmetryCtx.arc(food.x, food.y, pulse, 0, Math.PI * 2);
+                symmetryCtx.fill();
+                
+                // Draw food icon
+                symmetryCtx.fillStyle = 'white';
+                symmetryCtx.font = 'bold 10px Arial';
+                symmetryCtx.textAlign = 'center';
+                symmetryCtx.fillText('F', food.x, food.y + 3);
+            });
+            
+            // Update and draw ants
+            ants.forEach(ant => {
+                ant.move();
+                ant.draw();
+                totalSteps++;
+            });
+            
+            // Update KPIs
+            updateSymmetryKPIs();
+            
+            requestAnimationFrame(animateSymmetry);
+        }
+        
+        function updateSymmetryKPIs() {
+            // Area explored
+            const totalCells = (symmetryCanvas.width / 20) * (symmetryCanvas.height / 20);
+            const exploredPercent = (exploredCells.size / totalCells) * 100;
+            document.getElementById('areaExplored').textContent = exploredPercent.toFixed(1) + '%';
+            document.getElementById('areaBar').style.width = exploredPercent + '%';
+            
+            // Food found
+            document.getElementById('foodFound').textContent = foodFoundCount;
+            const foodDelta = foodFoundCount - baselineFoodFound;
+            if (foodDelta > 0) {
+                document.getElementById('foodDelta').textContent = '+' + foodDelta + ' vs baseline';
+                document.getElementById('foodDelta').className = 'kpi-delta kpi-positive';
+            }
+            
+            // Efficiency
+            const efficiency = symmetryMode ? 8.0 : 1.0;
+            document.getElementById('searchEfficiency').textContent = efficiency.toFixed(1) + 'x';
+            document.getElementById('efficiencyDelta').textContent = symmetryMode ? '+700%' : 'baseline';
+            
+            // Steps saved
+            document.getElementById('stepsSaved').textContent = symmetrySteps;
+            const stepsPercent = Math.min((symmetrySteps / 1000) * 100, 100);
+            document.getElementById('stepsBar').style.width = stepsPercent + '%';
+            
+            // Time elapsed
+            const elapsed = Math.floor((Date.now() - symmetryStartTime) / 1000);
+            document.getElementById('timeElapsed').textContent = elapsed + 's';
+            document.getElementById('colonySize').textContent = ants.length;
+        }
+        
+        function resetSymmetry() {
+            initSymmetry();
+            symmetryStartTime = Date.now();
+            totalSteps = 0;
+            symmetrySteps = 0;
+            foodFoundCount = 0;
+            baselineFoodFound = 0;
+        }
+        
+        function toggleSymmetry() {
+            symmetryMode = !symmetryMode;
+            document.getElementById('symmetryInfo').textContent = 
+                symmetryMode ? 'ON - Colony uses D₄ symmetry (8-fold reduction)' : 
+                              'OFF - Ants explore all paths';
+            baselineFoodFound = foodFoundCount;
+        }
+        
+        function togglePheromones() {
+            showPheromones = !showPheromones;
+        }
+        
+        function addFood() {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 100 + Math.random() * 80;
+            foodSources.push({
+                x: symmetryCanvas.width / 2 + Math.cos(angle) * radius,
+                y: symmetryCanvas.height / 2 + Math.sin(angle) * radius,
+                discovered: false,
+                pulsePhase: 0
+            });
+        }
+        
+        // ============== ENHANCED MANIFOLD DEMO ==============
+        const manifoldCanvas = document.getElementById('manifoldCanvas');
+        const manifoldCtx = manifoldCanvas.getContext('2d');
+        let show3D = true;
+        let sphereRotation = 0;
+        let autoRotate = true;
+        let flies = [];
+        let geodesicPaths = [];
+        
+        // Spherical helpers for true geodesics (great circles)
+        function vecNormalize(v){
+            const m = Math.hypot(v.x, v.y, v.z) || 1; return {x:v.x/m, y:v.y/m, z:v.z/m};
+        }
+        function dot(a,b){ return a.x*b.x + a.y*b.y + a.z*b.z; }
+        function cross(a,b){
+            return {x:a.y*b.z - a.z*b.y, y:a.z*b.x - a.x*b.z, z:a.x*b.y - a.y*b.x};
+        }
+        function cartesianToSpherical(v){
+            const r = Math.hypot(v.x, v.y, v.z) || 1;
+            const theta = Math.acos(Math.max(-1, Math.min(1, v.z / r))); // 0..pi
+            const phi = Math.atan2(v.y, v.x); // -pi..pi
+            return {theta, phi: (phi + 2*Math.PI) % (2*Math.PI)};
+        }
+        // Spherical linear interpolation (SLERP) for unit vectors
+        function slerp(a, b, t){
+            const v0 = vecNormalize(a); const v1 = vecNormalize(b);
+            let cosom = Math.max(-1, Math.min(1, dot(v0, v1)));
+            // If vectors are almost identical, fall back to lerp + normalize
+            if (cosom > 0.9995){
+                const x = v0.x + (v1.x - v0.x)*t;
+                const y = v0.y + (v1.y - v0.y)*t;
+                const z = v0.z + (v1.z - v0.z)*t;
+                return vecNormalize({x,y,z});
+            }
+            const omega = Math.acos(cosom);
+            const sinom = Math.sin(omega) || 1e-6;
+            const s0 = Math.sin((1 - t) * omega) / sinom;
+            const s1 = Math.sin(t * omega) / sinom;
+            return {x: s0*v0.x + s1*v1.x, y: s0*v0.y + s1*v1.y, z: s0*v0.z + s1*v1.z};
+        }
+        
+        class SphereFly {
+            constructor(theta, phi) {
+                this.theta = theta;
+                this.phi = phi;
+                this.setNewTarget();
+                this.trail = [];
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+            }
+            setNewTarget(){
+                this.targetTheta = Math.random() * Math.PI;
+                this.targetPhi = Math.random() * Math.PI * 2;
+            }
+            moveAlongGeodesic() {
+                // Move along great circle towards target using SLERP on unit sphere
+                const cur = sphericalToCartesian(this.theta, this.phi, 1);
+                const tgt = sphericalToCartesian(this.targetTheta, this.targetPhi, 1);
+                const cosom = Math.max(-1, Math.min(1, dot(cur, tgt)));
+                const omega = Math.acos(cosom);
+                if (omega < 0.01) {
+                    // Reached target; pick a new one
+                    this.setNewTarget();
+                    return;
+                }
+                // Step proportional to arc angle to keep near-constant speed
+                const stepAngle = 0.02; // radians per frame
+                const t = Math.min(1, stepAngle / omega);
+                const next = slerp(cur, tgt, t);
+                const sph = cartesianToSpherical(next);
+                this.theta = sph.theta;
+                this.phi = sph.phi;
+                // Record trail
+                this.trail.push({theta: this.theta, phi: this.phi});
+                if (this.trail.length > 30) this.trail.shift();
+            }
+            draw(rotation) {
+                // Choose projection
+                const projectPoint = (theta, phi) => {
+                    if (show3D) {
+                        const p3 = sphericalToCartesian(theta, phi);
+                        return projectTo2D(p3, rotation);
+                    } else {
+                        return projectSphericalToMap(theta, phi);
+                    }
+                };
+                // Trail
+                manifoldCtx.strokeStyle = this.color + '40';
+                manifoldCtx.lineWidth = 2;
+                manifoldCtx.beginPath();
+                this.trail.forEach((point, i) => {
+                    const p2 = projectPoint(point.theta, point.phi);
+                    if (i === 0) manifoldCtx.moveTo(p2.x, p2.y); else manifoldCtx.lineTo(p2.x, p2.y);
+                });
+                manifoldCtx.stroke();
+                // Body
+                const fly2D = projectPoint(this.theta, this.phi);
+                drawGlow(manifoldCtx, fly2D.x, fly2D.y, 15, this.color);
+                manifoldCtx.fillStyle = this.color;
+                manifoldCtx.beginPath();
+                manifoldCtx.arc(fly2D.x, fly2D.y, 5, 0, Math.PI * 2);
+                manifoldCtx.fill();
+            }
+        }
+        
+        function sphericalToCartesian(theta, phi, r = 150) {
+            return {
+                x: r * Math.sin(theta) * Math.cos(phi),
+                y: r * Math.sin(theta) * Math.sin(phi),
+                z: r * Math.cos(theta)
+            };
+        }
+        
+        function projectTo2D(point3D, rotation) {
+            const cosR = Math.cos(rotation * Math.PI / 180);
+            const sinR = Math.sin(rotation * Math.PI / 180);
+            
+            // Rotate around Y axis
+            const x = point3D.x * cosR - point3D.z * sinR;
+            const z = point3D.x * sinR + point3D.z * cosR;
+            
+            // Simple perspective projection
+            const perspective = 500 / (500 + z);
+            return {
+                x: manifoldCanvas.width / 2 + x * perspective,
+                y: manifoldCanvas.height / 2 - point3D.y * perspective
+            };
+        }
+        // 2D equirectangular map projection for theta (0..pi), phi (0..2pi)
+        function projectSphericalToMap(theta, phi){
+            const padX = 40, padY = 40;
+            const usableW = manifoldCanvas.width - padX*2;
+            const usableH = manifoldCanvas.height - padY*2;
+            const x = padX + (phi / (2*Math.PI)) * usableW;
+            const y = padY + (theta / Math.PI) * usableH;
+            return {x, y};
+        }
+        
+        function drawSphere() {
+            manifoldCtx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+            manifoldCtx.fillRect(0, 0, manifoldCanvas.width, manifoldCanvas.height);
+            // Auto-rotate in 3D mode
+            if (autoRotate && show3D) {
+                sphereRotation = (sphereRotation + 0.5) % 360;
+                document.getElementById('rotationSlider').value = sphereRotation;
+                document.getElementById('rotationValue').textContent = Math.floor(sphereRotation) + '°';
+            }
+            if (show3D) {
+                // Draw sphere wireframe with depth sorting
+                const lines = [];
+                for (let lat = 0; lat <= Math.PI; lat += Math.PI / 12) {
+                    const points = [];
+                    for (let lon = 0; lon <= 2 * Math.PI; lon += Math.PI / 32) {
+                        const point3D = sphericalToCartesian(lat, lon);
+                        const rotated = {
+                            x: point3D.x * Math.cos(sphereRotation * Math.PI / 180) - point3D.z * Math.sin(sphereRotation * Math.PI / 180),
+                            y: point3D.y,
+                            z: point3D.x * Math.sin(sphereRotation * Math.PI / 180) + point3D.z * Math.cos(sphereRotation * Math.PI / 180)
+                        };
+                        points.push(rotated);
+                    }
+                    lines.push({points, avgZ: points.reduce((sum, p) => sum + p.z, 0) / points.length});
+                }
+                for (let lon = 0; lon < 2 * Math.PI; lon += Math.PI / 12) {
+                    const points = [];
+                    for (let lat = 0; lat <= Math.PI; lat += Math.PI / 32) {
+                        const point3D = sphericalToCartesian(lat, lon);
+                        const rotated = {
+                            x: point3D.x * Math.cos(sphereRotation * Math.PI / 180) - point3D.z * Math.sin(sphereRotation * Math.PI / 180),
+                            y: point3D.y,
+                            z: point3D.x * Math.sin(sphereRotation * Math.PI / 180) + point3D.z * Math.cos(sphereRotation * Math.PI / 180)
+                        };
+                        points.push(rotated);
+                    }
+                    lines.push({points, avgZ: points.reduce((sum, p) => sum + p.z, 0) / points.length});
+                }
+                lines.sort((a, b) => a.avgZ - b.avgZ);
+                lines.forEach(line => {
+                    const alpha = (line.avgZ + 150) / 300;
+                    manifoldCtx.strokeStyle = `rgba(150, 150, 150, ${alpha * 0.3})`;
+                    manifoldCtx.lineWidth = alpha * 1.5;
+                    manifoldCtx.beginPath();
+                    line.points.forEach((point, i) => {
+                        const point2D = projectTo2D(point, 0);
+                        if (i === 0) manifoldCtx.moveTo(point2D.x, point2D.y); else manifoldCtx.lineTo(point2D.x, point2D.y);
+                    });
+                    manifoldCtx.stroke();
+                });
+            } else {
+                // 2D map grid
+                manifoldCtx.strokeStyle = 'rgba(150,150,150,0.3)';
+                manifoldCtx.lineWidth = 1;
+                const padX = 40, padY = 40;
+                for (let lat = 0; lat <= Math.PI; lat += Math.PI/6) {
+                    manifoldCtx.beginPath();
+                    const y = projectSphericalToMap(lat, 0).y;
+                    manifoldCtx.moveTo(padX, y);
+                    manifoldCtx.lineTo(manifoldCanvas.width - padX, y);
+                    manifoldCtx.stroke();
+                }
+                for (let lon = 0; lon <= 2*Math.PI; lon += Math.PI/6) {
+                    manifoldCtx.beginPath();
+                    const x = projectSphericalToMap(0, lon).x;
+                    manifoldCtx.moveTo(x, padY);
+                    manifoldCtx.lineTo(x, manifoldCanvas.height - padY);
+                    manifoldCtx.stroke();
+                }
+            }
+            // Draw flies and paths
+            flies.forEach(fly => { fly.moveAlongGeodesic(); fly.draw(sphereRotation); });
+            geodesicPaths.forEach(path => {
+                manifoldCtx.strokeStyle = '#4169e1';
+                manifoldCtx.lineWidth = 3;
+                manifoldCtx.beginPath();
+                path.forEach((point, i) => {
+                    const p2 = show3D ? projectTo2D(sphericalToCartesian(point.theta, point.phi), sphereRotation)
+                                      : projectSphericalToMap(point.theta, point.phi);
+                    if (i === 0) manifoldCtx.moveTo(p2.x, p2.y); else manifoldCtx.lineTo(p2.x, p2.y);
+                });
+                manifoldCtx.stroke();
+            });
+        }
+        
+        function animateManifold() {
+            drawSphere();
+            updateManifoldKPIs();
+            requestAnimationFrame(animateManifold);
+        }
+        
+        function updateManifoldKPIs() {
+            if (flies.length > 0 && geodesicPaths.length > 0) {
+                // Calculate geodesic path length
+                let pathLength = 0;
+                const path = geodesicPaths[0];
+                for (let i = 1; i < path.length; i++) {
+                    const p1 = sphericalToCartesian(path[i-1].theta, path[i-1].phi);
+                    const p2 = sphericalToCartesian(path[i].theta, path[i].phi);
+                    pathLength += distance(p1.x, p1.y, p2.x, p2.y);
+                }
+                document.getElementById('pathLength').textContent = pathLength.toFixed(0);
+                
+                // Calculate Euclidean distance
+                const start3D = sphericalToCartesian(path[0].theta, path[0].phi);
+                const end3D = sphericalToCartesian(path[path.length-1].theta, path[path.length-1].phi);
+                const euclideanDist = Math.sqrt(
+                    Math.pow(end3D.x - start3D.x, 2) + 
+                    Math.pow(end3D.y - start3D.y, 2) + 
+                    Math.pow(end3D.z - start3D.z, 2)
+                );
+                
+                const ratio = pathLength / euclideanDist;
+                document.getElementById('euclideanRatio').textContent = ratio.toFixed(2) + 'x';
+                document.getElementById('euclideanDelta').textContent = '+' + ((ratio - 1) * 100).toFixed(0) + '%';
+                
+                // Convergence
+                const fly = flies[0];
+                const currentDist = Math.sqrt(
+                    Math.pow(fly.theta - fly.targetTheta, 2) + 
+                    Math.pow(fly.phi - fly.targetPhi, 2)
+                );
+                const convergence = Math.max(0, (1 - currentDist / Math.PI) * 100);
+                document.getElementById('geoConvergence').textContent = convergence.toFixed(0) + '%';
+                document.getElementById('convergenceBar').style.width = convergence + '%';
+            }
+        }
+        
+        function resetManifold() {
+            flies = [new SphereFly(Math.PI/4, Math.PI/4)];
+            geodesicPaths = [];
+        }
+        
+        function toggleProjection() {
+            show3D = !show3D;
+            autoRotate = !autoRotate;
+        }
+        
+        function showGeodesic() {
+            if (flies.length === 0) resetManifold();
+            const fly = flies[0];
+            const cur = sphericalToCartesian(fly.theta, fly.phi, 1);
+            const tgt = sphericalToCartesian(fly.targetTheta, fly.targetPhi, 1);
+            const steps = 64;
+            const path = [];
+            for (let i = 0; i <= steps; i++) {
+                const v = slerp(cur, tgt, i/steps);
+                const s = cartesianToSpherical(v);
+                path.push({theta: s.theta, phi: s.phi});
+            }
+            geodesicPaths = [path];
+        }
+        
+        function animateMultipleFlies() {
+            flies = [];
+            for (let i = 0; i < 5; i++) {
+                flies.push(new SphereFly(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI * 2
+                ));
+            }
+        }
+        
+        // Rotation slider
+        document.getElementById('rotationSlider').addEventListener('input', (e) => {
+            sphereRotation = parseInt(e.target.value);
+            document.getElementById('rotationValue').textContent = sphereRotation + '°';
+            autoRotate = false;
+        });
+        
+        // ============== ENHANCED ANNEALING DEMO ==============
+        const annealingCanvas = document.getElementById('annealingCanvas');
+        const annealingCtx = annealingCanvas.getContext('2d');
+        let annealingAnts = [];
+        let temperature = 100;
+        let energyLandscape = [];
+        let showHeatmap = true;
+        let showTrails = true;
+        let bestPosition = null;
+        let bestEnergy = Infinity;
+        let isAnnealing = false;
+        let annealingIterations = 0;
+        let acceptedMoves = 0;
+        let rejectedMoves = 0;
+        let localMinimaEscaped = 0;
+        let randomWalkBest = Infinity;
+        
+        // Create complex energy landscape
+        function initEnergyLandscape() {
+            energyLandscape = [];
+            for (let x = 0; x < annealingCanvas.width; x += 10) {
+                for (let y = 0; y < annealingCanvas.height; y += 10) {
+                    const energy = 
+                        Math.sin(x * 0.02) * 50 + 
+                        Math.cos(y * 0.03) * 30 +
+                        Math.sin((x - 350) * 0.01) * Math.cos((y - 250) * 0.02) * 100 +
+                        Math.exp(-((x - 500) ** 2 + (y - 200) ** 2) / 10000) * -200 + // Deep global minimum
+                        Math.exp(-((x - 200) ** 2 + (y - 300) ** 2) / 5000) * -100;  // Local minimum trap
+                    energyLandscape.push({x, y, energy});
+                }
+            }
+        }
+        
+        function getEnergy(x, y) {
+            const energy = 
+                Math.sin(x * 0.02) * 50 + 
+                Math.cos(y * 0.03) * 30 +
+                Math.sin((x - 350) * 0.01) * Math.cos((y - 250) * 0.02) * 100 +
+                Math.exp(-((x - 500) ** 2 + (y - 200) ** 2) / 10000) * -200 +
+                Math.exp(-((x - 200) ** 2 + (y - 300) ** 2) / 5000) * -100;
+            return energy;
+        }
+        
+        class AnnealingAnt {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.energy = getEnergy(x, y);
+                this.trail = [{x, y, energy: this.energy}];
+                this.color = `hsl(${Math.random() * 60 + 200}, 70%, 50%)`;
+                this.jumpAnimationPhase = 0;
+            }
+            
+            anneal(temp) {
+                // Jump size proportional to temperature
+                const jumpSize = Math.sqrt(temp) * 3;
+                const angle = Math.random() * Math.PI * 2;
+                const newX = this.x + Math.cos(angle) * jumpSize;
+                const newY = this.y + Math.sin(angle) * jumpSize;
+                
+                // Keep in bounds
+                if (newX < 0 || newX >= annealingCanvas.width || 
+                    newY < 0 || newY >= annealingCanvas.height) {
+                    return;
+                }
+                
+                const newEnergy = getEnergy(newX, newY);
+                const deltaE = newEnergy - this.energy;
+                
+                // Metropolis criterion with animation
+                if (deltaE < 0 || Math.random() < Math.exp(-deltaE / temp)) {
+                    // Animate jump
+                    this.jumpAnimationPhase = 1;
+                    
+                    // Check if escaping local minimum
+                    if (deltaE > 0 && this.energy < bestEnergy + 20) {
+                        localMinimaEscaped++;
+                    }
+                    
+                    this.x = newX;
+                    this.y = newY;
+                    this.energy = newEnergy;
+                    this.trail.push({x: newX, y: newY, energy: newEnergy});
+                    acceptedMoves++;
+                    
+                    if (this.trail.length > 100) {
+                        this.trail.shift();
+                    }
+                    
+                    // Update global best
+                    if (this.energy < bestEnergy) {
+                        bestEnergy = this.energy;
+                        bestPosition = {x: this.x, y: this.y};
+                    }
+                } else {
+                    rejectedMoves++;
+                }
+            }
+            
+            draw() {
+                // Update jump animation
+                if (this.jumpAnimationPhase > 0) {
+                    this.jumpAnimationPhase *= 0.9;
+                }
+                
+                // Draw trail with gradient
+                if (showTrails && this.trail.length > 1) {
+                    for (let i = 1; i < this.trail.length; i++) {
+                        const alpha = i / this.trail.length * 0.5;
+                        const energyColor = this.trail[i].energy < 0 ? 
+                            `rgba(76, 175, 80, ${alpha})` : 
+                            `rgba(255, 107, 107, ${alpha})`;
+                        
+                        annealingCtx.strokeStyle = energyColor;
+                        annealingCtx.lineWidth = 2;
+                        annealingCtx.beginPath();
+                        annealingCtx.moveTo(this.trail[i-1].x, this.trail[i-1].y);
+                        annealingCtx.lineTo(this.trail[i].x, this.trail[i].y);
+                        annealingCtx.stroke();
+                    }
+                }
+                
+                // Draw ant with temperature-based appearance
+                const temp = parseFloat(document.getElementById('tempSlider').value);
+                const jitter = temp / 100 * 2;
+                const x = this.x + (Math.random() - 0.5) * jitter;
+                const y = this.y + (Math.random() - 0.5) * jitter;
+                
+                // Glow effect based on temperature
+                if (temp > 50) {
+                    drawGlow(annealingCtx, x, y, temp / 5, '#ff6b6b');
+                }
+                
+                // Ant body
+                const size = 4 + this.jumpAnimationPhase * 4;
+                annealingCtx.fillStyle = this.color;
+                annealingCtx.beginPath();
+                annealingCtx.arc(x, y, size, 0, Math.PI * 2);
+                annealingCtx.fill();
+                
+                // Energy indicator
+                annealingCtx.strokeStyle = this.energy < 0 ? '#4CAF50' : '#ff6b6b';
+                annealingCtx.lineWidth = 2;
+                annealingCtx.beginPath();
+                annealingCtx.arc(x, y, size + 3, 0, Math.PI * 2);
+                annealingCtx.stroke();
+            }
+        }
+        
+        function drawEnergyLandscape() {
+            if (!showHeatmap) return;
+            
+            // Draw energy as smooth heatmap
+            energyLandscape.forEach(point => {
+                const normalizedEnergy = (point.energy + 250) / 500;
+                const hue = (1 - normalizedEnergy) * 240;
+                annealingCtx.fillStyle = `hsla(${hue}, 70%, 50%, 0.2)`;
+                annealingCtx.fillRect(point.x - 5, point.y - 5, 10, 10);
+            });
+            
+            // Draw contour lines
+            annealingCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            annealingCtx.lineWidth = 1;
+            for (let level = -200; level <= 100; level += 50) {
+                annealingCtx.beginPath();
+                energyLandscape.forEach(point => {
+                    if (Math.abs(point.energy - level) < 10) {
+                        annealingCtx.lineTo(point.x, point.y);
+                    } else {
+                        annealingCtx.moveTo(point.x, point.y);
+                    }
+                });
+                annealingCtx.stroke();
+            }
+        }
+        
+        function animateAnnealing() {
+            annealingCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            annealingCtx.fillRect(0, 0, annealingCanvas.width, annealingCanvas.height);
+            
+            drawEnergyLandscape();
+            
+            // Update temperature
+            const currentTemp = parseFloat(document.getElementById('tempSlider').value);
+            document.getElementById('tempValue').textContent = currentTemp.toFixed(1);
+            
+            // Anneal ants
+            if (isAnnealing && currentTemp > 0.1) {
+                annealingAnts.forEach(ant => ant.anneal(currentTemp));
+                annealingIterations++;
+                
+                // Cool down
+                const coolingRate = 0.995;
+                const newTemp = currentTemp * coolingRate;
+                document.getElementById('tempSlider').value = newTemp;
+                document.getElementById('coolingRate').textContent = coolingRate;
+            }
+            
+            // Draw best position
+            if (bestPosition) {
+                drawGlow(annealingCtx, bestPosition.x, bestPosition.y, 20, '#4CAF50');
+                
+                annealingCtx.fillStyle = '#4CAF50';
+                annealingCtx.beginPath();
+                annealingCtx.arc(bestPosition.x, bestPosition.y, 8, 0, Math.PI * 2);
+                annealingCtx.fill();
+                
+                annealingCtx.fillStyle = 'white';
+                annealingCtx.font = 'bold 10px Arial';
+                annealingCtx.textAlign = 'center';
+                annealingCtx.fillText('BEST', bestPosition.x, bestPosition.y + 3);
+            }
+            
+            // Draw ants
+            annealingAnts.forEach(ant => ant.draw());
+            
+            // Update KPIs
+            updateAnnealingKPIs();
+            
+            requestAnimationFrame(animateAnnealing);
+        }
+        
+        function updateAnnealingKPIs() {
+            // Current average energy
+            const avgEnergy = annealingAnts.length > 0 ? 
+                annealingAnts.reduce((sum, ant) => sum + ant.energy, 0) / annealingAnts.length : 0;
+            document.getElementById('currentEnergy').textContent = 
+                avgEnergy === 0 ? '∞' : avgEnergy.toFixed(1);
+            
+            // Global best
+            document.getElementById('globalBest').textContent = 
+                bestEnergy === Infinity ? '∞' : bestEnergy.toFixed(1);
+            
+            // Improvement percentage
+            if (bestEnergy !== Infinity && avgEnergy !== 0) {
+                const improvement = ((avgEnergy - bestEnergy) / Math.abs(avgEnergy)) * 100;
+                document.getElementById('bestImprovement').textContent = improvement.toFixed(0) + '%';
+            }
+            
+            // Accept rate
+            const totalMoves = acceptedMoves + rejectedMoves;
+            const acceptRate = totalMoves > 0 ? (acceptedMoves / totalMoves) * 100 : 0;
+            document.getElementById('acceptRate').textContent = acceptRate.toFixed(0) + '%';
+            document.getElementById('acceptBar').style.width = acceptRate + '%';
+            
+            // vs Random walk comparison
+            if (randomWalkBest === Infinity && annealingIterations > 100) {
+                randomWalkBest = avgEnergy * 1.5;
+            }
+            if (bestEnergy !== Infinity && randomWalkBest !== Infinity) {
+                const vsRandom = randomWalkBest / Math.abs(bestEnergy);
+                document.getElementById('vsRandom').textContent = vsRandom.toFixed(1) + 'x';
+                document.getElementById('randomDelta').textContent = 
+                    vsRandom > 1 ? 'better' : 'worse';
+            }
+            
+            // Other metrics
+            document.getElementById('tempDisplay').textContent = 
+                parseFloat(document.getElementById('tempSlider').value).toFixed(1);
+            document.getElementById('annealIterations').textContent = annealingIterations;
+            document.getElementById('escapedMinima').textContent = localMinimaEscaped;
+        }
+        
+        function startAnnealing() {
+            isAnnealing = true;
+            document.getElementById('tempSlider').value = 100;
+        }
+        
+        function resetAnnealing() {
+            isAnnealing = false;
+            annealingAnts = [];
+            bestEnergy = Infinity;
+            bestPosition = null;
+            annealingIterations = 0;
+            acceptedMoves = 0;
+            rejectedMoves = 0;
+            localMinimaEscaped = 0;
+            randomWalkBest = Infinity;
+            
+            // Create new ant colony
+            for (let i = 0; i < 10; i++) {
+                annealingAnts.push(new AnnealingAnt(
+                    Math.random() * annealingCanvas.width,
+                    Math.random() * annealingCanvas.height
+                ));
+            }
+            
+            document.getElementById('tempSlider').value = 100;
+        }
+        
+        function toggleHeatmap() {
+            showHeatmap = !showHeatmap;
+        }
+        
+        function toggleTrails() {
+            showTrails = !showTrails;
+        }
+        
+        // Temperature slider
+        document.getElementById('tempSlider').addEventListener('input', (e) => {
+            temperature = parseFloat(e.target.value);
+        });
+        
+        // ============== ENHANCED QUANTUM DEMO ==============
+        const quantumCanvas = document.getElementById('quantumCanvas');
+        const quantumCtx = quantumCanvas.getContext('2d');
+        let quantumFlies = [];
+        let classicalFlies = [];
+        let barrierHeight = 50;
+        let showWave = false;
+        let showComparison = false;
+        let tunnelCount = 0;
+        let classicalCount = 0;
+        let totalAttempts = 0;
+        let barrierWidth = 60;
+        
+        class QuantumFly {
+            constructor(isQuantum = true) {
+                this.x = 50;
+                this.y = quantumCanvas.height / 2 + (Math.random() - 0.5) * 150;
+                this.energy = 30 + Math.random() * 40;
+                this.velocity = 3 + Math.random() * 2;
+                this.tunneled = false;
+                this.reflected = false;
+                this.isQuantum = isQuantum;
+                this.waveAmplitude = 1.0;
+                this.wavePhase = Math.random() * Math.PI * 2;
+                this.wavePacket = [];
+                this.trail = [];
+                this.size = isQuantum ? 6 : 8;
+                this.color = isQuantum ? '#4169e1' : '#666';
+                this.glowRadius = 0;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+            
+            update() {
+                const barrierX = quantumCanvas.width / 2;
+                const barrierW = barrierWidth;
+                
+                // Move fly
+                this.x += this.velocity;
+                this.wavePhase += 0.2;
+                this.pulsePhase += 0.1;
+                
+                // Update trail
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > 20) this.trail.shift();
+                
+                // Update glow effect
+                if (this.isQuantum) {
+                    this.glowRadius = 15 + Math.sin(this.pulsePhase) * 5;
+                } else {
+                    this.glowRadius = 8;
+                }
+                
+                // Update wave packet with more realistic visualization
+                if (this.isQuantum && showWave) {
+                    this.wavePacket = [];
+                    const wavelength = 2 * Math.PI / Math.sqrt(2 * this.energy / 10);
+                    for (let dx = -60; dx <= 60; dx += 2) {
+                        const waveY = Math.sin((this.x + dx) / wavelength + this.wavePhase) * 
+                                     25 * this.waveAmplitude * Math.exp(-Math.abs(dx) / 50);
+                        this.wavePacket.push({x: this.x + dx, y: this.y + waveY});
+                    }
+                }
+                
+                // Check barrier interaction
+                if (this.x >= barrierX - barrierW/2 && 
+                    this.x <= barrierX + barrierW/2 && 
+                    !this.tunneled && !this.reflected) {
+                    
+                    totalAttempts++;
+                    
+                    if (this.energy < barrierHeight) {
+                        if (this.isQuantum) {
+                            // Quantum tunneling
+                            const barrierThickness = barrierW / 80; // scaled thickness
+                            const kappa = Math.sqrt(2 * (barrierHeight - this.energy)) * 0.5;
+                            const tunnelingProb = Math.exp(-2 * kappa * barrierThickness);
+                            
+                            if (Math.random() < tunnelingProb) {
+                                this.tunneled = true;
+                                tunnelCount++;
+                                this.waveAmplitude *= 0.3; // Wave function collapse
+                            } else {
+                                this.reflected = true;
+                                this.velocity = -this.velocity;
+                            }
+                        } else {
+                            // Classical reflection
+                            this.reflected = true;
+                            this.velocity = -this.velocity;
+                        }
+                    } else {
+                        // Classical success
+                        classicalCount++;
+                        if (!this.isQuantum) {
+                            this.tunneled = true; // Mark as passed
+                        }
+                    }
+                }
+            }
+            
+            draw() {
+                // Draw trail
+                if (this.trail.length > 1) {
+                    quantumCtx.strokeStyle = this.tunneled ? '#4CAF5040' : 
+                                           this.reflected ? '#ff6b6b40' : 
+                                           this.isQuantum ? '#4169e140' : '#66666640';
+                    quantumCtx.lineWidth = 3;
+                    quantumCtx.beginPath();
+                    this.trail.forEach((point, i) => {
+                        if (i === 0) {
+                            quantumCtx.moveTo(point.x, point.y);
+                        } else {
+                            quantumCtx.lineTo(point.x, point.y);
+                        }
+                    });
+                    quantumCtx.stroke();
+                }
+                
+            // Draw wave function with improved visualization
+            if (this.isQuantum && showWave && this.wavePacket.length > 0) {
+                    // Probability density visualization
+                    quantumCtx.strokeStyle = `rgba(65, 105, 225, ${this.waveAmplitude * 0.8})`;
+                    quantumCtx.lineWidth = 3;
+                    quantumCtx.beginPath();
+                    this.wavePacket.forEach((point, i) => {
+                        if (i === 0) {
+                            quantumCtx.moveTo(point.x, point.y);
+                        } else {
+                            quantumCtx.lineTo(point.x, point.y);
+                        }
+                    });
+                    quantumCtx.stroke();
+                    
+                    // Add interference pattern visualization
+                    quantumCtx.fillStyle = `rgba(65, 105, 225, ${this.waveAmplitude * 0.1})`;
+                    for (let i = 0; i < this.wavePacket.length - 1; i++) {
+                        const p1 = this.wavePacket[i];
+                        const p2 = this.wavePacket[i + 1];
+                        const intensity = Math.abs(Math.sin((p1.x) * 0.05 + this.wavePhase));
+                        quantumCtx.globalAlpha = intensity * this.waveAmplitude * 0.2;
+                        quantumCtx.beginPath();
+                        quantumCtx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+                        quantumCtx.fill();
+                    }
+                quantumCtx.globalAlpha = 1;
+            }
+            
+            // Ghosting inside barrier (evanescent decay preview)
+            if (this.isQuantum && this.energy < barrierHeight) {
+                const barrierX = quantumCanvas.width / 2;
+                const barrierW = barrierWidth;
+                const left = barrierX - barrierW/2;
+                const right = barrierX + barrierW/2;
+                if (this.x > left && this.x < right) {
+                    const kappa = Math.sqrt(2 * (barrierHeight - this.energy)) * 0.5;
+                    const distLeft = this.x - left;
+                    const amp = Math.exp(-kappa * distLeft / 20);
+                    quantumCtx.globalAlpha = Math.min(0.6, 0.2 + 0.8*amp);
+                    quantumCtx.fillStyle = '#4169e1';
+                    quantumCtx.beginPath();
+                    quantumCtx.arc(this.x, this.y, 5, 0, Math.PI*2);
+                    quantumCtx.fill();
+                    // Ghost preview just beyond the barrier
+                    const previewX = right + 10;
+                    const ampOut = Math.exp(-kappa * (barrierW/40));
+                    quantumCtx.globalAlpha = Math.min(0.5, ampOut);
+                    quantumCtx.beginPath();
+                    quantumCtx.arc(previewX, this.y, 4, 0, Math.PI*2);
+                    quantumCtx.fill();
+                    quantumCtx.globalAlpha = 1;
+                }
+            }
+                
+                // Draw fly with enhanced visual effects
+                let color;
+                if (this.tunneled) {
+                    color = '#4CAF50'; // Green for tunneling success
+                    // Add special tunneling effect
+                    drawGlow(quantumCtx, this.x, this.y, this.glowRadius + 5, color);
+                    
+                    // Particle-like effect for successful tunneling
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i / 5) * Math.PI * 2 + this.pulsePhase;
+                        const px = this.x + Math.cos(angle) * (this.size + 3);
+                        const py = this.y + Math.sin(angle) * (this.size + 3);
+                        quantumCtx.fillStyle = color + '80';
+                        quantumCtx.beginPath();
+                        quantumCtx.arc(px, py, 2, 0, Math.PI * 2);
+                        quantumCtx.fill();
+                    }
+                    drawGlow(quantumCtx, this.x, this.y, 15, color);
+                } else if (this.reflected) {
+                    color = '#ff6b6b'; // Red for reflected
+                } else {
+                    color = this.isQuantum ? '#4169e1' : '#666'; // Blue for quantum, gray for classical
+                }
+                
+                quantumCtx.fillStyle = color;
+                quantumCtx.beginPath();
+                quantumCtx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                quantumCtx.fill();
+                
+                // Energy level indicator
+                const energyRadius = 2 + this.energy / 20;
+                quantumCtx.strokeStyle = color;
+                quantumCtx.lineWidth = 1;
+                quantumCtx.setLineDash([2, 2]);
+                quantumCtx.beginPath();
+                quantumCtx.arc(this.x, this.y, energyRadius, 0, Math.PI * 2);
+                quantumCtx.stroke();
+                quantumCtx.setLineDash([]);
+            }
+        }
+        
+        function drawBarrier() {
+            const barrierX = quantumCanvas.width / 2;
+            const barrierW = barrierWidth;
+            const maxHeight = quantumCanvas.height * 0.7;
+            const actualHeight = (barrierHeight / 100) * maxHeight;
+            
+            // Draw barrier with gradient
+            const gradient = quantumCtx.createLinearGradient(
+                barrierX - barrierWidth/2, quantumCanvas.height - actualHeight,
+                barrierX + barrierWidth/2, quantumCanvas.height
+            );
+            gradient.addColorStop(0, 'rgba(100, 100, 100, 0.9)');
+            gradient.addColorStop(1, 'rgba(50, 50, 50, 0.9)');
+            
+            quantumCtx.fillStyle = gradient;
+            quantumCtx.fillRect(
+                barrierX - barrierW/2, 
+                quantumCanvas.height - actualHeight, 
+                barrierW, 
+                actualHeight
+            );
+            
+            // Draw energy level lines
+            quantumCtx.strokeStyle = 'rgba(150, 150, 150, 0.3)';
+            quantumCtx.lineWidth = 1;
+            quantumCtx.setLineDash([5, 5]);
+            
+            for (let e = 20; e <= 80; e += 20) {
+                const y = quantumCanvas.height - (e / 100) * maxHeight;
+                quantumCtx.beginPath();
+                quantumCtx.moveTo(0, y);
+                quantumCtx.lineTo(quantumCanvas.width, y);
+                quantumCtx.stroke();
+                
+                quantumCtx.fillStyle = '#999';
+                quantumCtx.font = '10px Arial';
+                quantumCtx.fillText(`E=${e}`, 10, y - 5);
+            }
+            quantumCtx.setLineDash([]);
+            
+            // Barrier height label
+            quantumCtx.fillStyle = 'white';
+            quantumCtx.font = 'bold 12px Arial';
+            quantumCtx.textAlign = 'center';
+            quantumCtx.fillText(`V=${barrierHeight}`, barrierX, quantumCanvas.height - actualHeight - 10);
+            quantumCtx.fillText(`W=${Math.round(barrierW)}px`, barrierX, quantumCanvas.height - actualHeight - 26);
+        }
+        
+        function animateQuantum() {
+            quantumCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            quantumCtx.fillRect(0, 0, quantumCanvas.width, quantumCanvas.height);
+            
+            drawBarrier();
+            
+            // Update and draw flies
+            quantumFlies = quantumFlies.filter(fly => {
+                fly.update();
+                fly.draw();
+                return fly.x < quantumCanvas.width + 50 && fly.x > -50;
+            });
+            
+            if (showComparison) {
+                classicalFlies = classicalFlies.filter(fly => {
+                    fly.update();
+                    fly.draw();
+                    return fly.x < quantumCanvas.width + 50 && fly.x > -50;
+                });
+            }
+            
+            // Update KPIs
+            updateQuantumKPIs();
+            
+            requestAnimationFrame(animateQuantum);
+        }
+        
+        function updateQuantumKPIs() {
+            if (totalAttempts > 0) {
+                // Tunnel rate
+                const tunnelRate = (tunnelCount / totalAttempts) * 100;
+                document.getElementById('tunnelRateKPI').textContent = tunnelRate.toFixed(1) + '%';
+                document.getElementById('tunnelBar').style.width = tunnelRate + '%';
+                
+                // Classical pass rate
+                const classicalRate = (classicalCount / totalAttempts) * 100;
+                document.getElementById('classicalPass').textContent = classicalRate.toFixed(1) + '%';
+                document.getElementById('classicalBar').style.width = classicalRate + '%';
+                
+                // Quantum advantage
+                const quantumTotal = tunnelCount + classicalCount;
+                const classicalOnly = classicalCount;
+                const advantage = classicalOnly > 0 ? quantumTotal / classicalOnly : 0;
+                document.getElementById('quantumAdvantage').textContent = advantage.toFixed(1) + 'x';
+                document.getElementById('advantageDelta').textContent = 
+                    advantage > 1 ? 'quantum wins' : 'waiting';
+                document.getElementById('advantageDelta').className = 
+                    advantage > 1 ? 'kpi-delta kpi-positive' : 'kpi-delta';
+                
+                // Barrier ratio (height/avg energy)
+                const avgEnergy = 45;
+                const ratio = barrierHeight / avgEnergy;
+                document.getElementById('barrierRatio').textContent = ratio.toFixed(2);
+                
+                // Total attempts
+                document.getElementById('totalAttempts').textContent = totalAttempts;
+                
+                // De Broglie wavelength
+                const wavelength = 10 / Math.sqrt(barrierHeight);
+                document.getElementById('wavelength').textContent = wavelength.toFixed(1) + 'nm';
+                
+                // Transmission coefficient with width dependence
+                const a = barrierWidth / 80; // scaled width
+                const delta = Math.max(0.0001, barrierHeight - 30);
+                const transmission = Math.exp(-2 * Math.sqrt(delta) * (0.5 * a));
+                document.getElementById('transmission').textContent = transmission.toFixed(4);
+            }
+            
+            // Wave coherence
+            const coherence = Math.max(0, 100 - totalAttempts * 0.2);
+            document.getElementById('coherence').textContent = coherence.toFixed(0) + '%';
+            document.getElementById('coherenceDelta').textContent = coherence > 50 ? '↓' : '↓↓';
+        }
+        
+        function startQuantum() {
+            // Release waves of quantum flies
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    quantumFlies.push(new QuantumFly(true));
+                }, i * 300);
+            }
+        }
+        
+        function resetQuantum() {
+            quantumFlies = [];
+            classicalFlies = [];
+            tunnelCount = 0;
+            classicalCount = 0;
+            totalAttempts = 0;
+        }
+        
+        function toggleWavefunction() {
+            showWave = !showWave;
+        }
+        
+        function toggleClassicalComparison() {
+            showComparison = !showComparison;
+            if (showComparison) {
+                // Add classical flies for comparison
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        classicalFlies.push(new QuantumFly(false));
+                    }, i * 400);
+                }
+            } else {
+                classicalFlies = [];
+            }
+        }
+        
+        // Barrier height slider
+        document.getElementById('barrierSlider').addEventListener('input', (e) => {
+            barrierHeight = parseInt(e.target.value);
+            document.getElementById('barrierValue').textContent = barrierHeight;
+        });
+        document.getElementById('barrierWidthSlider').addEventListener('input', (e) => {
+            barrierWidth = parseInt(e.target.value);
+            document.getElementById('barrierWidthValue').textContent = `${barrierWidth}px`;
+        });
+        
+        
+        
+        /* Ant Telegraph removed */
+        
+        
+        
+        function drawAntColony() {
+            // Clear to solid white to keep background crisp
+            huffmanCtx.fillStyle = '#ffffff';
+            huffmanCtx.fillRect(0, 0, huffmanCanvas.width, huffmanCanvas.height);
+            
+            // Draw nest
+            drawNest();
+            
+            // Draw food sources
+            colony.foodSources.forEach(food => drawFoodSource(food));
+            
+            // Update and draw ants
+            colony.ants = colony.ants.filter(ant => {
+                const alive = ant.update();
+                ant.draw();
+                return alive;
+            });
+            
+            // Draw and update messages
+            colony.messages = colony.messages.filter(message => {
+                message.timer--;
+                drawMessage(message);
+                return message.timer > 0;
+            });
+            
+            // Encoding legend drawn at the end of the frame for correct layering
+        }
+        
+        function drawNest() {
+            const nest = colony.nest;
+            
+            huffmanCtx.fillStyle = '#8B4513';
+            huffmanCtx.beginPath();
+            huffmanCtx.arc(nest.x, nest.y, nest.size, 0, Math.PI * 2);
+            huffmanCtx.fill();
+            
+            huffmanCtx.fillStyle = '#654321';
+            huffmanCtx.beginPath();
+            huffmanCtx.arc(nest.x, nest.y, nest.size * 0.3, 0, Math.PI * 2);
+            huffmanCtx.fill();
+            
+            huffmanCtx.fillStyle = '#333';
+            huffmanCtx.font = 'bold 12px Arial';
+            huffmanCtx.textAlign = 'center';
+            huffmanCtx.fillText('ANT NEST', nest.x, nest.y + nest.size + 15);
+        }
+        
+        function drawFoodSource(food) {
+            const alpha = food.discovered ? 0.8 : 0.4;
+            huffmanCtx.fillStyle = food.type.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+            huffmanCtx.beginPath();
+            huffmanCtx.arc(food.x, food.y, food.size, 0, Math.PI * 2);
+            huffmanCtx.fill();
+            
+            if (food.discovered) {
+                const pulse = Math.sin(Date.now() * 0.01) * 2;
+                huffmanCtx.strokeStyle = food.type.color;
+                huffmanCtx.lineWidth = 2;
+                huffmanCtx.beginPath();
+                huffmanCtx.arc(food.x, food.y, food.size + pulse, 0, Math.PI * 2);
+                huffmanCtx.stroke();
+                
+                huffmanCtx.fillStyle = '#333';
+                huffmanCtx.font = '10px Arial';
+                huffmanCtx.textAlign = 'center';
+                huffmanCtx.fillText(food.type.name, food.x, food.y + food.size + 12);
+            }
+        }
+        
+        function drawMessage(message) {
+            huffmanCtx.fillStyle = '#333';
+            huffmanCtx.font = 'bold 10px monospace';
+            huffmanCtx.textAlign = 'center';
+            huffmanCtx.fillText(`${message.type}: ${message.code}`, message.x, message.y);
+            
+            message.bits.forEach((bit, i) => {
+                bit.life--;
+                bit.y -= 0.5;
+                
+                huffmanCtx.fillStyle = bit.value === '1' ? '#4169E1' : '#CCC';
+                huffmanCtx.beginPath();
+                huffmanCtx.arc(bit.x, bit.y, 3, 0, Math.PI * 2);
+                huffmanCtx.fill();
+                
+                huffmanCtx.fillStyle = '#333';
+                huffmanCtx.font = '8px monospace';
+                huffmanCtx.textAlign = 'center';
+                huffmanCtx.fillText(bit.value, bit.x, bit.y - 8);
+            });
+            
+            message.bits = message.bits.filter(bit => bit.life > 0);
+        }
+        
+        function drawEncodingInfo() {
+            const pad = 10;
+            const boxX = 10;
+            const header = 'Communication Codes';
+            // Measure widths
+            huffmanCtx.font = 'bold 12px Arial';
+            const headerW = huffmanCtx.measureText(header).width;
+            huffmanCtx.font = '10px Arial';
+            const lines = [];
+            foodDistribution.forEach(item => {
+                const enc = colony.encoding[item.location];
+                if (!enc) return;
+                const text = `${item.location}: ${enc.code}`;
+                const w = huffmanCtx.measureText(text).width;
+                lines.push({item, text, width: w});
+            });
+            const textStartX = 30;
+            const minW = 200;
+            const maxW = huffmanCanvas.width - 2*boxX;
+            const contentW = Math.min(maxW, Math.max(minW, Math.max(headerW + 2*pad, (textStartX + (lines.length? Math.max(...lines.map(l=>l.width)) : 0) + pad))));
+            const lineH = 14;
+            const headerH = 22;
+            const contentH = headerH + (lines.length * lineH) + pad;
+            // Draw panel
+            huffmanCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            huffmanCtx.fillRect(boxX, boxX, contentW, contentH);
+            huffmanCtx.strokeStyle = '#333';
+            huffmanCtx.lineWidth = 1;
+            huffmanCtx.strokeRect(boxX, boxX, contentW, contentH);
+            // Header
+            huffmanCtx.fillStyle = '#333';
+            huffmanCtx.font = 'bold 12px Arial';
+            huffmanCtx.textAlign = 'left';
+            huffmanCtx.fillText(header, boxX + pad, boxX + 16);
+            // Lines
+            huffmanCtx.font = '10px Arial';
+            let y = boxX + headerH;
+            lines.forEach(({item, text}) => {
+                // Color swatch
+                huffmanCtx.fillStyle = item.color;
+                huffmanCtx.fillRect(boxX + pad, y - 9, 10, 10);
+                // Text
+                huffmanCtx.fillStyle = '#333';
+                huffmanCtx.fillText(text, boxX + textStartX, y);
+                y += lineH;
+            });
+        }
+        
+        function drawFoodDistribution() {
+            // Fallback - use new colony visualization
+            drawAntColony();
+            
+            // Draw animated bar chart
+            const barWidth = 70;
+            const maxHeight = 250;
+            const startX = 50;
+            const baseY = huffmanCanvas.height - 100;
+            
+            foodDistribution.forEach((item, i) => {
+                const x = startX + i * (barWidth + 15);
+                const height = item.probability * maxHeight;
+                const y = baseY - height;
+                
+                // Draw bar with gradient
+                const gradient = huffmanCtx.createLinearGradient(x, y, x, baseY);
+                gradient.addColorStop(0, item.color + 'FF');
+                gradient.addColorStop(1, item.color + '80');
+                
+                huffmanCtx.fillStyle = gradient;
+                huffmanCtx.fillRect(x, y, barWidth, height);
+                
+                // Draw label
+                huffmanCtx.fillStyle = '#333';
+                huffmanCtx.font = '12px Arial';
+                huffmanCtx.textAlign = 'center';
+                huffmanCtx.fillText(item.location, x + barWidth/2, baseY + 20);
+                huffmanCtx.fillText((item.probability * 100).toFixed(1) + '%', x + barWidth/2, y - 10);
+                
+                // Draw code if available
+                if (huffmanCodes[item.location]) {
+                    // Draw code in binary visualization
+                    const code = huffmanCodes[item.location];
+                    huffmanCtx.fillStyle = '#4169e1';
+                    huffmanCtx.font = 'bold 16px monospace';
+                    huffmanCtx.fillText(code, x + barWidth/2, y - 30);
+                    
+                    // Draw bits as dots
+                    code.split('').forEach((bit, bitIndex) => {
+                        const bitX = x + barWidth/2 - (code.length * 5) + bitIndex * 10 + 5;
+                        const bitY = y - 50;
+                        
+                        huffmanCtx.fillStyle = bit === '1' ? '#4169e1' : '#ccc';
+                        huffmanCtx.beginPath();
+                        huffmanCtx.arc(bitX, bitY, 3, 0, Math.PI * 2);
+                        huffmanCtx.fill();
+                    });
+                }
+            });
+            
+            // Animate messages if active
+            messageAnimation.forEach((msg, index) => {
+                msg.phase += 0.05;
+                const alpha = Math.sin(msg.phase) * 0.5 + 0.5;
+                
+                huffmanCtx.fillStyle = `rgba(65, 105, 225, ${alpha})`;
+                huffmanCtx.font = 'bold 14px monospace';
+                huffmanCtx.fillText(msg.code, msg.x, msg.y);
+                
+                msg.y -= 2;
+                if (msg.y < 50) {
+                    messageAnimation.splice(index, 1);
+                }
+            });
+        }
+        
+        function drawHuffmanTree() {
+            if (!huffmanTree) return;
+
+            // Position nodes for tree visualization
+            function positionNodes(node, x, y, spread) {
+                node.x = x;
+                node.y = y;
+                
+                if (node.left) {
+                    positionNodes(node.left, x - spread, y + 60, spread * 0.6);
+                }
+                if (node.right) {
+                    positionNodes(node.right, x + spread, y + 60, spread * 0.6);
+                }
+            }
+            
+            positionNodes(huffmanTree, huffmanCanvas.width / 2, 80, 120);
+            
+            // Draw tree
+            function drawNode(node) {
+                // Draw edges first
+                if (node.left) {
+                    huffmanCtx.strokeStyle = '#999';
+                    huffmanCtx.lineWidth = 2;
+                    huffmanCtx.beginPath();
+                    huffmanCtx.moveTo(node.x, node.y);
+                    huffmanCtx.lineTo(node.left.x, node.left.y);
+                    huffmanCtx.stroke();
+                    
+                    // Label edge
+                    huffmanCtx.fillStyle = '#666';
+                    huffmanCtx.font = 'bold 12px monospace';
+                    huffmanCtx.fillText('0', (node.x + node.left.x) / 2 - 10, (node.y + node.left.y) / 2);
+                    
+                    drawNode(node.left);
+                }
+                
+                if (node.right) {
+                    huffmanCtx.strokeStyle = '#999';
+                    huffmanCtx.lineWidth = 2;
+                    huffmanCtx.beginPath();
+                    huffmanCtx.moveTo(node.x, node.y);
+                    huffmanCtx.lineTo(node.right.x, node.right.y);
+                    huffmanCtx.stroke();
+                    
+                    // Label edge
+                    huffmanCtx.fillStyle = '#666';
+                    huffmanCtx.font = 'bold 12px monospace';
+                    huffmanCtx.fillText('1', (node.x + node.right.x) / 2 + 10, (node.y + node.right.y) / 2);
+                    
+                    drawNode(node.right);
+                }
+                
+                // Draw node
+                if (node.location) {
+                    // Leaf node
+                    drawGlow(huffmanCtx, node.x, node.y, 15, '#4CAF50');
+                    huffmanCtx.fillStyle = '#4CAF50';
+                    huffmanCtx.beginPath();
+                    huffmanCtx.arc(node.x, node.y, 8, 0, Math.PI * 2);
+                    huffmanCtx.fill();
+                    
+                    huffmanCtx.fillStyle = '#333';
+                    huffmanCtx.font = '10px Arial';
+                    huffmanCtx.textAlign = 'center';
+                    huffmanCtx.fillText(node.location, node.x, node.y + 25);
+                } else {
+                    // Internal node
+                    huffmanCtx.fillStyle = '#666';
+                    huffmanCtx.beginPath();
+                    huffmanCtx.arc(node.x, node.y, 5, 0, Math.PI * 2);
+                    huffmanCtx.fill();
+                }
+            }
+            
+            drawNode(huffmanTree);
+        }
+
+        function renderHuffmanTreeStatic() {
+            if (!huffmanTree) return;
+            // Resize offscreen to match main canvas
+            if (huffmanTreeCanvas.width !== huffmanCanvas.width || huffmanTreeCanvas.height !== huffmanCanvas.height) {
+                huffmanTreeCanvas.width = huffmanCanvas.width;
+                huffmanTreeCanvas.height = huffmanCanvas.height;
+            }
+            // Clear
+            huffmanTreeCtx.clearRect(0, 0, huffmanTreeCanvas.width, huffmanTreeCanvas.height);
+            // Position nodes (same as drawHuffmanTree)
+            (function positionNodes(node, x, y, spread) {
+                node.x = x;
+                node.y = y;
+                if (node.left) positionNodes(node.left, x - spread, y + 60, spread * 0.6);
+                if (node.right) positionNodes(node.right, x + spread, y + 60, spread * 0.6);
+            })(huffmanTree, huffmanCanvas.width / 2, 80, 120);
+            // Draw recursively into offscreen
+            (function drawNode(node){
+                if (node.left) {
+                    huffmanTreeCtx.strokeStyle = '#999';
+                    huffmanTreeCtx.lineWidth = 2;
+                    huffmanTreeCtx.beginPath();
+                    huffmanTreeCtx.moveTo(node.x, node.y);
+                    huffmanTreeCtx.lineTo(node.left.x, node.left.y);
+                    huffmanTreeCtx.stroke();
+                    huffmanTreeCtx.fillStyle = '#666';
+                    huffmanTreeCtx.font = 'bold 12px monospace';
+                    huffmanTreeCtx.fillText('0', (node.x + node.left.x) / 2 - 10, (node.y + node.left.y) / 2);
+                    drawNode(node.left);
+                }
+                if (node.right) {
+                    huffmanTreeCtx.strokeStyle = '#999';
+                    huffmanTreeCtx.lineWidth = 2;
+                    huffmanTreeCtx.beginPath();
+                    huffmanTreeCtx.moveTo(node.x, node.y);
+                    huffmanTreeCtx.lineTo(node.right.x, node.right.y);
+                    huffmanTreeCtx.stroke();
+                    huffmanTreeCtx.fillStyle = '#666';
+                    huffmanTreeCtx.font = 'bold 12px monospace';
+                    huffmanTreeCtx.fillText('1', (node.x + node.right.x) / 2 + 10, (node.y + node.right.y) / 2);
+                    drawNode(node.right);
+                }
+                if (node.location) {
+                    // Leaf
+                    drawGlow(huffmanTreeCtx, node.x, node.y, 15, '#4CAF50');
+                    huffmanTreeCtx.fillStyle = '#4CAF50';
+                    huffmanTreeCtx.beginPath();
+                    huffmanTreeCtx.arc(node.x, node.y, 8, 0, Math.PI * 2);
+                    huffmanTreeCtx.fill();
+                    huffmanTreeCtx.fillStyle = '#333';
+                    huffmanTreeCtx.font = '10px Arial';
+                    huffmanTreeCtx.textAlign = 'center';
+                    huffmanTreeCtx.fillText(node.location, node.x, node.y + 25);
+                } else {
+                    huffmanTreeCtx.fillStyle = '#666';
+                    huffmanTreeCtx.beginPath();
+                    huffmanTreeCtx.arc(node.x, node.y, 5, 0, Math.PI * 2);
+                    huffmanTreeCtx.fill();
+                }
+            })(huffmanTree);
+            huffmanTreeDirty = false;
+        }
+
+        function buildWorkshopEdges() {
+            edgesForWorkshop = [];
+            if (!huffmanTree) return;
+            ensureTreeLayout();
+            (function collect(node){
+                if (!node) return;
+                if (node.left) {
+                    edgesForWorkshop.push({from: node, to: node.left, bit: '0', prob: node.left.probability});
+                    collect(node.left);
+                }
+                if (node.right) {
+                    edgesForWorkshop.push({from: node, to: node.right, bit: '1', prob: node.right.probability});
+                    collect(node.right);
+                }
+            })(huffmanTree);
+            // Sort by y for nicer draw order
+            edgesForWorkshop.sort((a,b) => (a.from.y + a.to.y) - (b.from.y + b.to.y));
+        }
+
+        function drawWorkshopTree() {
+            const ctx = huffmanCtx;
+            ctx.save();
+            ctx.lineCap = 'round';
+            edgesForWorkshop.forEach(e => {
+                const w = 6 + Math.max(0.5, (e.prob || 0) * 30);
+                ctx.strokeStyle = '#e5e5e5';
+                ctx.lineWidth = w;
+                ctx.beginPath();
+                ctx.moveTo(e.from.x, e.from.y);
+                ctx.lineTo(e.to.x, e.to.y);
+                ctx.stroke();
+                // edge label
+                ctx.fillStyle = '#666';
+                ctx.font = 'bold 12px monospace';
+                const lx = (e.from.x + e.to.x)/2 + (e.bit === '1' ? 8 : -12);
+                const ly = (e.from.y + e.to.y)/2 - 6;
+                ctx.fillText(e.bit, lx, ly);
+            });
+            // nodes
+            (function drawNodes(node){
+                if (!node) return;
+                ctx.fillStyle = node.location ? '#4CAF50' : '#bdbdbd';
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.location ? 7 : 5, 0, Math.PI*2);
+                ctx.fill();
+                if (node.location) {
+                    ctx.fillStyle = '#333';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(node.location, node.x, node.y + 22);
+                }
+                drawNodes(node.left); drawNodes(node.right);
+            })(huffmanTree);
+            ctx.restore();
+        }
+
+        function initBuilderAnts() {
+            builderAnts = [];
+            if (!edgesForWorkshop.length) return;
+            for (let i=0;i<4;i++) {
+                const edge = edgesForWorkshop[(i*3) % edgesForWorkshop.length];
+                builderAnts.push({edge, t: Math.random(), dir: 1, color: '#8B4513'});
+            }
+        }
+
+        function updateBuilderAnts(dtSec) {
+            builderAnts.forEach(b => {
+                const speed = 0.6; // fraction per second
+                b.t += b.dir * speed * dtSec;
+                if (b.t > 1) { b.t = 1; b.dir = -1; }
+                if (b.t < 0) {
+                    // switch to another edge
+                    const idx = Math.floor(Math.random()*edgesForWorkshop.length);
+                    b.edge = edgesForWorkshop[idx]; b.t = 0; b.dir = 1;
+                }
+            });
+        }
+
+        function drawBuilderAnts() {
+            builderAnts.forEach(b => {
+                const ex = lerp(b.edge.from.x, b.edge.to.x, b.t);
+                const ey = lerp(b.edge.from.y, b.edge.to.y, b.t);
+                drawGlow(huffmanCtx, ex, ey, 8, b.color);
+                huffmanCtx.fillStyle = b.color;
+                huffmanCtx.beginPath();
+                huffmanCtx.arc(ex, ey, 4, 0, Math.PI*2);
+                huffmanCtx.fill();
+            });
+        }
+
+        function pathForCode(code) {
+            const segs = [];
+            let node = huffmanTree;
+            for (const bit of code) {
+                const next = bit === '0' ? node.left : node.right;
+                if (!next) break;
+                segs.push({x1: node.x, y1: node.y, x2: next.x, y2: next.y});
+                node = next;
+            }
+            return segs;
+        }
+
+        function spawnMessengerAntWorkshop() {
+            const item = weightedPick(foodDistribution);
+            const code = huffmanCodes[item.location];
+            if (!code) return;
+            const segs = pathForCode(code);
+            if (!segs.length) return;
+            messengerAnts.push({segs, idx:0, pos:0, color:item.color, code});
+        }
+
+        function updateMessengerAntsWorkshop(dtSec) {
+            const now = performance.now();
+            if (telegraphActive && now - lastCourierTime > spawnIntervalMs) {
+                spawnMessengerAntWorkshop();
+                lastCourierTime = now;
+            }
+            const pxPerSec = 140;
+            messengerAnts = messengerAnts.filter(a => {
+                const seg = a.segs[a.idx];
+                if (!seg) return false;
+                const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1;
+                const len = Math.hypot(dx, dy) || 1;
+                const step = pxPerSec * dtSec;
+                const remain = len * (1 - a.pos);
+                if (step >= remain) {
+                    a.idx += 1; a.pos = 0;
+                    if (a.idx >= a.segs.length) { messagesSent++; bitsSent += a.code.length; colony.totalBits += a.code.length; return false; }
+                } else {
+                    a.pos += step / len;
+                }
+                return true;
+            });
+        }
+
+        function drawMessengerAntsWorkshop() {
+            messengerAnts.forEach(a => {
+                const seg = a.segs[a.idx] || a.segs[a.segs.length-1];
+                const x = lerp(seg.x1, seg.x2, a.pos);
+                const y = lerp(seg.y1, seg.y2, a.pos);
+                drawGlow(huffmanCtx, x, y, 10, a.color);
+                huffmanCtx.fillStyle = a.color;
+                huffmanCtx.beginPath();
+                huffmanCtx.arc(x, y, 4, 0, Math.PI*2);
+                huffmanCtx.fill();
+            });
+        }
+
+        function toggleWorkshopView() {
+            workshopView = true; boxView = false;
+            couriers = []; boxCouriers = []; messengerAnts = []; builderAnts = [];
+            messagesSent = 0; bitsSent = 0; lastCourierTime = performance.now();
+            buildWorkshopEdges();
+            initBuilderAnts();
+        }
+        function ensureTreeLayout() {
+            if (!huffmanTree) return;
+            (function positionNodes(node, x, y, spread) {
+                node.x = x; node.y = y;
+                if (node.left) positionNodes(node.left, x - spread, y + 60, spread * 0.6);
+                if (node.right) positionNodes(node.right, x + spread, y + 60, spread * 0.6);
+            })(huffmanTree, huffmanCanvas.width / 2, 60, 140);
+        }
+
+        function drawBoxLanes() {
+            ensureTreeLayout();
+            const ctx = huffmanCtx;
+            ctx.save();
+            ctx.lineCap = 'round';
+            function drawNodeLanes(node){
+                if (node.left) {
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 18;
+                    ctx.beginPath();
+                    ctx.moveTo(node.x, node.y);
+                    ctx.lineTo(node.left.x, node.left.y);
+                    ctx.stroke();
+                    // 0 label
+                    ctx.fillStyle = '#666';
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText('0', (node.x + node.left.x)/2 - 10, (node.y + node.left.y)/2 - 6);
+                    drawNodeLanes(node.left);
+                }
+                if (node.right) {
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 18;
+                    ctx.beginPath();
+                    ctx.moveTo(node.x, node.y);
+                    ctx.lineTo(node.right.x, node.right.y);
+                    ctx.stroke();
+                    // 1 label
+                    ctx.fillStyle = '#666';
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText('1', (node.x + node.right.x)/2 + 6, (node.y + node.right.y)/2 - 6);
+                    drawNodeLanes(node.right);
+                }
+                // draw node hub as small rounded box
+                ctx.fillStyle = '#bbb';
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 5, 0, Math.PI*2);
+                ctx.fill();
+            }
+            drawNodeLanes(huffmanTree);
+            ctx.restore();
+        }
+
+        function spawnBoxCourier() {
+            if (!huffmanTree || Object.keys(huffmanCodes).length === 0 || foodDistribution.length === 0) return;
+            const item = weightedPick(foodDistribution);
+            const code = huffmanCodes[item.location];
+            if (!code) return;
+            ensureTreeLayout();
+            boxCouriers.push({
+                node: huffmanTree,
+                x: huffmanTree.x,
+                y: huffmanTree.y,
+                color: item.color,
+                code,
+                bitIdx: 0
+            });
+        }
+
+        function updateBoxCouriers(dtSec) {
+            const now = performance.now();
+            if (telegraphActive && now - lastCourierTime > spawnIntervalMs) {
+                spawnBoxCourier();
+                lastCourierTime = now;
+            }
+            const speedY = 140; // px/s
+            boxCouriers = boxCouriers.filter(c => {
+                if (c.bitIdx >= c.code.length) {
+                    // delivered
+                    messagesSent += 1;
+                    bitsSent += c.code.length;
+                    colony.totalBits += c.code.length;
+                    return false;
+                }
+                const bit = c.code[c.bitIdx];
+                const next = bit === '0' ? c.node.left : c.node.right;
+                if (!next) return false;
+                const dx = next.x - c.x;
+                const dy = next.y - c.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                const step = speedY * dtSec;
+                if (step >= dist) {
+                    // snap to next node
+                    c.x = next.x; c.y = next.y; c.node = next; c.bitIdx += 1;
+                } else {
+                    c.x += dx * (step/dist); c.y += dy * (step/dist);
+                }
+                return true;
+            });
+        }
+
+        function drawBoxCouriers() {
+            boxCouriers.forEach(c => {
+                // draw 2.5D box
+                const w = 14, h = 10;
+                const shade = c.color + 'AA';
+                huffmanCtx.fillStyle = shade;
+                huffmanCtx.fillRect(c.x - w/2, c.y - h/2, w, h);
+                // top highlight
+                huffmanCtx.fillStyle = 'rgba(255,255,255,0.35)';
+                huffmanCtx.fillRect(c.x - w/2, c.y - h/2, w, 3);
+                // outline
+                huffmanCtx.strokeStyle = '#333';
+                huffmanCtx.lineWidth = 1;
+                huffmanCtx.strokeRect(c.x - w/2, c.y - h/2, w, h);
+            });
+        }
+
+        function toggleBoxView() {
+            boxView = !boxView;
+            // reset state for clarity
+            couriers = [];
+            boxCouriers = [];
+            messagesSent = 0; bitsSent = 0; lastCourierTime = performance.now();
+            // cache layout
+            ensureTreeLayout();
+            huffmanTreeDirty = true;
+        }
+        
+        // Ant Telegraph: couriers route along the Huffman tree edges
+        let telegraphActive = false;
+        let couriers = [];
+        let messagesSent = 0;
+        let bitsSent = 0;
+        let lastCourierTime = 0;
+        const spawnIntervalMs = 450;
+        let lastHuffmanFrame = performance.now();
+        
+        function weightedPick(items) {
+            const r = Math.random();
+            let c = 0;
+            for (const it of items) { c += it.probability; if (r <= c) return it; }
+            return items[items.length-1];
+        }
+        
+        function buildSegmentsForCode(code) {
+            const segs = [];
+            let node = huffmanTree;
+            if (!node || !node.left && !node.right) return segs;
+            for (const bit of code) {
+                const next = bit === '0' ? node.left : node.right;
+                if (!next) break;
+                segs.push({x1: node.x, y1: node.y, x2: next.x, y2: next.y, bit});
+                node = next;
+            }
+            return segs;
+        }
+        
+        function spawnCourier() {
+            if (!huffmanTree || Object.keys(huffmanCodes).length === 0 || foodDistribution.length === 0) return;
+            const item = weightedPick(foodDistribution);
+            const code = huffmanCodes[item.location];
+            if (!code) return;
+            const segs = buildSegmentsForCode(code);
+            if (segs.length === 0) return;
+            couriers.push({
+                x: segs[0].x1, y: segs[0].y1,
+                segs, idx: 0, t: 0,
+                speed: 0.02 + Math.random()*0.02,
+                color: item.color,
+                code, currentBitIdx: 0
+            });
+        }
+        
+        function updateCouriers(dtSec) {
+            const now = performance.now();
+            if (telegraphActive && now - lastCourierTime > spawnIntervalMs) {
+                spawnCourier();
+                lastCourierTime = now;
+            }
+            couriers = couriers.filter(c => {
+                // time-based movement at ~120 px/s
+                const speedPx = 120;
+                let remaining = speedPx * dtSec;
+                while (remaining > 0) {
+                    const seg = c.segs[c.idx];
+                    if (!seg) return false;
+                    const dx = seg.x2 - seg.x1;
+                    const dy = seg.y2 - seg.y1;
+                    const segLen = Math.hypot(dx, dy) || 1;
+                    const curX = c.x ?? seg.x1;
+                    const curY = c.y ?? seg.y1;
+                    const along = ((curX - seg.x1) * dx + (curY - seg.y1) * dy) / segLen;
+                    const remainOnSeg = Math.max(0, segLen - along);
+                    const step = Math.min(remainOnSeg, remaining);
+                    const tStep = step / segLen;
+                    const tCurrent = along / segLen;
+                    const tNew = tCurrent + tStep;
+                    c.x = lerp(seg.x1, seg.x2, tNew);
+                    c.y = lerp(seg.y1, seg.y2, tNew);
+                    remaining -= step;
+                    if (tNew >= 1 - 1e-6) {
+                        c.idx += 1;
+                        c.currentBitIdx += 1;
+                        c.x = seg.x2; c.y = seg.y2;
+                        if (c.idx >= c.segs.length) {
+                            messagesSent += 1;
+                            bitsSent += c.code.length;
+                            colony.totalBits += c.code.length;
+                            return false;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                return true;
+            });
+        }
+        
+        function drawCouriers() {
+            couriers.forEach(c => {
+                // draw ant-like courier
+                const size = 4;
+                drawGlow(huffmanCtx, c.x, c.y, 8, c.color);
+                huffmanCtx.fillStyle = c.color;
+                huffmanCtx.beginPath();
+                huffmanCtx.arc(c.x, c.y, size, 0, Math.PI*2);
+                huffmanCtx.fill();
+                // current bit bubble
+                const bit = c.code[c.currentBitIdx] || '';
+                if (bit){
+                    huffmanCtx.fillStyle = '#fff';
+                    huffmanCtx.strokeStyle = '#333';
+                    huffmanCtx.lineWidth = 1;
+                    huffmanCtx.beginPath();
+                    huffmanCtx.arc(c.x, c.y-12, 6, 0, Math.PI*2);
+                    huffmanCtx.fill();
+                    huffmanCtx.stroke();
+                    huffmanCtx.fillStyle = '#333';
+                    huffmanCtx.font = '8px monospace';
+                    huffmanCtx.textAlign = 'center';
+                    huffmanCtx.fillText(bit, c.x, c.y-10);
+                }
+            });
+        }
+        
+        function animateEncoding() {
+            telegraphActive = true;
+            lastCourierTime = performance.now();
+        }
+        
+        function updateHuffmanKPIs() {
+            // Entropy
+            document.getElementById('entropyKPI').textContent = entropy.toFixed(3);
+            document.getElementById('entropyDelta').textContent = 'bits (theoretical limit)';
+            
+            // Average code length
+            const avgLength = foodDistribution.reduce((sum, item) => 
+                sum + item.probability * (huffmanCodes[item.location]?.length || 0), 0);
+            document.getElementById('avgCodeLength').textContent = avgLength.toFixed(3);
+            document.getElementById('codeDelta').textContent = 'bits per message';
+            
+            // Shannon limit comparison
+            const shannonDiff = avgLength - entropy;
+            document.getElementById('shannonDiff').textContent = '+' + shannonDiff.toFixed(3);
+            document.getElementById('shannonDelta').textContent = 
+                shannonDiff < 1 ? 'near optimal' : 'bits overhead';
+            document.getElementById('shannonDelta').className = 
+                shannonDiff < 1 ? 'kpi-delta kpi-positive' : 'kpi-delta';
+            
+            // Compression ratio
+            const naiveBits = Math.ceil(Math.log2(foodDistribution.length));
+            const compressionRatio = avgLength > 0 ? ((naiveBits - avgLength) / naiveBits * 100) : 0;
+            document.getElementById('compressionRatio').textContent = 
+                compressionRatio.toFixed(1) + '%';
+            document.getElementById('compressionBar').style.width = Math.max(0, compressionRatio) + '%';
+            
+            // Additional info
+            document.getElementById('messageTypes').textContent = foodDistribution.length;
+            document.getElementById('naiveBits').textContent = naiveBits;
+            const efficiency = avgLength > 0 ? naiveBits / avgLength : 1;
+            document.getElementById('efficiencyGain').textContent = efficiency.toFixed(2) + 'x';
+            document.getElementById('totalMessages').textContent = telegraphActive ? messagesSent : totalMessages;
+        }
+        
+        function compareCompression() {
+            if (Object.keys(huffmanCodes).length === 0) {
+                buildHuffmanTree();
+            }
+            
+            // Visual comparison overlay
+            const naiveBits = Math.ceil(Math.log2(foodDistribution.length));
+            const avgHuffmanBits = foodDistribution.reduce((sum, item) => 
+                sum + item.probability * huffmanCodes[item.location].length, 0);
+            
+            const compressionRatio = ((naiveBits - avgHuffmanBits) / naiveBits * 100);
+            
+            // Draw comparison
+            huffmanCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            huffmanCtx.fillRect(50, 50, 300, 100);
+            
+            huffmanCtx.strokeStyle = '#333';
+            huffmanCtx.lineWidth = 2;
+            huffmanCtx.strokeRect(50, 50, 300, 100);
+            
+            huffmanCtx.fillStyle = '#333';
+            huffmanCtx.font = 'bold 14px Arial';
+            huffmanCtx.fillText(`Naive encoding: ${naiveBits} bits per message`, 70, 80);
+            huffmanCtx.fillText(`Huffman encoding: ${avgHuffmanBits.toFixed(2)} bits per message`, 70, 105);
+            huffmanCtx.fillStyle = '#4CAF50';
+            huffmanCtx.fillText(`Space saved: ${compressionRatio.toFixed(1)}%`, 70, 130);
+        }
+        
+        // ============== ENHANCED GRAPH MESSAGE PASSING ==============
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        let graphNodes = [];
+        let graphEdges = [];
+        let messages = [];
+        let messageIterations = 0;
+        let isMessagePassing = false;
+        let layoutType = 'force';
+        
+        class GraphNode {
+            constructor(x, y, id) {
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.id = id;
+                this.belief = Math.random();
+                this.messages = [];
+                this.neighbors = [];
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.size = 8;
+                this.antLegs = [];
+                this.activity = 0;
+                this.trail = [];
+                this.messageCarriers = [];
+                
+                // Initialize ant legs for animation
+                for (let i = 0; i < 6; i++) {
+                    this.antLegs.push({
+                        angle: (i / 6) * Math.PI * 2,
+                        phase: Math.random() * Math.PI
+                    });
+                }
+            }
+            
+            sendMessages() {
+                this.neighbors.forEach(neighbor => {
+                    // Create visual message with ant-like carrier
+                    const messageCarrier = {
+                        from: this,
+                        to: neighbor,
+                        value: this.belief,
+                        progress: 0,
+                        color: `hsl(${this.belief * 120}, 70%, 50%)`,
+                        size: 3,
+                        legs: [],
+                        legPhase: 0
+                    };
+                    
+                    // Initialize message carrier legs
+                    for (let i = 0; i < 4; i++) {
+                        messageCarrier.legs.push({
+                            angle: (i / 4) * Math.PI * 2,
+                            phase: Math.random() * Math.PI
+                        });
+                    }
+                    
+                    messages.push(messageCarrier);
+                    
+                    // Send belief value
+                    neighbor.messages.push(this.belief * 0.9 + Math.random() * 0.1);
+                });
+                
+                this.activity = 1.0; // Mark as active
+            }
+            
+            updateBelief() {
+                if (this.messages.length > 0) {
+                    // Weighted average with momentum
+                    const avgMessage = this.messages.reduce((a, b) => a + b, 0) / this.messages.length;
+                    this.belief = this.belief * 0.6 + avgMessage * 0.4;
+                    this.messages = [];
+                    this.activity = Math.max(this.activity, 0.5); // Show activity when receiving messages
+                }
+                
+                // Update ant animation
+                this.pulsePhase += 0.1;
+                this.activity *= 0.95; // Fade activity over time
+                
+                // Update trail
+                if (this.activity > 0.1) {
+                    this.trail.push({x: this.x, y: this.y, alpha: this.activity});
+                }
+                if (this.trail.length > 10) this.trail.shift();
+                
+                // Update ant legs animation
+                this.antLegs.forEach(leg => {
+                    leg.phase += 0.2 + this.activity * 0.1;
+                });
+            }
+            
+            draw() {
+                // Draw trail
+                if (this.trail.length > 1) {
+                    this.trail.forEach((point, i) => {
+                        const alpha = point.alpha * (i / this.trail.length) * 0.3;
+                        graphCtx.fillStyle = `rgba(139, 69, 19, ${alpha})`;
+                        graphCtx.beginPath();
+                        graphCtx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                        graphCtx.fill();
+                    });
+                }
+                
+                // Draw ant legs
+                this.antLegs.forEach(leg => {
+                    const legOffset = Math.sin(leg.phase) * 3;
+                    const legX = this.x + Math.cos(leg.angle) * (this.size + legOffset);
+                    const legY = this.y + Math.sin(leg.angle) * (this.size + legOffset);
+                    
+                    graphCtx.strokeStyle = '#8B4513';
+                    graphCtx.lineWidth = 1 + this.activity;
+                    graphCtx.beginPath();
+                    graphCtx.moveTo(this.x, this.y);
+                    graphCtx.lineTo(legX, legY);
+                    graphCtx.stroke();
+                });
+                
+                // Draw belief-colored glow
+                const glowSize = this.size + 5 + Math.sin(this.pulsePhase) * 3 + this.activity * 5;
+                const beliefColor = `hsl(${this.belief * 120}, 70%, 50%)`;
+                drawGlow(graphCtx, this.x, this.y, glowSize, beliefColor);
+                
+                // Draw ant body
+                graphCtx.fillStyle = '#8B4513';
+                graphCtx.beginPath();
+                graphCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                graphCtx.fill();
+                
+                // Draw belief indicator on body
+                graphCtx.fillStyle = beliefColor;
+                graphCtx.beginPath();
+                graphCtx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
+                graphCtx.fill();
+                
+                // Draw ID
+                graphCtx.fillStyle = '#333';
+                graphCtx.font = '12px Arial';
+                graphCtx.textAlign = 'center';
+                graphCtx.fillText(this.id, this.x, this.y - this.size - 5);
+            }
+            
+            applyForce(fx, fy) {
+                this.vx += fx;
+                this.vy += fy;
+            }
+            
+            update() {
+                // Apply velocity with damping
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.9;
+                this.vy *= 0.9;
+                
+                // Keep in bounds
+                this.x = Math.max(30, Math.min(graphCanvas.width - 30, this.x));
+                this.y = Math.max(30, Math.min(graphCanvas.height - 30, this.y));
+                
+                // Update pulse
+                this.pulsePhase += 0.05;
+            }
+            
+            drawAlt() {
+                // Draw glow based on belief
+                const glowRadius = 20 + Math.sin(this.pulsePhase) * 5;
+                const hue = this.belief * 120;
+                drawGlow(graphCtx, this.x, this.y, glowRadius, `hsl(${hue}, 70%, 50%)`);
+                
+                // Draw node
+                graphCtx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                graphCtx.beginPath();
+                graphCtx.arc(this.x, this.y, 10 + Math.sin(this.pulsePhase) * 2, 0, Math.PI * 2);
+                graphCtx.fill();
+                
+                // Draw border
+                graphCtx.strokeStyle = '#333';
+                graphCtx.lineWidth = 2;
+                graphCtx.beginPath();
+                graphCtx.arc(this.x, this.y, 10 + Math.sin(this.pulsePhase) * 2, 0, Math.PI * 2);
+                graphCtx.stroke();
+                
+                // Draw ID
+                graphCtx.fillStyle = 'white';
+                graphCtx.font = 'bold 10px Arial';
+                graphCtx.textAlign = 'center';
+                graphCtx.fillText(this.id, this.x, this.y + 3);
+            }
+        }
+        
+        function initializeGraph() {
+            graphNodes = [];
+            graphEdges = [];
+            messages = [];
+            messageIterations = 0;
+            
+            // Create nodes in interesting layout
+            const nodeCount = 20;
+            const centerX = graphCanvas.width / 2;
+            const centerY = graphCanvas.height / 2;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (i / nodeCount) * Math.PI * 2;
+                const radius = 150 + Math.random() * 50;
+                graphNodes.push(new GraphNode(
+                    centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 50,
+                    centerY + Math.sin(angle) * radius + (Math.random() - 0.5) * 50,
+                    i
+                ));
+            }
+            
+            // Create edges based on distance and density
+            const density = parseInt(document.getElementById('densitySlider').value) / 100;
+            const maxDist = 200;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    const dist = distance(
+                        graphNodes[i].x, graphNodes[i].y,
+                        graphNodes[j].x, graphNodes[j].y
+                    );
+                    
+                    if (dist < maxDist && Math.random() < density) {
+                        graphEdges.push({from: i, to: j});
+                        graphNodes[i].neighbors.push(graphNodes[j]);
+                        graphNodes[j].neighbors.push(graphNodes[i]);
+                    }
+                }
+            }
+            
+            updateGraphKPIs();
+        }
+        
+        function applyForceLayout() {
+            if (layoutType !== 'force') return;
+            
+            // Apply repulsion between all nodes
+            for (let i = 0; i < graphNodes.length; i++) {
+                for (let j = i + 1; j < graphNodes.length; j++) {
+                    const dx = graphNodes[j].x - graphNodes[i].x;
+                    const dy = graphNodes[j].y - graphNodes[i].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) + 0.01;
+                    const force = 1000 / (dist * dist);
+                    
+                    graphNodes[i].applyForce(-force * dx / dist, -force * dy / dist);
+                    graphNodes[j].applyForce(force * dx / dist, force * dy / dist);
+                }
+            }
+            
+            // Apply attraction along edges
+            graphEdges.forEach(edge => {
+                const node1 = graphNodes[edge.from];
+                const node2 = graphNodes[edge.to];
+                const dx = node2.x - node1.x;
+                const dy = node2.y - node1.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const force = (dist - 100) * 0.01;
+                
+                node1.applyForce(force * dx / dist, force * dy / dist);
+                node2.applyForce(-force * dx / dist, -force * dy / dist);
+            });
+            
+            // Update positions
+            graphNodes.forEach(node => node.update());
+        }
+        
+        function animateGraph() {
+            graphCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            graphCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+            
+            // Apply force-directed layout
+            applyForceLayout();
+            
+            // Draw edges
+            graphEdges.forEach(edge => {
+                const node1 = graphNodes[edge.from];
+                const node2 = graphNodes[edge.to];
+                
+                // Edge opacity based on belief difference
+                const beliefDiff = Math.abs(node1.belief - node2.belief);
+                const alpha = 0.2 + (1 - beliefDiff) * 0.5;
+                
+                graphCtx.strokeStyle = `rgba(150, 150, 150, ${alpha})`;
+                graphCtx.lineWidth = 1 + (1 - beliefDiff) * 2;
+                graphCtx.beginPath();
+                graphCtx.moveTo(node1.x, node1.y);
+                graphCtx.lineTo(node2.x, node2.y);
+                graphCtx.stroke();
+            });
+            
+            // Animate message carriers (ant-like)
+            messages = messages.filter(msg => {
+                msg.progress += 0.03;
+                msg.legPhase += 0.3;
+                
+                if (msg.progress < 1) {
+                    const x = lerp(msg.from.x, msg.to.x, msg.progress);
+                    const y = lerp(msg.from.y, msg.to.y, msg.progress);
+                    
+                    // Draw message carrier legs
+                    msg.legs.forEach(leg => {
+                        const legOffset = Math.sin(msg.legPhase + leg.phase) * 2;
+                        const legX = x + Math.cos(leg.angle) * (msg.size + legOffset);
+                        const legY = y + Math.sin(leg.angle) * (msg.size + legOffset);
+                        
+                        graphCtx.strokeStyle = msg.color;
+                        graphCtx.lineWidth = 1;
+                        graphCtx.beginPath();
+                        graphCtx.moveTo(x, y);
+                        graphCtx.lineTo(legX, legY);
+                        graphCtx.stroke();
+                    });
+                    
+                    // Draw glow effect
+                    drawGlow(graphCtx, x, y, 8, msg.color);
+                    
+                    // Draw message carrier body
+                    graphCtx.fillStyle = msg.color;
+                    graphCtx.beginPath();
+                    graphCtx.arc(x, y, msg.size, 0, Math.PI * 2);
+                    graphCtx.fill();
+                    
+                    return true;
+                }
+                return false;
+            });
+            
+            // Message passing logic
+            if (isMessagePassing) {
+                if (messageIterations % 15 === 0) {
+                    graphNodes.forEach(node => node.sendMessages());
+                }
+                
+                if (messageIterations % 15 === 8) {
+                    graphNodes.forEach(node => node.updateBelief());
+                }
+                
+                messageIterations++;
+                
+                if (messageIterations > 300) {
+                    isMessagePassing = false;
+                }
+            }
+            
+            // Draw nodes
+            graphNodes.forEach(node => node.draw());
+            
+            // Update KPIs
+            updateGraphKPIs();
+            
+            requestAnimationFrame(animateGraph);
+        }
+        
+        function updateGraphKPIs() {
+            if (graphNodes.length > 0) {
+                // Convergence
+                const mean = graphNodes.reduce((s, n) => s + n.belief, 0) / graphNodes.length;
+                const variance = graphNodes.reduce((sum, node) => {
+                    return sum + Math.pow(node.belief - mean, 2);
+                }, 0) / graphNodes.length;
+                
+                const convergence = Math.max(0, Math.min(100, 100 - variance * 200));
+                document.getElementById('graphConvergence').textContent = convergence.toFixed(0) + '%';
+                document.getElementById('convBar').style.width = convergence + '%';
+                
+                // Information spread
+                const highBeliefNodes = graphNodes.filter(n => n.belief > 0.7).length;
+                const infoSpread = (highBeliefNodes / graphNodes.length) * 100;
+                document.getElementById('infoSpread').textContent = infoSpread.toFixed(0) + '%';
+                document.getElementById('spreadBar').style.width = infoSpread + '%';
+                
+                // Message rounds
+                const rounds = Math.floor(messageIterations / 15);
+                document.getElementById('messageRounds').textContent = rounds;
+                document.getElementById('roundsDelta').textContent = 
+                    isMessagePassing ? 'active' : convergence > 95 ? 'converged' : 'idle';
+                document.getElementById('roundsDelta').className = 
+                    convergence > 95 ? 'kpi-delta kpi-positive' : 'kpi-delta';
+                
+                // Network efficiency
+                const avgDegree = graphEdges.length * 2 / graphNodes.length;
+                const maxPossibleEdges = graphNodes.length * (graphNodes.length - 1) / 2;
+                const density = (graphEdges.length / maxPossibleEdges) * 100;
+                const efficiency = Math.min(100, density * 3);
+                document.getElementById('networkEff').textContent = efficiency.toFixed(0) + '%';
+                
+                // Graph statistics
+                document.getElementById('nodeCount').textContent = graphNodes.length;
+                document.getElementById('edgeCount').textContent = graphEdges.length;
+                document.getElementById('avgDegree').textContent = avgDegree.toFixed(1);
+                
+                // Estimate diameter
+                const diameter = graphEdges.length > 0 ? 
+                    Math.ceil(Math.log(graphNodes.length) / Math.log(avgDegree + 1)) : '∞';
+                document.getElementById('graphDiameter').textContent = diameter;
+                
+                // Clustering coefficient (simplified)
+                const clustering = Math.min(1, density / 30).toFixed(2);
+                document.getElementById('clustering').textContent = clustering;
+            }
+        }
+        
+        function startMessagePassing() {
+            isMessagePassing = true;
+            messageIterations = 0;
+        }
+        
+        function injectInformation() {
+            // Inject high belief at random nodes
+            const luckyNodes = Math.floor(Math.random() * 3) + 1;
+            for (let i = 0; i < luckyNodes; i++) {
+                const randomNode = graphNodes[Math.floor(Math.random() * graphNodes.length)];
+                randomNode.belief = 0.95 + Math.random() * 0.05;
+                
+                // Visual feedback
+                drawGlow(graphCtx, randomNode.x, randomNode.y, 50, '#4CAF50');
+            }
+        }
+        
+        function toggleGraphLayout() {
+            layoutType = layoutType === 'force' ? 'circle' : 'force';
+            
+            if (layoutType === 'circle') {
+                // Arrange in circle
+                const centerX = graphCanvas.width / 2;
+                const centerY = graphCanvas.height / 2;
+                const radius = 180;
+                
+                graphNodes.forEach((node, i) => {
+                    const angle = (i / graphNodes.length) * Math.PI * 2;
+                    node.x = centerX + Math.cos(angle) * radius;
+                    node.y = centerY + Math.sin(angle) * radius;
+                });
+            }
+        }
+        
+        // Density slider
+        document.getElementById('densitySlider').addEventListener('input', (e) => {
+            document.getElementById('densityValue').textContent = e.target.value + '%';
+        });
+        
+        // Initialize all demos
+        window.onload = () => {
+            initSymmetry();
+            initEnergyLandscape();
+            resetAnnealing();
+            resetManifold();
+            initializeGraph();
+            
+            animateSymmetry();
+            animateManifold();
+            animateAnnealing();
+            animateQuantum();
+            animateGraph();
+            
+            // Initialize tooltip system
+            initializeTooltips();
+            
+            // Add click-to-explain functionality to canvases
+            addCanvasTooltips(quantumCanvas, explainQuantumCanvas);
+            addCanvasTooltips(graphCanvas, explainGraphCanvas);
+        };
+        
+        // Tooltip system for educational explanations
+        function initializeTooltips() {
+            const tooltip = document.getElementById('tooltip');
+            
+            // Add interactive help to mathematical terms
+            document.querySelectorAll('.interactive-help').forEach(element => {
+                element.addEventListener('mouseenter', (e) => {
+                    const helpText = e.target.getAttribute('data-help');
+                    showTooltip(e, helpText);
+                });
+                
+                element.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+            });
+        }
+        
+        function showTooltip(event, text) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.textContent = text;
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 10 + 'px';
+            tooltip.classList.add('show');
+        }
+        
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.classList.remove('show');
+        }
+        
+        // Add click-to-explain functionality for canvas elements
+        function addCanvasTooltips(canvas, explainFunction) {
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const explanation = explainFunction(x, y);
+                if (explanation) {
+                    showTooltip(e, explanation);
+                    setTimeout(hideTooltip, 3000);
+                }
+            });
+        }
+        
+        // Canvas explanation functions
+        function explainQuantumCanvas(x, y) {
+            const barrierX = quantumCanvas.width / 2;
+            const halfW = (typeof barrierWidth === 'number' ? barrierWidth : 60) / 2;
+            if (Math.abs(x - barrierX) < halfW) {
+                return "This is the quantum barrier. Particles with insufficient energy can still 'tunnel' through with exponentially small probability exp(-2κa) where κ = √(2m(V-E)/ℏ²)";
+            }
+            return null;
+        }
+        
+        function explainGraphCanvas(x, y) {
+            // Find clicked node
+            for (let node of graphNodes) {
+                if (Math.sqrt((x - node.x)**2 + (y - node.y)**2) < 15) {
+                    return `Node ${node.id}: Belief = ${node.belief.toFixed(3)}. In message passing, beliefs update via: b_i^{new} = Σ_j W_{ij} * m_{j→i} where W_{ij} are edge weights.`;
+                }
+            }
+            return null;
+        }
+    </script>
+
+        </article>
+
+        <footer class="footer">
+            <p><a href="../index.html">← Back to Home</a></p>
+        </footer>
+    </div>
+</body>
+</html>
