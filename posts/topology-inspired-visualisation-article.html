@@ -20,7 +20,7 @@
         };
     </script>
     <style>
-        /* Simulation-specific styles only */
+        /* Simulation-specific styles aligned to Matrix console theme */
         .intro {
             max-width: 800px;
             margin: 0 auto 60px auto;
@@ -28,203 +28,88 @@
             line-height: 1.6;
         }
         
-        .section {
-            margin-bottom: 40px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid #e6e6e6;
-        }
+        .section { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--matrix-grid); }
         
-        .section-intro {
-            max-width: 800px;
-            margin: 0 auto 24px auto;
-        }
+        .section-intro { max-width: 800px; margin: 0 auto 24px auto; color: var(--matrix-muted); }
         
         .demo-container {
-            background: linear-gradient(to bottom, #fafafa, #f5f5f5);
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            background: radial-gradient(800px 600px at 50% 50%, #000 0%, #000 40%, #001003 100%);
+            border: 1px solid var(--matrix-grid);
+            border-radius: 10px;
             padding: 20px;
             margin: 24px auto;
             position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            max-width: 750px;
+            box-shadow: inset 0 0 20px rgba(0,255,65,0.06);
+            max-width: 780px;
         }
         
         canvas {
             display: block;
             margin: 12px auto;
-            border: 1px solid #ccc;
-            background: white;
+            border: 1px solid var(--matrix-grid);
+            background: #010a04;
             cursor: pointer;
-            border-radius: 6px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: inset 0 0 12px rgba(0,255,65,0.05);
         }
         
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-        }
+        .controls { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; margin-top:12px; }
         
         button {
-            background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
-            color: white;
-            border: none;
+            background: rgba(0,0,0,0.7);
+            color: var(--matrix-green);
+            border: 1px solid var(--matrix-grid);
             padding: 8px 12px;
             margin: 0;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
-            transition: all 0.3s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 800;
         }
         .controls button { min-width: 120px; }
         
-        button:hover {
-            background: linear-gradient(to bottom, #4a4a4a, #3a3a3a);
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
-        }
+        button:hover { border-color: var(--matrix-green-3); box-shadow: 0 0 12px rgba(0,255,65,0.18); transform: translateY(-1px); }
         
-        button:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
+        button:active { transform: translateY(0); box-shadow: none; }
         
-        button:disabled {
-            background: #999;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .math-explanation {
-            max-width: 800px;
-            margin: 16px auto 0 auto;
-            padding: 0;
-            background: transparent;
-            border: none;
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-        .math-explanation strong {
-            display: block;
-            margin: 8px 0 4px 0;
-            font-size: 1.0em;
-            color: #2a2a2a;
-        }
+        .math-explanation { max-width: 800px; margin: 16px auto 0 auto; padding: 0; background: transparent; border: none; font-size: 0.95em; line-height: 1.6; color: var(--matrix-muted); }
+        .math-explanation strong { display:block; margin: 8px 0 6px 0; font-size: 0.95em; color: var(--matrix-green); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
 
-        .howto {
-            max-width: 800px;
-            margin: 8px auto 0 auto;
-            color: #444;
-            font-size: 0.85em;
-        }
-        .howto ul { margin: 4px 0 0 16px; }
+        .howto { max-width: 800px; margin: 8px auto 0 auto; color: var(--matrix-muted); font-size: 0.9em; background: rgba(0,255,65,0.06); border: 1px solid var(--matrix-grid); border-radius: 10px; padding: 12px 14px; box-shadow: inset 0 0 12px rgba(0,255,65,0.05); }
+        .howto ul { margin: 6px 0 0 18px; }
         
-        .kpi-panel {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin: 16px 0;
-            padding: 12px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
+        .kpi-panel { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin:16px 0; padding:12px; background: rgba(0,0,0,0.3); border-radius:10px; border:1px solid var(--matrix-grid); }
         
-        .kpi-item {
-            text-align: center;
-            padding: 8px;
-            background: linear-gradient(to bottom, #fafafa, white);
-            border-radius: 6px;
-            border: 1px solid #e5e5e5;
-            transition: transform 0.2s;
-        }
+        .kpi-item { text-align:center; padding:8px; background:#021805; border-radius:8px; border:1px solid var(--matrix-grid); transition: transform 0.2s; box-shadow: inset 0 0 12px rgba(0,255,65,0.04); }
         
-        .kpi-item:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-        }
+        .kpi-item:hover { transform: translateY(-1px); box-shadow: 0 0 12px rgba(0,255,65,0.12); }
         
-        .kpi-value {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #2a2a2a;
-            margin: 4px 0;
-        }
+        .kpi-value { font-size: 1.3em; font-weight: 900; color: var(--matrix-green); margin: 4px 0; }
         
-        .kpi-label {
-            font-size: 0.75em;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 3px;
-        }
+        .kpi-label { font-size: 0.7em; color: var(--matrix-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
         
-        .kpi-delta {
-            font-size: 0.75em;
-            margin-top: 3px;
-            color: #666;
-        }
+        .kpi-delta { font-size: 0.75em; margin-top: 3px; color: var(--matrix-dim); }
         
-        .kpi-positive {
-            color: #4CAF50;
-            font-weight: 600;
-        }
+        .kpi-positive { color: #00ff41; font-weight: 800; }
         
-        .kpi-negative {
-            color: #ff6b6b;
-            font-weight: 600;
-        }
+        .kpi-negative { color: #ff6b6b; font-weight: 800; }
         
-        .comparison-bar {
-            height: 6px;
-            background: #e0e0e0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 8px 0 0 0;
-            position: relative;
-        }
+        .comparison-bar { height:6px; background:#052410; border-radius:3px; overflow:hidden; margin:8px 0 0 0; position:relative; border:1px solid var(--matrix-grid); }
         
-        .comparison-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 3px;
-        }
+        .comparison-fill { height:100%; background: linear-gradient(90deg, #00ff41, #00b32c); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 3px; box-shadow: 0 0 8px rgba(0,255,65,0.25); }
         
-        .info-box {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-size: 0.8em;
-            text-align: center;
-        }
+        .info-box { background: rgba(0,0,0,0.65); border: 1px solid var(--matrix-grid); padding: 8px 12px; margin: 10px 0; border-radius: 8px; font-size: 0.8em; text-align: center; color: var(--matrix-green); }
         
-        .slider-container {
-            margin: 12px 0 0 0;
-            text-align: center;
-            padding: 6px 8px;
-            background: white;
-            border-radius: 4px;
-        }
+        .slider-container { margin: 12px 0 0 0; text-align: center; padding: 6px 8px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid var(--matrix-grid); color: var(--matrix-muted); }
         
-        input[type="range"] {
-            width: 180px;
-            margin: 0 8px;
-        }
+        input[type="range"] { width: 180px; margin: 0 8px; accent-color: var(--matrix-green); }
         
-        .value-display {
-            display: inline-block;
-            min-width: 60px;
-            font-weight: bold;
-            color: #2a2a2a;
-        }
+        .value-display { display:inline-block; min-width:60px; font-weight:900; color: var(--matrix-green); }
         
         /* Animation enhancements */
         @keyframes pulse {
@@ -248,40 +133,18 @@
             animation: pulse 2s infinite;
         }
         
-        .tooltip {
-            position: absolute;
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            max-width: 300px;
-            z-index: 1000;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
+        .tooltip { position:absolute; background: rgba(0,0,0,0.9); color: var(--matrix-green); padding: 8px 12px; border-radius: 8px; font-size: 12px; max-width: 300px; z-index: 1000; pointer-events: none; opacity:0; transition: opacity 0.2s; border: 1px solid var(--matrix-grid); }
         
         .tooltip.show {
             opacity: 1;
         }
         
-        .interactive-help {
-            cursor: help;
-            border-bottom: 1px dotted #4169e1;
-            color: #4169e1;
-        }
+        .interactive-help { cursor: help; border-bottom: 1px dotted var(--matrix-dim); color: var(--matrix-green); }
         
-        .math-formula {
-            font-family: "Times New Roman", serif;
-            font-style: italic;
-            background: rgba(65,105,225,0.1);
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
+        .math-formula { font-family: "Times New Roman", serif; font-style: italic; background: rgba(0,255,65,0.06); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--matrix-grid); color: var(--matrix-green); }
     </style>
 </head>
-<body>
+<body class="static-bg">
     <div class="container">
         <header class="header">
             <h1 class="site-title">antifold</h1>
@@ -306,9 +169,9 @@
             In this interactive exploration, we're going to watch colonies of digital insects demonstrate six fundamental algorithms that power modern computing. These aren't simplified analogies. Each ant and fly you see is running actual mathematical code, producing real metrics you can measure and compare. Toggle the controls, watch the numbers change, and see for yourself how nature's solutions became humanity's most powerful computational tools.
         </p>
     </div>
-    <div style="max-width: 600px; margin: 24px auto; padding: 16px; background: #f8f8f8; border-radius: 8px; border-left: 4px solid #667eea;">
-        <h3 style="margin: 0 0 12px 0; color: #242424; font-size: 1.1em;">How to use this page:</h3>
-        <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+    <div style="max-width: 760px; margin: 24px auto; padding: 16px; background: rgba(0,255,65,0.06); border-radius: 10px; border: 1px solid var(--matrix-grid); box-shadow: inset 0 0 12px rgba(0,255,65,0.05);">
+        <h3 style="margin: 0 0 12px 0; color: var(--matrix-green); font-size: 1.0em; text-transform: uppercase; letter-spacing: 1px;">How to use this page</h3>
+        <ul style="margin: 0; padding-left: 20px; list-style-type: disc; color: var(--matrix-muted);">
             <li style="margin-bottom: 6px;">Each section has a live canvas and controls—try them.</li>
             <li style="margin-bottom: 6px;">Read the short "How to use" under each graphic for guidance.</li>
             <li style="margin-bottom: 6px;">Equations use LaTeX; hover blue terms for quick tooltips.</li>
@@ -910,7 +773,7 @@
         }
         
         function animateSymmetry() {
-            symmetryCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            symmetryCtx.fillStyle = 'rgba(0, 0, 0, 0.10)';
             symmetryCtx.fillRect(0, 0, symmetryCanvas.width, symmetryCanvas.height);
             
             // Draw symmetry axes with animated opacity
@@ -1218,7 +1081,7 @@
         }
         
         function drawSphere() {
-            manifoldCtx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+            manifoldCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             manifoldCtx.fillRect(0, 0, manifoldCanvas.width, manifoldCanvas.height);
             // Auto-rotate in 3D mode
             if (autoRotate && show3D) {
@@ -1564,7 +1427,7 @@
         }
         
         function animateAnnealing() {
-            annealingCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            annealingCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             annealingCtx.fillRect(0, 0, annealingCanvas.width, annealingCanvas.height);
             
             drawEnergyLandscape();
@@ -1953,7 +1816,7 @@
         }
         
         function animateQuantum() {
-            quantumCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            quantumCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             quantumCtx.fillRect(0, 0, quantumCanvas.width, quantumCanvas.height);
             
             drawBarrier();
@@ -2194,13 +2057,13 @@
             const headerH = 22;
             const contentH = headerH + (lines.length * lineH) + pad;
             // Draw panel
-            huffmanCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            huffmanCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             huffmanCtx.fillRect(boxX, boxX, contentW, contentH);
-            huffmanCtx.strokeStyle = '#333';
+            huffmanCtx.strokeStyle = '#003b14';
             huffmanCtx.lineWidth = 1;
             huffmanCtx.strokeRect(boxX, boxX, contentW, contentH);
             // Header
-            huffmanCtx.fillStyle = '#333';
+            huffmanCtx.fillStyle = '#7aff9a';
             huffmanCtx.font = 'bold 12px Arial';
             huffmanCtx.textAlign = 'left';
             huffmanCtx.fillText(header, boxX + pad, boxX + 16);
@@ -2688,10 +2551,10 @@
                 huffmanCtx.fillStyle = shade;
                 huffmanCtx.fillRect(c.x - w/2, c.y - h/2, w, h);
                 // top highlight
-                huffmanCtx.fillStyle = 'rgba(255,255,255,0.35)';
+                huffmanCtx.fillStyle = 'rgba(0,255,65,0.25)';
                 huffmanCtx.fillRect(c.x - w/2, c.y - h/2, w, 3);
                 // outline
-                huffmanCtx.strokeStyle = '#333';
+                huffmanCtx.strokeStyle = '#003b14';
                 huffmanCtx.lineWidth = 1;
                 huffmanCtx.strokeRect(c.x - w/2, c.y - h/2, w, h);
             });
@@ -2877,18 +2740,18 @@
             const compressionRatio = ((naiveBits - avgHuffmanBits) / naiveBits * 100);
             
             // Draw comparison
-            huffmanCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            huffmanCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             huffmanCtx.fillRect(50, 50, 300, 100);
             
-            huffmanCtx.strokeStyle = '#333';
+            huffmanCtx.strokeStyle = '#003b14';
             huffmanCtx.lineWidth = 2;
             huffmanCtx.strokeRect(50, 50, 300, 100);
             
-            huffmanCtx.fillStyle = '#333';
+            huffmanCtx.fillStyle = '#7aff9a';
             huffmanCtx.font = 'bold 14px Arial';
             huffmanCtx.fillText(`Naive encoding: ${naiveBits} bits per message`, 70, 80);
             huffmanCtx.fillText(`Huffman encoding: ${avgHuffmanBits.toFixed(2)} bits per message`, 70, 105);
-            huffmanCtx.fillStyle = '#4CAF50';
+            huffmanCtx.fillStyle = '#00ff41';
             huffmanCtx.fillText(`Space saved: ${compressionRatio.toFixed(1)}%`, 70, 130);
         }
         
@@ -3158,7 +3021,7 @@
         }
         
         function animateGraph() {
-            graphCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            graphCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             graphCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
             
             // Apply force-directed layout
@@ -3423,7 +3286,7 @@
 
         <footer class="footer">
             <p><a href="../index.html">← Back to Home</a></p>
-            <p style="margin-top: 8px;"><a href="https://twitter.com/amazedsaint" style="color: #667eea; text-decoration: none; font-weight: 600;">Follow me on 𝕏 (Twitter)</a></p>
+            <p style="margin-top: 8px;"><a href="https://twitter.com/amazedsaint" style="color: var(--matrix-green); text-decoration: none; font-weight: 800;">Follow me on 𝕏 (Twitter)</a></p>
         </footer>
     </div>
 </body>
