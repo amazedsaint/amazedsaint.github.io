@@ -36,12 +36,16 @@
     .panel.collapsed { height: 48px; overflow: hidden; }
     .panel.collapsed .panel-content { display: none; }
     /* Controls panel */
-    .panel.controls { position: fixed; left: 12px; top: 12px; width: 360px; max-width: 92vw; z-index: 20; }
-    .controls .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .controls .row { display:flex; align-items:center; gap:8px; }
-    .controls .row small { color: var(--muted); width: 64px; }
-    .controls input[type=range] { width: 160px; }
-    .panel-content { max-height: 64vh; overflow: auto; }
+    .panel.controls { position: fixed; left: 12px; top: 12px; width: 480px; max-width: 96vw; z-index: 20; }
+    .controls .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .controls .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .controls .row small { color: var(--muted); width: 80px; flex:0 0 auto; }
+    .controls input[type=range] { width: 240px; flex: 1 1 auto; }
+    .panel-content { max-height: 70vh; overflow: auto; }
+    @media (max-width: 600px){
+      .panel.controls { width: 96vw; left: 2vw; }
+      .controls input[type=range]{ width: 55vw; }
+    }
     .tabs { display:flex; gap:8px; margin-bottom:8px; }
     .tab-btn { padding:6px 10px; border:1px solid var(--border); background:#fff; border-radius:8px; cursor:pointer; font-size:12px; }
     .tab-btn.active { outline:2px solid var(--accent); }
@@ -499,6 +503,7 @@
     const mathPanel=document.getElementById('mathPanel');
     function toggleMath(){ mathPanel.classList.toggle('collapsed'); }
     document.getElementById('mathToggle').addEventListener('click', toggleMath);
+    document.getElementById('mathHeader').addEventListener('click', toggleMath);
     document.getElementById('toggleMath').addEventListener('click', toggleMath);
     // controls panel + tabs
     const controlsPanel=document.getElementById('controlsPanel');
