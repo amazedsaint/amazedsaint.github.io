@@ -77,14 +77,12 @@
       <div class="tab-section active" id="toolsSection">
         <div class="grid">
           <div>
-            <div class="tool-label" style="margin-bottom:6px;">Concept</div>
-            <div class="tool-group" style="flex-wrap:wrap; gap:6px;">
-              <button class="tool-btn" data-emoji="🍎" title="Apple (attractor)">🍎</button>
-              <button class="tool-btn" data-emoji="🍊" title="Orange (attractor)">🍊</button>
-              <button class="tool-btn" data-emoji="📣" title="Beacon (attractor)">📣</button>
-              <button class="tool-btn" data-emoji="🌶️" title="Chili (repellent)">🌶️</button>
-              <button class="tool-btn" data-emoji="💀" title="Hazard (repellent)">💀</button>
-            </div>
+          <div class="tool-label" style="margin-bottom:6px;">Flags</div>
+          <div class="tool-group" style="flex-wrap:wrap; gap:6px;">
+            <button class="tool-btn" data-flag="red" title="Red Flag">🚩 Red</button>
+            <button class="tool-btn" data-flag="blue" title="Blue Flag">🚩 Blue</button>
+            <button class="tool-btn" data-flag="white" title="White Flag">🏳️ White</button>
+          </div>
             <div class="tool-group" style="margin-top:8px;">
               <span class="tool-label">Mode</span>
               <button class="tool-btn" id="modeAdd">Add</button>
@@ -129,26 +127,30 @@
   <div class="hud" id="hud"></div>
   <div class="panel math collapsed" id="mathPanel">
     <div class="panel-header" id="mathHeader">
-      <span class="panel-title">SU(3) Info Transport — Model</span>
+      <span class="panel-title">Flag Influence — Model</span>
       <button class="panel-toggle" id="mathToggle">▼</button>
     </div>
     <div class="panel-content">
       <div class="article-content" style="font-size:14px;">
-        <p>Each fly $i$ carries a simplified SU(3)-inspired information state $q_i \in \mathbb{R}^3$ ("color charges"),
-        visualized as three color dots. The dynamics couple motion, sensing, and communication on the proximity graph.</p>
-        <p>Motion:</p>
-        $$\dot x_i = v_i,\quad \dot v_i = \sum_k F_k(x_i) - \gamma v_i$$
-        <p>Parallel transport (gauge-like mixing along velocity):</p>
-        $$\dot q_i = \theta(\|v_i\|)\,G(v_i)\,q_i$$
-        where $G$ is skew-symmetric (an $\mathfrak{su}(3)$-inspired generator) and $\theta$ scales with speed.
-        <p>Sensing (attractors/repellents indexed by $k$ and mapped to color basis $e_{c(k)}$):</p>
-        $$\dot q_i \mathrel{+}= s_k\,\sigma(\|x_i-x_k\|)\, e_{c(k)} \quad (s_k=\pm1)$$
-        <p>Graph information passing (finite-speed diffusion over a proximity graph $w_{ij}$):</p>
-        $$\dot q_i \mathrel{+}= \sum_j w_{ij}\,(q_j - q_i),\quad w_{ij}=\phi(\|x_i-x_j\|)\,\psi(\|v_i-v_j\|)$$
-        <p>Coupling of information to motion (awareness-driven sensitivity):</p>
-        $$F_k^{\text{eff}}(q_i) = \bigl(1 + \beta\, s_k\, e_{c(k)}^\top q_i\bigr)\,F_k$$
-        with $0\le \beta < 1$ so the sign of $F_k$ is preserved; positive alignment increases attraction (or repulsion), negative alignment diminishes it.
-        <p>This is a pedagogical approximation: we visualize three components (RGB) rather than the full 8-dim $\mathfrak{su}(3)$ basis.</p>
+        <p>We place control flags $k$ (red/blue/white) in the plane. Each fly $i$ carries an allegiance label $L_i$ (the flag it follows)
+        and a scalar influence strength $s_i \in [0,1]$ (neutral if $s_i \approx 0$). Physics couples motion, sensing, and local communication.</p>
+        <p>Motion (with damping):</p>
+        $$\dot x_i = v_i,\quad \dot v_i = \sum_k F_k(x_i,L_i,s_i) - \gamma v_i$$
+        where the flag force near flag $k$ is attractive and scales with allegiance:
+        $$F_k \propto \frac{\alpha(L_i,k,s_i)}{\|x_i-x_k\|^2}\, \frac{x_k - x_i}{\|x_k-x_i\|},\qquad
+          \alpha = \begin{cases}
+          \alpha_0 & L_i<0 \text{ (neutral: stronger bias)}\\
+          \alpha_1(0.8+0.4s_i) & L_i=k \text{ (follow own flag)}\\
+          \alpha_2 & L_i\neq k \text{ (weak cross-bias)}
+          \end{cases} $$
+        <p>Sensing and forgetting:</p>
+        $$\dot s_i = \eta\,\sigma(\|x_i-x_{L_i}\|) - \lambda s_i,$$
+        where $\sigma$ increases near a flag; neutral flies adopt the nearest flag on contact.</p>
+        <p>Local communication (label propagation):</p>
+        $$\dot s_i \mathrel{+}= \sum_j w_{ij}(s_j - s_i),\qquad
+          L_i \leftarrow L_j \text{ if } s_j > s_i,$$
+        with $w_{ij}=\phi(\|x_i-x_j\|)\,\psi(\|v_i-v_j\|)$ decaying with distance and relative speed.
+        <p>Social terms (cohesion/separation/alignment) are awareness-weighted so informed flies coordinate flocks while neutrals seek flags.</p>
       </div>
     </div>
   </div>
@@ -163,15 +165,12 @@
     const dist2=(ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;};
 
     const state = {
-      flies: [], // {x,y,vx,vy,info:[r,g,b]}
-      objs: [],  // {x,y,emoji,type:'attractor'|'repellent', qty?, maxQty?}
+      flies: [], // {x,y,vx,vy,info:[r,g,b], allegiance:-1, s:0}
+      objs: [],  // {x,y,emoji,type:'flag', color?:'red'|'blue'|'white', qty?, maxQty?}
       grid: null, // spatial hash
       params: { N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:72, hazardAlpha:1.2, memorySlots:2, cohesion:36, separation:120, sepDist:28, heatR:180, heatAlpha:0.35, resourceInit:150, consumeRate:24, consumeR:22, capDecay:2.0 },
       paused:false,
-      tool: { emoji:'🍎', mode:'add' },
-      emojiType: new Map([
-        ['🍎','attractor'], ['🍊','attractor'], ['📣','attractor'], ['🌶️','repellent'], ['💀','repellent']
-      ]),
+      tool: { flag:'red', mode:'add' },
     };
 
     const emojiColorIndex = new Map([
@@ -191,16 +190,15 @@
       for(let i=0;i<N;i++){
         const x = Math.random()*W, y = Math.random()*H;
         const ang = rand(-Math.PI,Math.PI), sp=state.params.speed;
-        state.flies.push({ x, y, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, info:[0,0,0] });
+        state.flies.push({ x, y, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, info:[0,0,0], allegiance:-1, s:0 });
       }
     }
 
-    function addObject(x,y,emoji){
-      const type = state.emojiType.get(emoji)||'attractor';
-      // Both attractors and repellents carry limited information by default
-      const maxQty = state.params.resourceInit;
-      const qty = maxQty;
-      state.objs.push({x,y,emoji,type, qty, maxQty});
+    function addObject(x,y,flagColor){
+      // place a control flag that biases local motion
+      const color = flagColor || 'red';
+      const emoji = (color==='white')? '🏳️' : '🚩';
+      state.objs.push({x,y,emoji,type:'flag', color});
     }
 
     function removeNearestObject(x,y){
@@ -252,42 +250,68 @@
       const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social,consumeRate,consumeR,capDecay} = state.params;
       const commR2 = commR*commR;
       const N = state.flies.length; const ax = new Float32Array(N), ay = new Float32Array(N);
-      // forgetting and object forces with hazard dominance
-      for(let i=0;i<N;i++){
-        const f = state.flies[i];
-        f.info[0] = clamp(f.info[0] - forget*f.info[0]*dt, -1, 1);
-        f.info[1] = clamp(f.info[1] - forget*f.info[1]*dt, -1, 1);
-        f.info[2] = clamp(f.info[2] - forget*f.info[2]*dt, -1, 1);
-        let axAttr=0, ayAttr=0, axRep=0, ayRep=0, attrSum=0, repSum=0;
-        for(const o of state.objs){
-          const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
-          const idx = emojiColorIndex.get(o.emoji) ?? 0;
-          const reactSign = (o.type==='attractor')? 1 : -1;
-          const sensScale = 1 + beta * (f.info[idx]||0) * reactSign;
-          const active = !(Number.isFinite(o.maxQty) && (o.qty||0) <= 0);
-          if (active){
-            if (o.type==='attractor'){
-              const mag = sensScale * (kAttr / r2);
-              axAttr += mag * dx / r; ayAttr += mag * dy / r; attrSum += (kAttr / r2);
-            } else {
-              const mag = sensScale * (kRepel / r2);
-              axRep += -mag * dx / r; ayRep += -mag * dy / r; repSum += (kRepel / r2);
-            }
+      const useFlags = state.objs.some(o=>o.type==='flag');
+      if (useFlags){
+        // Flags: allegiance-based attraction and sensing
+        for(let i=0;i<N;i++){
+          const f = state.flies[i];
+          f.s = clamp((f.s||0) - forget*(f.s||0)*dt, 0, 1);
+          // nearest flag
+          let kmin=-1, dmin=1e18, ox=0, oy=0, col='red';
+          for(let k=0;k<state.objs.length;k++){
+            const o=state.objs[k]; if(o.type!=='flag') continue;
+            const dx=o.x-f.x, dy=o.y-f.y; const d2=dx*dx+dy*dy; if(d2<dmin){ dmin=d2; kmin=k; ox=o.x; oy=o.y; col=o.color||'red'; }
           }
-          if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; f.info[idx] = clamp((f.info[idx]||0) + sgn * 1.2*dt, -1, 1); }
-          if (Number.isFinite(o.maxQty) && (o.qty||0) > 0 && r < consumeR){
-            const c = Math.min(consumeRate*dt, o.qty); o.qty -= c;
-            const boost = 0.8 * (c/Math.max(1e-6, consumeRate));
-            // attractors increase positive coding; repellents increase avoidance coding
-            if (o.type==='attractor') f.info[idx] = clamp((f.info[idx]||0) + boost, -1, 1);
-            else f.info[idx] = clamp((f.info[idx]||0) - boost, -1, 1);
+          if (kmin>=0){
+            const dx=ox-f.x, dy=oy-f.y; const r2=dmin+25; const r=Math.sqrt(r2);
+            const towards = (f.allegiance==null || f.allegiance<0)? 1.3 : ((f.allegiance===kmin)? (0.8+0.4*(f.s||0)) : 0.15);
+            const str = (kAttr * towards) / r2;
+            ax[i] += str * dx / r; ay[i] += str * dy / r;
+            if (r < consumeR){ f.s = clamp((f.s||0) + 1.2*dt, 0, 1); if (f.allegiance==null || f.allegiance<0) f.allegiance = kmin; }
+            const cv = (col==='red')? [1,0,0] : (col==='blue')? [0,0,1] : [0.7,0.7,0.7];
+            f.info[0]=cv[0]*(f.s||0); f.info[1]=cv[1]*(f.s||0); f.info[2]=cv[2]*(f.s||0);
+          } else {
+            f.info[0]=f.info[1]=f.info[2]=0;
           }
         }
-        const risk = repSum / (attrSum + 1e-6);
-        const scaleA = 1/(1 + state.params.hazardAlpha * risk);
-        const scaleR = 1 + state.params.hazardAlpha * risk;
-        ax[i] += axAttr * scaleA + axRep * scaleR;
-        ay[i] += ayAttr * scaleA + ayRep * scaleR;
+      } else {
+        // forgetting and object forces with hazard dominance
+        for(let i=0;i<N;i++){
+          const f = state.flies[i];
+          f.info[0] = clamp(f.info[0] - forget*f.info[0]*dt, -1, 1);
+          f.info[1] = clamp(f.info[1] - forget*f.info[1]*dt, -1, 1);
+          f.info[2] = clamp(f.info[2] - forget*f.info[2]*dt, -1, 1);
+          let axAttr=0, ayAttr=0, axRep=0, ayRep=0, attrSum=0, repSum=0;
+          for(const o of state.objs){
+            const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
+            const idx = emojiColorIndex.get(o.emoji) ?? 0;
+            const reactSign = (o.type==='attractor')? 1 : -1;
+            const sensScale = 1 + beta * (f.info[idx]||0) * reactSign;
+            const active = !(Number.isFinite(o.maxQty) && (o.qty||0) <= 0);
+            if (active){
+              if (o.type==='attractor'){
+                const mag = sensScale * (kAttr / r2);
+                axAttr += mag * dx / r; ayAttr += mag * dy / r; attrSum += (kAttr / r2);
+              } else {
+                const mag = sensScale * (kRepel / r2);
+                axRep += -mag * dx / r; ayRep += -mag * dy / r; repSum += (kRepel / r2);
+              }
+            }
+            if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; f.info[idx] = clamp((f.info[idx]||0) + sgn * 1.2*dt, -1, 1); }
+            if (Number.isFinite(o.maxQty) && (o.qty||0) > 0 && r < consumeR){
+              const c = Math.min(consumeRate*dt, o.qty); o.qty -= c;
+              const boost = 0.8 * (c/Math.max(1e-6, consumeRate));
+              // attractors increase positive coding; repellents increase avoidance coding
+              if (o.type==='attractor') f.info[idx] = clamp((f.info[idx]||0) + boost, -1, 1);
+              else f.info[idx] = clamp((f.info[idx]||0) - boost, -1, 1);
+            }
+          }
+          const risk = repSum / (attrSum + 1e-6);
+          const scaleA = 1/(1 + state.params.hazardAlpha * risk);
+          const scaleR = 1 + state.params.hazardAlpha * risk;
+          ax[i] += axAttr * scaleA + axRep * scaleR;
+          ay[i] += ayAttr * scaleA + ayRep * scaleR;
+        }
       }
       // communication + social alignment
       buildGrid();
@@ -301,12 +325,26 @@
           const vrel = Math.hypot(f.vx-g.vx, f.vy-g.vy);
           const psi = 1/(1+vrel/40);
           const k = infoRate * phi * psi;
-          const dr = ((g.info[0]||0)-(f.info[0]||0)) * k * dt;
-          const dg = ((g.info[1]||0)-(f.info[1]||0)) * k * dt;
-          const db = ((g.info[2]||0)-(f.info[2]||0)) * k * dt;
-          f.info[0]=clamp((f.info[0]||0)+dr,-1,1); g.info[0]=clamp((g.info[0]||0)-dr,-1,1);
-          f.info[1]=clamp((f.info[1]||0)+dg,-1,1); g.info[1]=clamp((g.info[1]||0)-dg,-1,1);
-          f.info[2]=clamp((f.info[2]||0)+db,-1,1); g.info[2]=clamp((g.info[2]||0)-db,-1,1);
+          if (useFlags){
+            const ds = ((g.s||0) - (f.s||0)) * k * dt;
+            f.s = clamp((f.s||0) + ds, 0, 1);
+            g.s = clamp((g.s||0) - ds, 0, 1);
+            if ((g.s||0) > (f.s||0) && g.allegiance!=null && g.allegiance>=0) f.allegiance = g.allegiance;
+            if ((f.s||0) > (g.s||0) && f.allegiance!=null && f.allegiance>=0) g.allegiance = f.allegiance;
+            const colf = (f.allegiance!=null && f.allegiance>=0)? (state.objs[f.allegiance].color||'red') : 'none';
+            const cvf = (colf==='red')?[1,0,0]:(colf==='blue')?[0,0,1]:(colf==='white')?[0.7,0.7,0.7]:[0,0,0];
+            f.info[0]=cvf[0]*(f.s||0); f.info[1]=cvf[1]*(f.s||0); f.info[2]=cvf[2]*(f.s||0);
+            const colg = (g.allegiance!=null && g.allegiance>=0)? (state.objs[g.allegiance].color||'red') : 'none';
+            const cvg = (colg==='red')?[1,0,0]:(colg==='blue')?[0,0,1]:(colg==='white')?[0.7,0.7,0.7]:[0,0,0];
+            g.info[0]=cvg[0]*(g.s||0); g.info[1]=cvg[1]*(g.s||0); g.info[2]=cvg[2]*(g.s||0);
+          } else {
+            const dr = ((g.info[0]||0)-(f.info[0]||0)) * k * dt;
+            const dg = ((g.info[1]||0)-(f.info[1]||0)) * k * dt;
+            const db = ((g.info[2]||0)-(f.info[2]||0)) * k * dt;
+            f.info[0]=clamp((f.info[0]||0)+dr,-1,1); g.info[0]=clamp((g.info[0]||0)-dr,-1,1);
+            f.info[1]=clamp((f.info[1]||0)+dg,-1,1); g.info[1]=clamp((g.info[1]||0)-dg,-1,1);
+            f.info[2]=clamp((f.info[2]||0)+db,-1,1); g.info[2]=clamp((g.info[2]||0)-db,-1,1);
+          }
           const infG = Math.max(Math.abs(g.info[0]||0), Math.abs(g.info[1]||0), Math.abs(g.info[2]||0));
           const infF = Math.max(Math.abs(f.info[0]||0), Math.abs(f.info[1]||0), Math.abs(f.info[2]||0));
           const w = social * phi * psi * 0.5;
@@ -382,7 +420,8 @@
       // objects
       for(const o of state.objs){
         ctx.save(); ctx.font = '20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        // info heatmap
+        // info heatmap (skip for flags)
+        if (o.type !== 'flag') {
         const idx = emojiColorIndex.get(o.emoji) ?? 0;
         const R = state.params.heatR;
         let acc=0, wsum=0; const sig2=(R*0.5)*(R*0.5);
@@ -399,6 +438,7 @@
           g.addColorStop(0, `rgba(${col},${a})`);
           g.addColorStop(1, `rgba(${col},0)`);
           ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x,o.y,R,0,Math.PI*2); ctx.fill();
+        }
         }
         ctx.fillText(o.emoji, o.x, o.y);
         // halo / resource ring
@@ -458,15 +498,15 @@
     }
 
     // Interaction
-    function pickTool(btn){
-      document.querySelectorAll('.tool-btn[data-emoji]').forEach(b=>b.classList.remove('active'));
+    function pickFlag(btn){
+      document.querySelectorAll('.tool-btn[data-flag]').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      state.tool.emoji = btn.getAttribute('data-emoji');
+      state.tool.flag = btn.getAttribute('data-flag');
     }
-    document.querySelectorAll('.tool-btn[data-emoji]').forEach(btn=>{
-      btn.addEventListener('click', ()=> pickTool(btn));
+    document.querySelectorAll('.tool-btn[data-flag]').forEach(btn=>{
+      btn.addEventListener('click', ()=> pickFlag(btn));
     });
-    pickTool(document.querySelector('.tool-btn[data-emoji="🍎"]'));
+    pickFlag(document.querySelector('.tool-btn[data-flag="red"]'));
     const modeAdd=document.getElementById('modeAdd');
     const modeRemove=document.getElementById('modeRemove');
     function setMode(m){ state.tool.mode=m; modeAdd.classList.toggle('active', m==='add'); modeRemove.classList.toggle('active', m==='remove'); }
@@ -477,7 +517,7 @@
     canvas.addEventListener('click', (e)=>{
       const r=canvas.getBoundingClientRect(); const x=(e.clientX-r.left), y=(e.clientY-r.top);
       if (e.shiftKey || state.tool.mode==='remove') removeNearestObject(x,y);
-      else addObject(x,y,state.tool.emoji);
+      else addObject(x,y,state.tool.flag);
     });
 
     // Controls
