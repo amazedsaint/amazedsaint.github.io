@@ -389,11 +389,11 @@
           const sraw = (o.type==='attractor')? Math.max(0, f.info[idx]||0) : Math.max(0, -(f.info[idx]||0));
           const w = Math.exp(-d2/(2*sig2)); acc += sraw*w; wsum += w;
         }
-        const frac = wsum>0? Math.min(1, acc/wsum) : 0;
-        if (frac>0){
+        const hfrac = wsum>0? Math.min(1, acc/wsum) : 0;
+        if (hfrac>0){
           const g = ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,R);
           const col = (o.type==='attractor')? '26,137,23' : '220,60,60';
-          const a = state.params.heatAlpha * frac;
+          const a = state.params.heatAlpha * hfrac;
           g.addColorStop(0, `rgba(${col},${a})`);
           g.addColorStop(1, `rgba(${col},0)`);
           ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x,o.y,R,0,Math.PI*2); ctx.fill();
