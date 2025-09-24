@@ -13,7 +13,7 @@
     .toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
     .tool-group { display: flex; align-items: center; gap: 6px; }
     .tool-label { font-size: 14px; color: var(--muted); }
-    .tool-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; }
+    .tool-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; position: relative; }
     .tool-btn.active { outline: 2px solid var(--accent); }
     .tool { display: inline-flex; align-items: center; gap: 6px; }
     .tool input[type=range] { width: 120px; }
@@ -21,6 +21,16 @@
     #canvas { width: 100%; height: 100%; display: block; background: #ffffff; cursor: crosshair; }
     .hud { position: fixed; left: 12px; bottom: 12px; background: rgba(255,255,255,0.95); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 12px; color: var(--text); }
     .legend { color: var(--muted); font-size: 12px; }
+    /* Emoji button color cues (channel + valence) */
+    .tool-btn[data-emoji="🍎"], .tool-btn[data-emoji="🌶️"] { box-shadow: inset 0 0 0 2px rgba(230,40,30,0.25); }
+    .tool-btn[data-emoji="🍊"] { box-shadow: inset 0 0 0 2px rgba(30,150,60,0.25); }
+    .tool-btn[data-emoji="📣"], .tool-btn[data-emoji="💀"] { box-shadow: inset 0 0 0 2px rgba(40,90,220,0.25); }
+    .tool-btn[data-emoji]::after { content:""; width:8px; height:8px; border-radius:50%; position:absolute; right:6px; top:6px; }
+    .tool-btn[data-emoji="🍎"]::after { background: rgb(230,40,30); }
+    .tool-btn[data-emoji="🍊"]::after { background: rgb(30,150,60); }
+    .tool-btn[data-emoji="📣"]::after { background: rgb(40,90,220); }
+    .tool-btn[data-emoji="🌶️"]::after { background: rgb(230,40,30); }
+    .tool-btn[data-emoji="💀"]::after { background: rgb(40,90,220); }
     /* Collapsible math panel */
     .panel.math { position: fixed; right: 12px; top: 64px; width: 380px; max-width: 92vw; z-index: 20; }
     .panel.collapsed { height: 48px; overflow: hidden; }
@@ -105,6 +115,9 @@
         $$\dot q_i \mathrel{+}= s_k\,\sigma(\|x_i-x_k\|)\, e_{c(k)} \quad (s_k=\pm1)$$
         <p>Graph information passing (finite-speed diffusion over a proximity graph $w_{ij}$):</p>
         $$\dot q_i \mathrel{+}= \sum_j w_{ij}\,(q_j - q_i),\quad w_{ij}=\phi(\|x_i-x_j\|)\,\psi(\|v_i-v_j\|)$$
+        <p>Coupling of information to motion (awareness-driven sensitivity):</p>
+        $$F_k^{\text{eff}}(q_i) = \bigl(1 + \beta\, s_k\, e_{c(k)}^\top q_i\bigr)\,F_k$$
+        with $0\le \beta < 1$ so the sign of $F_k$ is preserved; positive alignment increases attraction (or repulsion), negative alignment diminishes it.
         <p>This is a pedagogical approximation: we visualize three components (RGB) rather than the full 8-dim $\mathfrak{su}(3)$ basis.</p>
       </div>
     </div>
@@ -199,24 +212,28 @@
       const dr = theta * ( -a1*g + a2*b);
       const dg = theta * (  a1*r - a3*b);
       const db = theta * ( -a2*r + a3*g);
-      info[0]=clamp(r+dr,0,1); info[1]=clamp(g+dg,0,1); info[2]=clamp(b+db,0,1);
+      info[0]=clamp(r+dr,-1,1); info[1]=clamp(g+dg,-1,1); info[2]=clamp(b+db,-1,1);
     }
 
     function step(dt){
       const {kAttr,kRepel,commR,infoRate,speed} = state.params;
       const commR2 = commR*commR;
       // Movement influenced by objects
+      const infoSens = 0.8; // knowledge-to-force sensitivity
       for(const f of state.flies){
         let ax=0, ay=0; // acceleration
         for(const o of state.objs){
           const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
-          const str = (o.type==='attractor'? kAttr : -kRepel) / r2;
+          const idx = emojiColorIndex.get(o.emoji) ?? 0;
+          const reactSign = (o.type==='attractor')? 1 : -1;
+          const sensScale = 1 + infoSens * (f.info[idx]||0) * reactSign; // never flips sign
+          const str = sensScale * (o.type==='attractor'? kAttr : -kRepel) / r2;
           ax += str * dx / r; ay += str * dy / r;
           // Sensing -> update color component mapped from emoji
-          const idx = emojiColorIndex.get(o.emoji) ?? 0;
           if (r<60){
             const sgn = (o.type==='attractor')? 1 : -1;
-            f.info[idx] = clamp(f.info[idx] + sgn * 1.8*dt, 0, 1);
+            const val = (f.info[idx]||0) + sgn * 1.8*dt;
+            f.info[idx] = clamp(val, -1, 1);
           }
         }
         // integrate velocity (damped)
@@ -248,12 +265,12 @@
           const psi = 1/(1+vrel/40);
           const k = infoRate * Math.max(0,phi) * psi;
           // vector exchange per component
-          const dr = (g.info[0]-f.info[0]) * k * dt;
-          const dg = (g.info[1]-f.info[1]) * k * dt;
-          const db = (g.info[2]-f.info[2]) * k * dt;
-          f.info[0]=clamp(f.info[0]+dr,0,1); g.info[0]=clamp(g.info[0]-dr,0,1);
-          f.info[1]=clamp(f.info[1]+dg,0,1); g.info[1]=clamp(g.info[1]-dg,0,1);
-          f.info[2]=clamp(f.info[2]+db,0,1); g.info[2]=clamp(g.info[2]-db,0,1);
+          const dr = ((g.info[0]||0)-(f.info[0]||0)) * k * dt;
+          const dg = ((g.info[1]||0)-(f.info[1]||0)) * k * dt;
+          const db = ((g.info[2]||0)-(f.info[2]||0)) * k * dt;
+          f.info[0]=clamp((f.info[0]||0)+dr,-1,1); g.info[0]=clamp((g.info[0]||0)-dr,-1,1);
+          f.info[1]=clamp((f.info[1]||0)+dg,-1,1); g.info[1]=clamp((g.info[1]||0)-dg,-1,1);
+          f.info[2]=clamp((f.info[2]||0)+db,-1,1); g.info[2]=clamp((g.info[2]||0)-db,-1,1);
           // draw info link colored by difference magnitude
           if (drawn<maxLinks){
             const mr = Math.abs(f.info[0]-g.info[0]);
@@ -282,17 +299,22 @@
       // flies with info dots (RGB)
       for(const f of state.flies){
         // body
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.beginPath(); ctx.arc(f.x, f.y, 3.4, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.beginPath(); ctx.arc(f.x, f.y, 3.8, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.stroke();
         // info dots around
-        const R=5.2;
+        const R=5.6;
         const angs=[-Math.PI/2, -Math.PI/2 + 2*Math.PI/3, -Math.PI/2 + 4*Math.PI/3];
         const cols=[[230,40,30],[30,150,60],[40,90,220]]; // R,G,B
         for(let k=0;k<3;k++){
           const a=angs[k]; const x=f.x+R*Math.cos(a), y=f.y+R*Math.sin(a);
-          const s=1.2+2.2*f.info[k];
-          const c=cols[k]; ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.35+0.55*f.info[k]})`;
+          const val = Math.abs(f.info[k]||0);
+          const s=1.2+2.2*val;
+          const c=cols[k]; ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.25+0.6*val})`;
+          // negative value -> dark ring to denote avoidance coding
+          if ((f.info[k]||0) < 0){ ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=0.8; } else { ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=0.5; }
           ctx.beginPath(); ctx.arc(x,y, s, 0, Math.PI*2); ctx.fill();
+          ctx.stroke();
         }
       }
     }
