@@ -1,4 +1,6 @@
 .bundle/
 vendor/
 _site/
-.jekyll-cache/ 
+.jekyll-cache/
+.http-*.log
+.http-*.pid
