@@ -9,8 +9,8 @@
   <style>
     html, body { height: 100%; }
     body { margin: 0; background: #fff; }
-    .sim-root { position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr; }
-    .toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+    .sim-root { position: fixed; inset: 0; display: grid; grid-template-rows: 1fr; }
+    .toolbar { display: none; }
     .tool-group { display: flex; align-items: center; gap: 6px; }
     .tool-label { font-size: 14px; color: var(--muted); }
     .tool-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; position: relative; }
@@ -35,6 +35,12 @@
     .panel.math { position: fixed; right: 12px; top: 64px; width: 380px; max-width: 92vw; z-index: 20; }
     .panel.collapsed { height: 48px; overflow: hidden; }
     .panel.collapsed .panel-content { display: none; }
+    /* Controls panel */
+    .panel.controls { position: fixed; right: 12px; bottom: 12px; width: 360px; max-width: 92vw; z-index: 20; }
+    .controls .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .controls .row { display:flex; align-items:center; gap:8px; }
+    .controls .row small { color: var(--muted); width: 64px; }
+    .controls input[type=range] { width: 160px; }
   </style>
   <script>
     window.MathJax = {
@@ -46,55 +52,48 @@
 </head>
 <body>
   <div class="sim-root">
-    <div class="toolbar">
-      <div class="tool-group">
-        <span class="tool-label">Concept:</span>
-        <button class="tool-btn" data-emoji="🍎" title="Apple (attractor)">🍎</button>
-        <button class="tool-btn" data-emoji="🍊" title="Orange (attractor)">🍊</button>
-        <button class="tool-btn" data-emoji="📣" title="Beacon (attractor)">📣</button>
-        <button class="tool-btn" data-emoji="🌶️" title="Chili (repellent)">🌶️</button>
-        <button class="tool-btn" data-emoji="💀" title="Hazard (repellent)">💀</button>
-      </div>
-      <div class="tool-group" style="margin-left:14px;">
-        <span class="tool-label">Mode:</span>
-        <button class="tool-btn" id="modeAdd">Add</button>
-        <button class="tool-btn" id="modeRemove">Remove</button>
-      </div>
-      <div class="tool-group" style="margin-left:14px;">
-        <div class="tool">
-          <small>Flies</small>
-          <input id="flies" type="range" min="60" max="500" step="10" value="220" />
-          <small id="fliesV">220</small>
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="panel controls" id="controlsPanel">
+    <div class="panel-header" id="controlsHeader">
+      <span class="panel-title">Controls</span>
+      <button class="panel-toggle" id="controlsToggle">▼</button>
+    </div>
+    <div class="panel-content" id="controlsContent">
+      <div class="grid">
+        <div>
+          <div class="tool-label" style="margin-bottom:6px;">Concept</div>
+          <div class="tool-group" style="flex-wrap:wrap; gap:6px;">
+            <button class="tool-btn" data-emoji="🍎" title="Apple (attractor)">🍎</button>
+            <button class="tool-btn" data-emoji="🍊" title="Orange (attractor)">🍊</button>
+            <button class="tool-btn" data-emoji="📣" title="Beacon (attractor)">📣</button>
+            <button class="tool-btn" data-emoji="🌶️" title="Chili (repellent)">🌶️</button>
+            <button class="tool-btn" data-emoji="💀" title="Hazard (repellent)">💀</button>
+          </div>
+          <div class="tool-group" style="margin-top:8px;">
+            <span class="tool-label">Mode</span>
+            <button class="tool-btn" id="modeAdd">Add</button>
+            <button class="tool-btn" id="modeRemove">Remove</button>
+          </div>
         </div>
-        <div class="tool">
-          <small>Attract</small>
-          <input id="attr" type="range" min="0" max="240" step="1" value="120" />
-          <small id="attrV">120</small>
-        </div>
-        <div class="tool">
-          <small>Repel</small>
-          <input id="repel" type="range" min="0" max="240" step="1" value="140" />
-          <small id="repelV">140</small>
-        </div>
-        <div class="tool">
-          <small>Comm</small>
-          <input id="comm" type="range" min="20" max="200" step="1" value="90" />
-          <small id="commV">90</small>
-        </div>
-        <div class="tool">
-          <small>Info</small>
-          <input id="info" type="range" min="0" max="4" step="0.05" value="1.2" />
-          <small id="infoV">1.20</small>
+        <div>
+          <div class="row"><small>Flies</small><input id="flies" type="range" min="60" max="500" step="10" value="220" /><small id="fliesV">220</small></div>
+          <div class="row"><small>Attract</small><input id="attr" type="range" min="0" max="240" step="1" value="120" /><small id="attrV">120</small></div>
+          <div class="row"><small>Repel</small><input id="repel" type="range" min="0" max="240" step="1" value="140" /><small id="repelV">140</small></div>
+          <div class="row"><small>Comm</small><input id="comm" type="range" min="20" max="220" step="1" value="100" /><small id="commV">100</small></div>
+          <div class="row"><small>Info</small><input id="info" type="range" min="0" max="4" step="0.05" value="1.2" /><small id="infoV">1.20</small></div>
+          <div class="row"><small>Forget</small><input id="forget" type="range" min="0" max="2" step="0.02" value="0.18" /><small id="forgetV">0.18</small></div>
+          <div class="row"><small>Awareness β</small><input id="beta" type="range" min="0" max="0.99" step="0.01" value="0.8" /><small id="betaV">0.80</small></div>
+          <div class="row"><small>Social</small><input id="social" type="range" min="0" max="180" step="2" value="64" /><small id="socialV">64</small></div>
         </div>
       </div>
-      <div class="tool-group" style="margin-left:auto;">
+      <div class="tool-group" style="margin-top:8px; gap:8px;">
         <button class="btn-secondary tool-btn" id="toggleMath">Math</button>
         <button class="btn-secondary tool-btn" id="togglePause">Pause</button>
         <button class="btn-secondary tool-btn" id="clear">Clear</button>
         <a href="../index.html" class="btn-secondary tool-btn">Home</a>
       </div>
     </div>
-    <canvas id="canvas"></canvas>
   </div>
   <div class="hud" id="hud"></div>
   <div class="panel math collapsed" id="mathPanel">
@@ -136,7 +135,7 @@
       flies: [], // {x,y,vx,vy,info:[r,g,b]}
       objs: [],  // {x,y,emoji,type:'attractor'|'repellent'}
       grid: null, // spatial hash
-      params: { N:220, kAttr:120, kRepel:140, commR:90, infoRate:1.2, speed:42 },
+      params: { N:220, kAttr:120, kRepel:140, commR:100, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:64 },
       paused:false,
       tool: { emoji:'🍎', mode:'add' },
       emojiType: new Map([
@@ -150,7 +149,7 @@
 
     function resize(){
       W = canvas.clientWidth = window.innerWidth;
-      H = canvas.clientHeight = window.innerHeight - document.querySelector('.toolbar').offsetHeight;
+      H = canvas.clientHeight = window.innerHeight;
       canvas.width = Math.floor(W*DPR); canvas.height = Math.floor(H*DPR);
       canvas.style.width = W+'px'; canvas.style.height = H+'px';
       ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -216,61 +215,53 @@
     }
 
     function step(dt){
-      const {kAttr,kRepel,commR,infoRate,speed} = state.params;
+      const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social} = state.params;
       const commR2 = commR*commR;
-      // Movement influenced by objects
-      const infoSens = 0.8; // knowledge-to-force sensitivity
-      for(const f of state.flies){
-        let ax=0, ay=0; // acceleration
+      // Movement influenced by objects + forgetting first pass
+      const N = state.flies.length; const ax = new Float32Array(N), ay = new Float32Array(N);
+      for(let i=0;i<N;i++){
+        const f = state.flies[i];
+        // forget
+        f.info[0] = clamp(f.info[0] - forget*f.info[0]*dt, -1, 1);
+        f.info[1] = clamp(f.info[1] - forget*f.info[1]*dt, -1, 1);
+        f.info[2] = clamp(f.info[2] - forget*f.info[2]*dt, -1, 1);
         for(const o of state.objs){
           const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
           const idx = emojiColorIndex.get(o.emoji) ?? 0;
           const reactSign = (o.type==='attractor')? 1 : -1;
-          const sensScale = 1 + infoSens * (f.info[idx]||0) * reactSign; // never flips sign
+          const sensScale = 1 + beta * (f.info[idx]||0) * reactSign; // never flips sign
           const str = sensScale * (o.type==='attractor'? kAttr : -kRepel) / r2;
-          ax += str * dx / r; ay += str * dy / r;
-          // Sensing -> update color component mapped from emoji
-          if (r<60){
-            const sgn = (o.type==='attractor')? 1 : -1;
-            const val = (f.info[idx]||0) + sgn * 1.8*dt;
-            f.info[idx] = clamp(val, -1, 1);
-          }
+          ax[i] += str * dx / r; ay[i] += str * dy / r;
+          // Sensing update
+          if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; f.info[idx] = clamp((f.info[idx]||0) + sgn * 1.8*dt, -1, 1); }
         }
-        // integrate velocity (damped)
-        f.vx = clamp(f.vx + ax*dt, -140, 140);
-        f.vy = clamp(f.vy + ay*dt, -140, 140);
-        // gauge-like mixing due to motion
-        parallelTransport(f.info, f.vx, f.vy, dt, speed);
       }
-      // Position + boundaries
-      for(const f of state.flies){
-        const v=Math.hypot(f.vx,f.vy)||1; const vmax=speed;
-        if(v>vmax){ f.vx=f.vx/v*vmax; f.vy=f.vy/v*vmax; }
-        f.x += f.vx*dt; f.y += f.vy*dt;
-        if (f.x<4){ f.x=4; f.vx=Math.abs(f.vx); }
-        if (f.x>W-4){ f.x=W-4; f.vx=-Math.abs(f.vx); }
-        if (f.y<4){ f.y=4; f.vy=Math.abs(f.vy); }
-        if (f.y>H-4){ f.y=H-4; f.vy=-Math.abs(f.vy); }
-      }
-      // Communication (information passing) via local diffusion with delay
+      // Communication (information passing) + social alignment on proximity graph
       buildGrid();
-      const maxLinks=120; let drawn=0; // draw limited info links
-      for(let i=0;i<state.flies.length;i++){
-        const f = state.flies[i];
+      const maxLinks=120; let drawn=0;
+      for(let i=0;i<N;i++){
+        const f = state.flies[i]; const vfi = Math.hypot(f.vx,f.vy)||1e-6; const ufi=[f.vx/vfi, f.vy/vfi];
         const neigh = neighbors(i);
         for(const j of neigh){ if(j<=i) continue; const g=state.flies[j];
-          const d2 = dist2(f.x,f.y,g.x,g.y); if(d2>commR2) continue;
-          const d = Math.sqrt(d2); const phi = 1 - d/commR;
+          const d2 = dist2(f.x,f.y,g.x,g.y); if(d2>commR2) continue; const d=Math.sqrt(d2);
+          const phi = 1 - d/commR; if (phi<=0) continue;
           const vrel = Math.hypot(f.vx-g.vx, f.vy-g.vy);
           const psi = 1/(1+vrel/40);
-          const k = infoRate * Math.max(0,phi) * psi;
-          // vector exchange per component
+          const k = infoRate * phi * psi;
+          // info exchange per component
           const dr = ((g.info[0]||0)-(f.info[0]||0)) * k * dt;
           const dg = ((g.info[1]||0)-(f.info[1]||0)) * k * dt;
           const db = ((g.info[2]||0)-(f.info[2]||0)) * k * dt;
           f.info[0]=clamp((f.info[0]||0)+dr,-1,1); g.info[0]=clamp((g.info[0]||0)-dr,-1,1);
           f.info[1]=clamp((f.info[1]||0)+dg,-1,1); g.info[1]=clamp((g.info[1]||0)-dg,-1,1);
           f.info[2]=clamp((f.info[2]||0)+db,-1,1); g.info[2]=clamp((g.info[2]||0)-db,-1,1);
+          // social alignment: pull toward informed neighbor heading
+          const infG = Math.max(Math.abs(g.info[0]||0), Math.abs(g.info[1]||0), Math.abs(g.info[2]||0));
+          const infF = Math.max(Math.abs(f.info[0]||0), Math.abs(f.info[1]||0), Math.abs(f.info[2]||0));
+          const w = social * phi * psi * 0.5;
+          const vgj = Math.hypot(g.vx,g.vy)||1e-6; const ugj=[g.vx/vgj, g.vy/vgj];
+          ax[i] += (ugj[0]-ufi[0]) * w * infG; ay[i] += (ugj[1]-ufi[1]) * w * infG;
+          ax[j] += (ufi[0]-ugj[0]) * w * infF; ay[j] += (ufi[1]-ugj[1]) * w * infF;
           // draw info link colored by difference magnitude
           if (drawn<maxLinks){
             const mr = Math.abs(f.info[0]-g.info[0]);
@@ -283,6 +274,20 @@
             drawn++;
           }
         }
+      }
+      // integrate
+      for(let i=0;i<N;i++){
+        const f=state.flies[i];
+        f.vx = clamp(f.vx + ax[i]*dt, -160, 160);
+        f.vy = clamp(f.vy + ay[i]*dt, -160, 160);
+        parallelTransport(f.info, f.vx, f.vy, dt, speed);
+        const v=Math.hypot(f.vx,f.vy)||1; const vmax=speed;
+        if(v>vmax){ f.vx=f.vx/v*vmax; f.vy=f.vy/v*vmax; }
+        f.x += f.vx*dt; f.y += f.vy*dt;
+        if (f.x<4){ f.x=4; f.vx=Math.abs(f.vx); }
+        if (f.x>W-4){ f.x=W-4; f.vx=-Math.abs(f.vx); }
+        if (f.y<4){ f.y=4; f.vy=Math.abs(f.vy); }
+        if (f.y>H-4){ f.y=H-4; f.vy=-Math.abs(f.vy); }
       }
     }
 
@@ -365,6 +370,9 @@
     bindRange('repel','kRepel');
     bindRange('comm','commR');
     bindRange('info','infoRate', v=>v.toFixed(2));
+    bindRange('forget','forget', v=>v.toFixed(2));
+    bindRange('beta','beta', v=>(+v).toFixed(2));
+    bindRange('social','social');
 
     document.getElementById('togglePause').addEventListener('click', ()=>{ state.paused=!state.paused; document.getElementById('togglePause').textContent = state.paused?'Resume':'Pause'; });
     document.getElementById('clear').addEventListener('click', ()=>{ state.objs.length=0; state.flies.forEach(f=>{ f.info[0]=0; f.info[1]=0; f.info[2]=0; }); });
@@ -373,6 +381,10 @@
     function toggleMath(){ mathPanel.classList.toggle('collapsed'); }
     document.getElementById('mathToggle').addEventListener('click', toggleMath);
     document.getElementById('toggleMath').addEventListener('click', toggleMath);
+    // controls panel toggle
+    const controlsPanel=document.getElementById('controlsPanel');
+    document.getElementById('controlsToggle').addEventListener('click', ()=> controlsPanel.classList.toggle('collapsed'));
+    document.getElementById('controlsHeader').addEventListener('click', ()=> controlsPanel.classList.toggle('collapsed'));
 
     // Loop
     let last=performance.now();
