@@ -104,6 +104,7 @@
             <div class="row"><small>Attract</small><input id="attr" type="range" min="0" max="300" step="1" value="140" /><small id="attrV">140</small></div>
             <div class="row"><small>Repel</small><input id="repel" type="range" min="0" max="400" step="1" value="180" /><small id="repelV">180</small></div>
             <div class="row"><small>Comm</small><input id="comm" type="range" min="20" max="260" step="1" value="110" /><small id="commV">110</small></div>
+            <div class="row"><small>Cohesion</small><input id="cohesion" type="range" min="0" max="200" step="2" value="36" /><small id="cohesionV">36</small></div>
           </div>
           <div>
             <div class="row"><small>Info</small><input id="info" type="range" min="0" max="4" step="0.05" value="1.2" /><small id="infoV">1.20</small></div>
@@ -112,6 +113,10 @@
             <div class="row"><small>Social</small><input id="social" type="range" min="0" max="200" step="2" value="72" /><small id="socialV">72</small></div>
             <div class="row"><small>Hazard</small><input id="hazard" type="range" min="0" max="3" step="0.05" value="1.2" /><small id="hazardV">1.20</small></div>
             <div class="row"><small>Memory</small><input id="memSlots" type="range" min="1" max="3" step="1" value="2" /><small id="memSlotsV">2</small></div>
+            <div class="row"><small>Separation</small><input id="separation" type="range" min="0" max="300" step="2" value="120" /><small id="separationV">120</small></div>
+            <div class="row"><small>SepDist</small><input id="sepDist" type="range" min="5" max="80" step="1" value="28" /><small id="sepDistV">28</small></div>
+            <div class="row"><small>HeatR</small><input id="heatR" type="range" min="40" max="260" step="2" value="180" /><small id="heatRV">180</small></div>
+            <div class="row"><small>HeatA</small><input id="heatA" type="range" min="0" max="1" step="0.05" value="0.35" /><small id="heatAV">0.35</small></div>
           </div>
         </div>
       </div>
@@ -157,7 +162,7 @@
       flies: [], // {x,y,vx,vy,info:[r,g,b]}
       objs: [],  // {x,y,emoji,type:'attractor'|'repellent', qty?, maxQty?}
       grid: null, // spatial hash
-      params: { N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:72, hazardAlpha:1.2, memorySlots:2, resourceInit:150, consumeRate:24, consumeR:22, capDecay:2.0 },
+      params: { N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:72, hazardAlpha:1.2, memorySlots:2, cohesion:36, separation:120, sepDist:28, heatR:180, heatAlpha:0.35, resourceInit:150, consumeRate:24, consumeR:22, capDecay:2.0 },
       paused:false,
       tool: { emoji:'🍎', mode:'add' },
       emojiType: new Map([
@@ -314,6 +319,29 @@
           }
         }
       }
+      // boids-style cohesion and separation (awareness weighted)
+      for(let i=0;i<N;i++){
+        const f = state.flies[i];
+        const neigh = neighbors(i);
+        let cx=0, cy=0, wsum=0; // cohesion
+        let sx=0, sy=0;        // separation
+        for(const j of neigh){ if(j===i) continue; const g=state.flies[j];
+          const dx=g.x-f.x, dy=g.y-f.y; const d2=dx*dx+dy*dy; const d=Math.sqrt(d2)+1e-6;
+          const phi = Math.max(0, 1 - d/state.params.commR);
+          const inf = Math.max(Math.abs(g.info[0]||0), Math.abs(g.info[1]||0), Math.abs(g.info[2]||0));
+          const w = phi * (0.5+0.5*inf);
+          cx += g.x * w; cy += g.y * w; wsum += w;
+          const sep = Math.max(0, state.params.sepDist - d);
+          if (sep>0){ sx += -(dx/d) * (sep*sep/d); sy += -(dy/d) * (sep*sep/d); }
+        }
+        if (wsum>0){
+          const tx = (cx/wsum) - f.x; const ty = (cy/wsum) - f.y;
+          ax[i] += state.params.cohesion * tx * 0.0015;
+          ay[i] += state.params.cohesion * ty * 0.0015;
+        }
+        ax[i] += state.params.separation * sx * 0.0025;
+        ay[i] += state.params.separation * sy * 0.0025;
+      }
       // integrate + capacity (keep top-K channels)
       for(let i=0;i<N;i++){
         const f=state.flies[i];
@@ -348,6 +376,24 @@
       // objects
       for(const o of state.objs){
         ctx.save(); ctx.font = '20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        // info heatmap
+        const idx = emojiColorIndex.get(o.emoji) ?? 0;
+        const R = state.params.heatR;
+        let acc=0, wsum=0; const sig2=(R*0.5)*(R*0.5);
+        for(const f of state.flies){
+          const dx=f.x-o.x, dy=f.y-o.y; const d2=dx*dx+dy*dy; if(d2>R*R) continue;
+          const sraw = (o.type==='attractor')? Math.max(0, f.info[idx]||0) : Math.max(0, -(f.info[idx]||0));
+          const w = Math.exp(-d2/(2*sig2)); acc += sraw*w; wsum += w;
+        }
+        const frac = wsum>0? Math.min(1, acc/wsum) : 0;
+        if (frac>0){
+          const g = ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,R);
+          const col = (o.type==='attractor')? '26,137,23' : '220,60,60';
+          const a = state.params.heatAlpha * frac;
+          g.addColorStop(0, `rgba(${col},${a})`);
+          g.addColorStop(1, `rgba(${col},0)`);
+          ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x,o.y,R,0,Math.PI*2); ctx.fill();
+        }
         ctx.fillText(o.emoji, o.x, o.y);
         // halo / resource ring
         const isCons = (o.type==='attractor' && Number.isFinite(o.maxQty));
@@ -441,6 +487,11 @@
     bindRange('social','social');
     bindRange('hazard','hazardAlpha', v=>v.toFixed(2));
     bindRange('memSlots','memorySlots');
+    bindRange('cohesion','cohesion');
+    bindRange('separation','separation');
+    bindRange('sepDist','sepDist');
+    bindRange('heatR','heatR');
+    bindRange('heatA','heatAlpha', v=>v.toFixed(2));
 
     document.getElementById('togglePause').addEventListener('click', ()=>{ state.paused=!state.paused; document.getElementById('togglePause').textContent = state.paused?'Resume':'Pause'; });
     document.getElementById('clear').addEventListener('click', ()=>{ state.objs.length=0; state.flies.forEach(f=>{ f.info[0]=0; f.info[1]=0; f.info[2]=0; }); });
@@ -467,6 +518,28 @@
     tabTools.addEventListener('click', ()=> setTab('tools'));
     tabSettings.addEventListener('click', ()=> setTab('settings'));
     setTab('tools');
+
+    // Persist settings
+    function saveSettings(){
+      try{
+        const p=state.params; const data={
+          N:p.N,kAttr:p.kAttr,kRepel:p.kRepel,commR:p.commR,infoRate:p.infoRate,speed:p.speed,forget:p.forget,beta:p.beta,social:p.social,hazardAlpha:p.hazardAlpha,memorySlots:p.memorySlots,cohesion:p.cohesion,separation:p.separation,sepDist:p.sepDist,heatR:p.heatR,heatAlpha:p.heatAlpha
+        };
+        localStorage.setItem('infoflies.settings', JSON.stringify(data));
+      }catch(e){}
+    }
+    function loadSettings(){
+      try{
+        const raw=localStorage.getItem('infoflies.settings'); if(!raw) return; const d=JSON.parse(raw);
+        const set=(id,val)=>{ const el=document.getElementById(id); if(!el) return; el.value=String(val); el.dispatchEvent(new Event('input',{bubbles:true})); };
+        for(const [id,key] of [['flies','N'],['attr','kAttr'],['repel','kRepel'],['comm','commR'],['info','infoRate'],['forget','forget'],['beta','beta'],['social','social'],['hazard','hazardAlpha'],['memSlots','memorySlots'],['cohesion','cohesion'],['separation','separation'],['sepDist','sepDist'],['heatR','heatR'],['heatA','heatAlpha']]){
+          if(d[key]!==undefined) set(id,d[key]);
+        }
+      }catch(e){}
+    }
+    // attach save to sliders
+    document.querySelectorAll('#settingsSection input[type=range]').forEach(el=> el.addEventListener('input', saveSettings));
+    loadSettings();
 
     // Loop
     let last=performance.now();
