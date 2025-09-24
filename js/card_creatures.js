@@ -1,5 +1,6 @@
 // Card Creatures: tiny ants/flies carrying shapes in card headers
 // Lightweight, respectful of performance and prefers-reduced-motion
+// Less motion: mini number lattice with ants reinforcing edges
 (function(){
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce) return;
@@ -7,11 +8,15 @@
   const covers = Array.from(document.querySelectorAll('.card-cover'));
   if (!covers.length) return;
 
-  function colorFromCSSVar(el, name, fallback){
+  function cssVar(el, name, fallback){
     const s = getComputedStyle(el);
     const v = s.getPropertyValue(name).trim();
     return v || fallback;
   }
+
+  function isPrime(n){ if(n<2) return false; if(n%2===0) return n===2; const r=Math.sqrt(n); for(let p=3;p<=r;p+=2){ if(n%p===0) return false;} return true; }
+  function gcd(a,b){ while(b!==0){ const t=b; b=a%b; a=t; } return Math.abs(a); }
+  function key(i,j){ return i<j? `${i}-${j}` : `${j}-${i}`; }
 
   function setupCover(cover){
     const canvas = document.createElement('canvas');
@@ -21,16 +26,18 @@
     const DPR = Math.max(1, Math.min(2, (window.devicePixelRatio||1))); // cap DPR for perf
     let w=0,h=0, running=false, raf=0, last=0;
 
-    // palette based on category variables
-    const tagColor = colorFromCSSVar(cover, '--tag-color', '#444');
-    const accent = colorFromCSSVar(cover, '--accent', '#1a8917');
-    const stroke = tagColor || '#666';
+    // palette
+    const tagColor = cssVar(cover, '--tag-color', '#444');
+    const textColor = 'rgba(0,0,0,0.70)';
+    const edgeAlphaBase = 0.06;
 
-    const MAX = 10; // agents per card
-    const agents = [];
-    const shapes = ['circle','square','triangle'];
+    // state
+    let nodes = []; // {x,y,vx,vy,val,prime}
+    let edges = new Map(); // key -> weight
+    let ants = [];  // {cur,tgt,progress,speed}
+
     function rand(a,b){ return Math.random()*(b-a)+a; }
-    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
 
     function resize(){
       const r = cover.getBoundingClientRect();
@@ -41,93 +48,119 @@
       ctx.setTransform(DPR,0,0,DPR,0,0);
     }
 
-    function makeAgent(){
-      const type = Math.random()<0.5 ? 'ant' : 'fly';
-      const x = rand(8, w-8), y = rand(8, h-8);
-      const speed = type==='ant' ? rand(18,28) : rand(28,40); // px/sec
-      const dir = rand(-Math.PI, Math.PI);
-      const carry = Math.random()<0.45; // sometimes carrying
-      return {x, y, dir, vx: Math.cos(dir)*speed, vy: Math.sin(dir)*speed, speed, type, carry, 
-              shape: pick(shapes), t: rand(0,1)};
+    function init(){
+      nodes = [];
+      edges.clear();
+      ants = [];
+      const N = clamp(Math.floor(w/70), 8, 14);
+      const used = new Set();
+      for(let i=0;i<N;i++){
+        let v=0, guard=0; do { v = Math.floor(rand(2,200)); guard++; } while(used.has(v) && guard<40);
+        used.add(v);
+        const speed=rand(4,8); // px/sec (very slow)
+        nodes.push({ x: rand(10,w-10), y: rand(12,h-12), vx: rand(-1,1), vy: rand(-1,1), val:v, prime:isPrime(v), sp:speed });
+      }
+      // edges: gcd/divisibility
+      for(let i=0;i<N;i++){
+        for(let j=i+1;j<N;j++){
+          const a=nodes[i].val, b=nodes[j].val;
+          if (gcd(a,b)>1 || a%b===0 || b%a===0){ edges.set(key(i,j), Math.random()*0.15+0.05); }
+        }
+      }
+      // ensure some structure
+      if (edges.size < N){
+        for(let i=0;i<N;i++){
+          // nearest neighbor fallback
+          let best=-1, bd=1e9;
+          for(let j=0;j<N;j++) if(j!==i){
+            const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y; const d=dx*dx+dy*dy;
+            if(d<bd){ bd=d; best=j; }
+          }
+          if (best>=0) edges.set(key(i,best), Math.random()*0.1+0.05);
+        }
+      }
+      // ants
+      const A = clamp(Math.floor(N/4), 2, 4);
+      for(let k=0;k<A;k++) ants.push(makeAnt(N));
     }
 
-    function initAgents(){
-      agents.length = 0;
-      const N = Math.min(MAX, Math.max(6, Math.floor(w/80))); // scale to width
-      for(let i=0;i<N;i++) agents.push(makeAgent());
+    function neighbors(i){
+      const res=[];
+      for(let j=0;j<nodes.length;j++) if(j!==i){ if (edges.has(key(i,j))) res.push(j); }
+      return res;
     }
 
-    function wrap(a, lo, hi){ if(a<lo) return hi-(lo-a); if(a>hi) return lo+(a-hi); return a; }
+    function chooseNext(i){
+      const nb = neighbors(i);
+      if (!nb.length) return Math.floor(rand(0,nodes.length));
+      // prefer cross prime/composite
+      const a = nodes[i];
+      const pref = nb.filter(j=> nodes[j].prime!==a.prime);
+      const pool = pref.length? pref : nb;
+      return pool[Math.floor(rand(0,pool.length))];
+    }
+
+    function makeAnt(N){
+      const cur = Math.floor(rand(0,N));
+      const tgt = chooseNext(cur);
+      const speed = rand(10,16); // px/sec, calm
+      return { cur, tgt, progress: 0, speed };
+    }
 
     function step(dt){
-      const turnAnt = 0.8;    // deg/sec-ish
-      const turnFly = 2.8;
-      for(const a of agents){
-        // wander turning
-        const turn = (a.type==='ant'?turnAnt:turnFly) * (Math.random()-0.5) * dt;
-        a.dir += turn;
-        a.vx = Math.cos(a.dir)*a.speed;
-        a.vy = Math.sin(a.dir)*a.speed;
-        a.x += a.vx*dt; a.y += a.vy*dt;
-        // soft steer to keep in bounds
-        if (a.x<8 || a.x>w-8 || a.y<8 || a.y>h-8){
-          const cx = Math.min(Math.max(a.x, 8), w-8);
-          const cy = Math.min(Math.max(a.y, 8), h-8);
-          const ang = Math.atan2(cy-a.y, cx-a.x);
-          a.dir = ang + rand(-0.2,0.2);
-        }
-        a.x = wrap(a.x, -10, w+10);
-        a.y = wrap(a.y, -10, h+10);
-        // toggle carry occasionally
-        a.t += dt; if (a.t>rand(2,5)) { a.carry = !a.carry; a.shape = pick(shapes); a.t=0; }
+      // nodes slow drift
+      for(const p of nodes){
+        p.x += p.vx*dt*p.sp*0.2; p.y += p.vy*dt*p.sp*0.2;
+        p.vx += rand(-0.02,0.02); p.vy += rand(-0.02,0.02);
+        const v=Math.hypot(p.vx,p.vy)||1, vmax=0.6; if(v>vmax){ p.vx=p.vx/v*vmax; p.vy=p.vy/v*vmax; }
+        if (p.x<8) { p.x=8; p.vx=Math.abs(p.vx); }
+        if (p.x>w-8){ p.x=w-8; p.vx=-Math.abs(p.vx); }
+        if (p.y<10){ p.y=10; p.vy=Math.abs(p.vy); }
+        if (p.y>h-10){ p.y=h-10; p.vy=-Math.abs(p.vy); }
+      }
+      // decay edges
+      for(const k of Array.from(edges.keys())){
+        const wgt = edges.get(k)*0.995;
+        if (wgt<0.01) edges.delete(k); else edges.set(k, wgt);
+      }
+      // ants move
+      for(const a of ants){
+        const A = nodes[a.cur]; const B = nodes[a.tgt];
+        const dx=B.x-A.x, dy=B.y-A.y; const d=Math.hypot(dx,dy)||1;
+        const stepLen = a.speed*dt;
+        a.progress = Math.min(1, a.progress + stepLen/d);
+        // strengthen edge
+        const k = key(a.cur, a.tgt);
+        edges.set(k, clamp((edges.get(k)||0)+0.02, 0, 1));
+        if (a.progress>=1){ a.cur = a.tgt; a.tgt = chooseNext(a.cur); a.progress=0; }
       }
     }
 
     function draw(){
       ctx.clearRect(0,0,w,h);
+      // edges under
       ctx.lineWidth = 1;
-      for(const a of agents){
-        // carried shape forward of agent
-        if (a.carry){
-          const ox = Math.cos(a.dir)*8, oy = Math.sin(a.dir)*8;
-          const sx = a.x + ox, sy = a.y + oy;
-          ctx.save();
-          ctx.translate(sx, sy);
-          ctx.rotate(a.dir);
-          ctx.globalAlpha = 0.85;
-          ctx.strokeStyle = stroke;
-          ctx.fillStyle = 'rgba(0,0,0,0)';
-          if (a.shape==='circle'){
-            ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.stroke();
-          } else if (a.shape==='square'){
-            ctx.strokeRect(-3.5,-3.5,7,7);
-          } else {
-            ctx.beginPath(); ctx.moveTo(0,-4); ctx.lineTo(4,3.5); ctx.lineTo(-4,3.5); ctx.closePath(); ctx.stroke();
-          }
-          // tether line
-          ctx.beginPath(); ctx.moveTo(-2,0); ctx.lineTo(-8,0); ctx.stroke();
-          ctx.restore();
-        }
-        // body (tiny ant/fly)
-        ctx.save();
-        ctx.translate(a.x, a.y); ctx.rotate(a.dir);
-        ctx.globalAlpha = 0.75;
-        ctx.strokeStyle = stroke;
-        // body: head + thorax + abdomen simplified
-        if (a.type==='ant'){
-          ctx.beginPath(); ctx.ellipse(-3,0,2.2,1.6,0,0,Math.PI*2); ctx.stroke(); // head
-          ctx.beginPath(); ctx.ellipse(0,0,2.6,1.8,0,0,Math.PI*2); ctx.stroke();  // thorax
-          ctx.beginPath(); ctx.ellipse(4,0,3,2.1,0,0,Math.PI*2); ctx.stroke();    // abdomen
-          // legs simplified
-          ctx.beginPath(); ctx.moveTo(-1.5,-2); ctx.lineTo(-4,-3); ctx.moveTo(-1.5,2); ctx.lineTo(-4,3); ctx.stroke();
-        } else {
-          // fly: compact body + wings
-          ctx.beginPath(); ctx.ellipse(0,0,3,2,0,0,Math.PI*2); ctx.stroke();
-          ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.ellipse(-1.5,-2.2,2.4,1.4,0,0,Math.PI*2); ctx.stroke();
-          ctx.beginPath(); ctx.ellipse(1.5,-2.2,2.4,1.4,0,0,Math.PI*2); ctx.stroke();
-        }
+      for(const [kk,weight] of edges){
+        const [i,j] = kk.split('-').map(Number); const A=nodes[i], B=nodes[j];
+        const alpha = edgeAlphaBase + weight*0.18;
+        ctx.strokeStyle = tagColor; ctx.globalAlpha = alpha;
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      }
+      // numbers
+      ctx.globalAlpha = 0.85; ctx.fillStyle = textColor; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+      for(const n of nodes){ ctx.fillText(String(n.val), n.x, n.y); }
+      // ants as tiny triangles
+      ctx.globalAlpha = 0.8; ctx.strokeStyle = tagColor; ctx.fillStyle = tagColor;
+      for(const a of ants){
+        const A = nodes[a.cur]; const B = nodes[a.tgt];
+        const t = a.progress; const x=A.x+(B.x-A.x)*t; const y=A.y+(B.y-A.y)*t;
+        const ang = Math.atan2(B.y-A.y, B.x-A.x);
+        ctx.save(); ctx.translate(x,y); ctx.rotate(ang);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-4,2); ctx.lineTo(-4,-2); ctx.closePath(); ctx.fill();
         ctx.restore();
       }
+      ctx.globalAlpha = 1;
     }
 
     function loop(ts){
@@ -137,7 +170,7 @@
       raf = requestAnimationFrame(loop);
     }
 
-    function start(){ if (!raf){ resize(); initAgents(); raf = requestAnimationFrame(loop); } }
+    function start(){ if (!raf){ resize(); init(); raf = requestAnimationFrame(loop); } }
     function stop(){ if (raf){ cancelAnimationFrame(raf); raf=0; running=false; } }
 
     const ro = new ResizeObserver(()=>{ resize(); });
@@ -158,4 +191,3 @@
 
   covers.forEach(c => io.observe(c));
 })();
-
