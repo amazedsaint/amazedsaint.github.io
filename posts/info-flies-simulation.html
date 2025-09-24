@@ -23,10 +23,14 @@
     .legend { color: var(--muted); font-size: 12px; }
     /* Emoji button color cues (channel + valence) */
     /* Flag buttons as colored blocks */
-    .tool-btn[data-flag] { font-size: 12px; font-weight: 600; color:#fff; }
-    .tool-btn[data-flag="red"] { background:#e44242; border-color:#d43a3a; }
-    .tool-btn[data-flag="blue"] { background:#3b82f6; border-color:#2563eb; }
-    .tool-btn[data-flag="white"] { background:#f3f4f6; border-color:#e5e7eb; color:#333; }
+    /* House buttons */
+    .tool-btn[data-house] { font-size: 12px; font-weight: 700; color:#fff; }
+    .tool-btn[data-house="stark"] { background:#6b7280; border-color:#4b5563; }
+    .tool-btn[data-house="lannister"] { background:#b91c1c; border-color:#991b1b; }
+    .tool-btn[data-house="targaryen"] { background:#111827; border-color:#1f2937; }
+    .tool-btn[data-house="tyrell"] { background:#065f46; border-color:#065f46; }
+    .tool-btn[data-house="walkers"] { background:#3b82f6; border-color:#2563eb; }
+    .tool-btn[data-house="wildfire"] { background:#10b981; border-color:#059669; }
     /* Collapsible math panel */
     .panel.math { position: fixed; right: 12px; top: 12px; width: 380px; max-width: 92vw; z-index: 20; }
     .panel.collapsed { height: 48px; overflow: hidden; }
@@ -81,11 +85,17 @@
       <div class="tab-section active" id="toolsSection">
         <div class="grid">
           <div>
-          <div class="tool-label" style="margin-bottom:6px;">Flags</div>
+          <div class="tool-label" style="margin-bottom:6px;">Houses (Attractors)</div>
           <div class="tool-group" style="flex-wrap:wrap; gap:6px;">
-            <button class="tool-btn" data-flag="red" title="Red Flag">🚩 Red</button>
-            <button class="tool-btn" data-flag="blue" title="Blue Flag">🚩 Blue</button>
-            <button class="tool-btn" data-flag="white" title="White Flag">🏳️ White</button>
+            <button class="tool-btn" data-house="stark" title="House Stark">Stark</button>
+            <button class="tool-btn" data-house="lannister" title="House Lannister">Lannister</button>
+            <button class="tool-btn" data-house="targaryen" title="House Targaryen">Targaryen</button>
+            <button class="tool-btn" data-house="tyrell" title="House Tyrell">Tyrell</button>
+          </div>
+          <div class="tool-label" style="margin:10px 0 6px 0;">Hazards (Repellents)</div>
+          <div class="tool-group" style="flex-wrap:wrap; gap:6px;">
+            <button class="tool-btn" data-house="walkers" title="White Walkers">Walkers</button>
+            <button class="tool-btn" data-house="wildfire" title="Wildfire">Wildfire</button>
           </div>
             <div class="tool-group" style="margin-top:8px;">
               <span class="tool-label">Mode</span>
@@ -193,13 +203,20 @@
     }
 
     // Defaults for reset
-    const defaultParams = { N:220, kFlag:140, commR:110, influence:1.2, speed:42, forget:0.18, social:72, cohesion:36, separation:120, sepDist:28 };
+    const defaultParams = { N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:72, cohesion:36, separation:120, sepDist:28, hazardAlpha:1.2 };
 
-    function addObject(x,y,flagColor){
-      // place a control flag that biases local motion
-      const color = flagColor || 'red';
-      const emoji = (color==='white')? '🏳️' : '🚩';
-      state.objs.push({x,y,emoji,type:'flag', color});
+    const HOUSES = {
+      stark:      { type:'attractor', idx:1, color:'#6b7280', name:'Stark' },
+      lannister:  { type:'attractor', idx:0, color:'#b91c1c', name:'Lannister' },
+      targaryen:  { type:'attractor', idx:2, color:'#111827', name:'Targaryen' },
+      tyrell:     { type:'attractor', idx:1, color:'#065f46', name:'Tyrell' },
+      walkers:    { type:'repellent', idx:2, color:'#3b82f6', name:'Walkers' },
+      wildfire:   { type:'repellent', idx:1, color:'#10b981', name:'Wildfire' },
+    };
+
+    function addObject(x,y,house){
+      const h=HOUSES[house]||HOUSES.stark;
+      state.objs.push({x,y,type:h.type, idx:h.idx, color:h.color, name:h.name});
     }
 
     function removeNearestObject(x,y){
@@ -443,15 +460,15 @@
     }
 
     // Interaction
-    function pickFlag(btn){
-      document.querySelectorAll('.tool-btn[data-flag]').forEach(b=>b.classList.remove('active'));
+    function pickHouse(btn){
+      document.querySelectorAll('.tool-btn[data-house]').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      state.tool.flag = btn.getAttribute('data-flag');
+      state.tool.house = btn.getAttribute('data-house');
     }
-    document.querySelectorAll('.tool-btn[data-flag]').forEach(btn=>{
-      btn.addEventListener('click', ()=> pickFlag(btn));
+    document.querySelectorAll('.tool-btn[data-house]').forEach(btn=>{
+      btn.addEventListener('click', ()=> pickHouse(btn));
     });
-    pickFlag(document.querySelector('.tool-btn[data-flag="red"]'));
+    pickHouse(document.querySelector('.tool-btn[data-house="stark"]'));
     const modeAdd=document.getElementById('modeAdd');
     const modeRemove=document.getElementById('modeRemove');
     function setMode(m){ state.tool.mode=m; modeAdd.classList.toggle('active', m==='add'); modeRemove.classList.toggle('active', m==='remove'); }
@@ -462,7 +479,7 @@
     canvas.addEventListener('click', (e)=>{
       const r=canvas.getBoundingClientRect(); const x=(e.clientX-r.left), y=(e.clientY-r.top);
       if (e.shiftKey || state.tool.mode==='remove') removeNearestObject(x,y);
-      else addObject(x,y,state.tool.flag);
+      else addObject(x,y,state.tool.house);
     });
 
     // Controls
@@ -473,9 +490,9 @@
       upd();
     }
     bindRange('flies','N');
-    bindRange('attr','kFlag');
+    bindRange('attr','kAttr');
     bindRange('comm','commR');
-    bindRange('info','influence', v=>v.toFixed(2));
+    bindRange('info','infoRate', v=>v.toFixed(2));
     bindRange('forget','forget', v=>v.toFixed(2));
     bindRange('social','social');
     bindRange('cohesion','cohesion');
@@ -548,11 +565,10 @@
     const tip=document.createElement('div'); tip.id='flagTip'; tip.className='flag-tip'; document.body.appendChild(tip);
     canvas.addEventListener('mousemove', (e)=>{
       const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top;
-      let best=-1, bd=900; for(let i=0;i<state.objs.length;i++){ const o=state.objs[i]; if(o.type!=='flag') continue; const d2=(o.x-mx)*(o.x-mx)+(o.y-my)*(o.y-my); if(d2<bd){ bd=d2; best=i; } }
+      let best=-1, bd=900; for(let i=0;i<state.objs.length;i++){ const o=state.objs[i]; const d2=(o.x-mx)*(o.x-mx)+(o.y-my)*(o.y-my); if(d2<bd){ bd=d2; best=i; } }
       if (best>=0 && bd < 1600){
-        const o=state.objs[best]; let aligned=0, neutral=0, ssum=0; for(const f of state.flies){ if(f.allegiance===best) { aligned++; ssum+= (f.s||0); } else if ((f.s||0)<0.1) neutral++; }
-        const avg = aligned? (ssum/aligned).toFixed(2) : '0.00';
-        tip.innerHTML = `${o.color.toUpperCase()} • aligned: ${aligned} • neutral: ${neutral} • avg s: ${avg}`;
+        const o=state.objs[best]; let aware=0; for(const f of state.flies){ const v=Math.abs(f.info[o.idx]||0); if(v>0.6) aware++; }
+        tip.innerHTML = `${o.name} • channel ${o.idx} • aware: ${aware}`;
         tip.style.left = `${e.clientX+12}px`; tip.style.top = `${e.clientY+12}px`; tip.style.display='block';
       } else { tip.style.display='none'; }
     });
