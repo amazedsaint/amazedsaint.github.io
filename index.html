@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>antifold - Computational Explorations in Neural Networks and Consciousness</title>
-    <meta name="description" content="Interactive simulations and research exploring neural networks, evolutionary computation, and consciousness through computational experiments.">
+    <title>antifold — Essays, Simulations, and Computational Explorations</title>
+    <meta name="description" content="Simple, elegant essays and interactive simulations exploring neural networks, evolution, and consciousness.">
     <link rel="stylesheet" href="style.css">
     <script>
         // Guard against duplicate custom element registrations from third-party overlays
@@ -29,24 +29,15 @@
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-    <meta name="theme-color" content="#000000" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="supported-color-schemes" content="dark" />
-    <meta name="description" content="antifold — Matrix console themed computational explorations and interactive simulations." />
-    <meta name="og:title" content="antifold — Matrix Console" />
-    <meta name="og:description" content="Interactive simulations in a Matrix-style console aesthetic." />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="og:title" content="antifold — Essays and Simulations" />
+    <meta name="og:description" content="Clean, readable articles and interactive demos on computation and mind." />
     <meta name="og:type" content="website" />
-    <style>
-      /* Ensure no caret block appears after the main title */
-      .site-title::after { content: none !important; animation: none !important; }
-    </style>
 </head>
 <body>
-    <canvas id="latticeCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:1;"></canvas>
     <div class="container">
         <header class="header">
             <h1 class="site-title">antifold</h1>
-            <p class="site-subtitle">Computational explorations in neural networks, evolution, and consciousness</p>
             <nav class="nav">
                 <a href="https://github.com/amazedsaint">GitHub</a>
                 <a href="https://twitter.com/amazedsaint">Twitter</a>
@@ -54,70 +45,42 @@
         </header>
 
         <main>
-            <!-- Featured Theory Article (Newest) -->
-            <section class="featured-simulation">
-                <div class="simulation-header">
-                    <span class="simulation-category">Interactive Theory</span>
-                    <h2 class="simulation-title">Nature's Algorithms: Topology-Inspired Visualizations</h2>
-                    <p class="simulation-description">
-                        Discover how ants and flies have been solving million-dollar computer science problems for millions of years. 
-                        Watch digital insects demonstrate fundamental algorithms: symmetry groups, manifold navigation, quantum tunneling, 
-                        and message passing that power everything from GPS to neural networks.
-                    </p>
-                    <div class="simulation-meta">
-                        <span>August 9, 2025</span>
-                        <span>•</span>
-                        <span>Interactive Demonstrations</span>
-                        <span>•</span>
-                        <span>Topology & Algorithms</span>
-                        <span>•</span>
-                        <span>Mathematical Visualizations</span>
-                    </div>
-                    <div class="simulation-actions">
-                        <a href="posts/topology-inspired-visualisation-article.html" class="btn-primary">
-                            🧮 Explore Interactive Demos
-                        </a>
-                    </div>
-                </div>
+            <section class="hero">
+                <p>Readable essays and interactive demos on neural networks, evolution, and consciousness — presented simply and elegantly.</p>
             </section>
 
-            <!-- Featured Research with Simulation -->
-            <section class="featured-simulation">
-                <div class="simulation-header">
-                    <span class="simulation-category">Interactive Research</span>
-                    <h2 class="simulation-title">Physics Aware Flies: SE(3) Group Dynamics</h2>
-                    <p class="simulation-description">
-                        Experience how symmetry, noise, and reward shape motion when agents evolve on Lie groups rather than vector spaces. 
-                        This interactive simulation demonstrates generative dynamics on SE(3), where each agent samples on-manifold increments 
-                        while a GAN-like critic shapes behavior through user-placed attractors, repellents, and diffusing plumes.
-                    </p>
-                    <div class="simulation-meta">
-                        <span>August 28, 2024</span>
-                        <span>•</span>
-                        <span>Interactive 3D Simulation</span>
-                        <span>•</span>
-                        <span>SE(3) Lie Groups</span>
-                        <span>•</span>
-                        <span>Research Article</span>
+            <section class="article-grid">
+                <a class="card" href="posts/topology-inspired-visualisation-article.html">
+                    <div class="card-cover">Theory</div>
+                    <div class="card-body">
+                        <div class="card-title">Nature's Algorithms: Topology‑Inspired Visualizations</div>
+                        <div class="card-desc">Interactive visual explanations of symmetry groups, manifold navigation, tunneling, and message passing.</div>
+                        <div class="card-meta">Aug 9, 2025 • Interactive • Mathematics</div>
                     </div>
-                    <div class="simulation-actions">
-                        <a href="posts/physics-aware-flies-simulation.html" class="btn-primary">
-                            🎮 Launch Interactive Simulation
-                        </a>
-                        <a href="posts/physics-aware-flies-article.html" class="btn-secondary">
-                            📖 Read Research Article
-                        </a>
+                </a>
+                <a class="card" href="posts/physics-aware-flies-article.html">
+                    <div class="card-cover">Research</div>
+                    <div class="card-body">
+                        <div class="card-title">Physics‑Aware Flies: SE(3) Group Dynamics</div>
+                        <div class="card-desc">How symmetry, noise, and reward shape motion when agents evolve on Lie groups instead of vector spaces.</div>
+                        <div class="card-meta">Aug 28, 2024 • Article • SE(3)</div>
                     </div>
-                </div>
+                </a>
+                <a class="card" href="posts/physics-aware-flies-simulation.html">
+                    <div class="card-cover">Simulation</div>
+                    <div class="card-body">
+                        <div class="card-title">Interactive: Physics‑Aware Flies</div>
+                        <div class="card-desc">Place attractors, repellents, and plumes; observe on‑manifold proposals and emergent motion.</div>
+                        <div class="card-meta">Aug 28, 2024 • 3D • Demo</div>
+                    </div>
+                </a>
             </section>
         </main>
 
         <footer class="footer">
-            <p>&copy; 2024 antifold • Computational explorations in consciousness</p>
-            <p style="margin-top: 8px;"><a href="https://twitter.com/amazedsaint" style="color: var(--matrix-green); text-decoration: none; font-weight: 800;">Follow me on 𝕏 (Twitter)</a></p>
+            <p>&copy; 2024 antifold • Essays and simulations</p>
+            <p style="margin-top: 8px;"><a href="https://twitter.com/amazedsaint">Follow on 𝕏 (Twitter)</a></p>
         </footer>
     </div>
-
-    <script src="js/lattice.js"></script>
 </body>
 </html>
