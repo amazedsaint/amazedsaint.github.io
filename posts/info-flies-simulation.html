@@ -32,11 +32,11 @@
     .tool-btn[data-emoji="🌶️"]::after { background: rgb(230,40,30); }
     .tool-btn[data-emoji="💀"]::after { background: rgb(40,90,220); }
     /* Collapsible math panel */
-    .panel.math { position: fixed; right: 12px; top: 64px; width: 380px; max-width: 92vw; z-index: 20; }
+    .panel.math { position: fixed; right: 12px; top: 72px; width: 380px; max-width: 92vw; z-index: 20; }
     .panel.collapsed { height: 48px; overflow: hidden; }
     .panel.collapsed .panel-content { display: none; }
     /* Controls panel */
-    .panel.controls { position: fixed; right: 12px; bottom: 12px; width: 360px; max-width: 92vw; z-index: 20; }
+    .panel.controls { position: fixed; right: 12px; top: 12px; width: 360px; max-width: 92vw; z-index: 20; }
     .controls .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .controls .row { display:flex; align-items:center; gap:8px; }
     .controls .row small { color: var(--muted); width: 64px; }
@@ -133,9 +133,9 @@
 
     const state = {
       flies: [], // {x,y,vx,vy,info:[r,g,b]}
-      objs: [],  // {x,y,emoji,type:'attractor'|'repellent'}
+      objs: [],  // {x,y,emoji,type:'attractor'|'repellent', qty?, maxQty?}
       grid: null, // spatial hash
-      params: { N:220, kAttr:120, kRepel:140, commR:100, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:64 },
+      params: { N:220, kAttr:120, kRepel:140, commR:100, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:64, resourceInit:150, consumeRate:24, consumeR:22, capDecay:2.0 },
       paused:false,
       tool: { emoji:'🍎', mode:'add' },
       emojiType: new Map([
@@ -166,7 +166,10 @@
 
     function addObject(x,y,emoji){
       const type = state.emojiType.get(emoji)||'attractor';
-      state.objs.push({x,y,emoji,type});
+      const consumable = (emoji==='🍎' || emoji==='🍊');
+      const maxQty = consumable ? state.params.resourceInit : Infinity;
+      const qty = maxQty;
+      state.objs.push({x,y,emoji,type, qty, maxQty});
     }
 
     function removeNearestObject(x,y){
@@ -215,13 +218,12 @@
     }
 
     function step(dt){
-      const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social} = state.params;
+      const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social,consumeRate,consumeR,capDecay} = state.params;
       const commR2 = commR*commR;
-      // Movement influenced by objects + forgetting first pass
       const N = state.flies.length; const ax = new Float32Array(N), ay = new Float32Array(N);
+      // forgetting and object forces
       for(let i=0;i<N;i++){
         const f = state.flies[i];
-        // forget
         f.info[0] = clamp(f.info[0] - forget*f.info[0]*dt, -1, 1);
         f.info[1] = clamp(f.info[1] - forget*f.info[1]*dt, -1, 1);
         f.info[2] = clamp(f.info[2] - forget*f.info[2]*dt, -1, 1);
@@ -229,14 +231,19 @@
           const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
           const idx = emojiColorIndex.get(o.emoji) ?? 0;
           const reactSign = (o.type==='attractor')? 1 : -1;
-          const sensScale = 1 + beta * (f.info[idx]||0) * reactSign; // never flips sign
-          const str = sensScale * (o.type==='attractor'? kAttr : -kRepel) / r2;
+          const sensScale = 1 + beta * (f.info[idx]||0) * reactSign;
+          const active = !(o.type==='attractor' && Number.isFinite(o.maxQty) && (o.qty||0) <= 0);
+          const str = active ? (sensScale * (o.type==='attractor'? kAttr : -kRepel) / r2) : 0;
           ax[i] += str * dx / r; ay[i] += str * dy / r;
-          // Sensing update
-          if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; f.info[idx] = clamp((f.info[idx]||0) + sgn * 1.8*dt, -1, 1); }
+          if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; f.info[idx] = clamp((f.info[idx]||0) + sgn * 1.2*dt, -1, 1); }
+          if (o.type==='attractor' && Number.isFinite(o.maxQty) && (o.qty||0) > 0 && r < consumeR){
+            const c = Math.min(consumeRate*dt, o.qty); o.qty -= c;
+            const boost = 0.8 * (c/Math.max(1e-6, consumeRate));
+            f.info[idx] = clamp((f.info[idx]||0) + boost, -1, 1);
+          }
         }
       }
-      // Communication (information passing) + social alignment on proximity graph
+      // communication + social alignment
       buildGrid();
       const maxLinks=120; let drawn=0;
       for(let i=0;i<N;i++){
@@ -248,21 +255,18 @@
           const vrel = Math.hypot(f.vx-g.vx, f.vy-g.vy);
           const psi = 1/(1+vrel/40);
           const k = infoRate * phi * psi;
-          // info exchange per component
           const dr = ((g.info[0]||0)-(f.info[0]||0)) * k * dt;
           const dg = ((g.info[1]||0)-(f.info[1]||0)) * k * dt;
           const db = ((g.info[2]||0)-(f.info[2]||0)) * k * dt;
           f.info[0]=clamp((f.info[0]||0)+dr,-1,1); g.info[0]=clamp((g.info[0]||0)-dr,-1,1);
           f.info[1]=clamp((f.info[1]||0)+dg,-1,1); g.info[1]=clamp((g.info[1]||0)-dg,-1,1);
           f.info[2]=clamp((f.info[2]||0)+db,-1,1); g.info[2]=clamp((g.info[2]||0)-db,-1,1);
-          // social alignment: pull toward informed neighbor heading
           const infG = Math.max(Math.abs(g.info[0]||0), Math.abs(g.info[1]||0), Math.abs(g.info[2]||0));
           const infF = Math.max(Math.abs(f.info[0]||0), Math.abs(f.info[1]||0), Math.abs(f.info[2]||0));
           const w = social * phi * psi * 0.5;
           const vgj = Math.hypot(g.vx,g.vy)||1e-6; const ugj=[g.vx/vgj, g.vy/vgj];
           ax[i] += (ugj[0]-ufi[0]) * w * infG; ay[i] += (ugj[1]-ufi[1]) * w * infG;
           ax[j] += (ufi[0]-ugj[0]) * w * infF; ay[j] += (ufi[1]-ugj[1]) * w * infF;
-          // draw info link colored by difference magnitude
           if (drawn<maxLinks){
             const mr = Math.abs(f.info[0]-g.info[0]);
             const mg = Math.abs(f.info[1]-g.info[1]);
@@ -275,12 +279,16 @@
           }
         }
       }
-      // integrate
+      // integrate + capacity
       for(let i=0;i<N;i++){
         const f=state.flies[i];
         f.vx = clamp(f.vx + ax[i]*dt, -160, 160);
         f.vy = clamp(f.vy + ay[i]*dt, -160, 160);
         parallelTransport(f.info, f.vx, f.vy, dt, speed);
+        const a0=Math.abs(f.info[0]||0), a1=Math.abs(f.info[1]||0), a2=Math.abs(f.info[2]||0);
+        let kmin=0, amin=a0; if(a1<amin){kmin=1; amin=a1;} if(a2<amin){kmin=2; amin=a2;}
+        const sgn = Math.sign(f.info[kmin]||0); const dec = Math.min(Math.abs(f.info[kmin]||0), capDecay*dt);
+        f.info[kmin] = (f.info[kmin]||0) - sgn*dec;
         const v=Math.hypot(f.vx,f.vy)||1; const vmax=speed;
         if(v>vmax){ f.vx=f.vx/v*vmax; f.vy=f.vy/v*vmax; }
         f.x += f.vx*dt; f.y += f.vy*dt;
@@ -289,6 +297,8 @@
         if (f.y<4){ f.y=4; f.vy=Math.abs(f.vy); }
         if (f.y>H-4){ f.y=H-4; f.vy=-Math.abs(f.vy); }
       }
+      // remove depleted consumables
+      state.objs = state.objs.filter(o => !(o.type==='attractor' && Number.isFinite(o.maxQty) && (o.qty||0) <= 0));
     }
 
     function draw(){
@@ -297,16 +307,31 @@
       for(const o of state.objs){
         ctx.save(); ctx.font = '20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(o.emoji, o.x, o.y);
-        // halo
-        ctx.globalAlpha = 0.1; ctx.beginPath(); ctx.arc(o.x,o.y, (o.type==='attractor'? 56:44), 0, Math.PI*2); ctx.fillStyle = (o.type==='attractor'? 'rgba(26,137,23,0.15)':'rgba(220,60,60,0.15)'); ctx.fill();
+        // halo / resource ring
+        const isCons = (o.type==='attractor' && Number.isFinite(o.maxQty));
+        const frac = isCons ? clamp((o.qty||0)/o.maxQty, 0, 1) : 1;
+        const baseR = (o.type==='attractor'? 56:44);
+        ctx.globalAlpha = 0.12; ctx.beginPath(); ctx.arc(o.x,o.y, baseR*(0.6+0.4*frac), 0, Math.PI*2);
+        ctx.fillStyle = (o.type==='attractor'? 'rgba(26,137,23,0.15)':'rgba(220,60,60,0.15)'); ctx.fill();
+        if (isCons){ ctx.globalAlpha = 0.35; ctx.strokeStyle='rgba(26,137,23,0.65)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(o.x,o.y, baseR*0.52, -Math.PI/2, -Math.PI/2 + frac*2*Math.PI); ctx.stroke(); }
         ctx.restore();
       }
-      // flies with info dots (RGB)
+      // flies with info dots (RGB) and direction hint
       for(const f of state.flies){
         // body
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.beginPath(); ctx.arc(f.x, f.y, 3.8, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.stroke();
+        // direction hint
+        const vmag = Math.hypot(f.vx,f.vy);
+        if (vmag>1e-2){
+          const ux=f.vx/vmag, uy=f.vy/vmag; const L=7;
+          const a0=Math.abs(f.info[0]||0), a1=Math.abs(f.info[1]||0), a2=Math.abs(f.info[2]||0);
+          let kdom=0, ad=a0; if(a1>ad){kdom=1; ad=a1;} if(a2>ad){kdom=2; ad=a2;}
+          const cols=[[230,40,30],[30,150,60],[40,90,220]]; const c=cols[kdom];
+          ctx.strokeStyle = `rgba(${c[0]},${c[1]},${c[2]},${0.25+0.45*ad})`;
+          ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x+ux*L, f.y+uy*L); ctx.stroke();
+        }
         // info dots around
         const R=5.6;
         const angs=[-Math.PI/2, -Math.PI/2 + 2*Math.PI/3, -Math.PI/2 + 4*Math.PI/3];
@@ -316,7 +341,6 @@
           const val = Math.abs(f.info[k]||0);
           const s=1.2+2.2*val;
           const c=cols[k]; ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.25+0.6*val})`;
-          // negative value -> dark ring to denote avoidance coding
           if ((f.info[k]||0) < 0){ ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=0.8; } else { ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=0.5; }
           ctx.beginPath(); ctx.arc(x,y, s, 0, Math.PI*2); ctx.fill();
           ctx.stroke();
