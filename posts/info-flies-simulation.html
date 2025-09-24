@@ -197,8 +197,8 @@
 
     function addObject(x,y,emoji){
       const type = state.emojiType.get(emoji)||'attractor';
-      const consumable = (emoji==='🍎' || emoji==='🍊');
-      const maxQty = consumable ? state.params.resourceInit : Infinity;
+      // Both attractors and repellents carry limited information by default
+      const maxQty = state.params.resourceInit;
       const qty = maxQty;
       state.objs.push({x,y,emoji,type, qty, maxQty});
     }
@@ -264,7 +264,7 @@
           const idx = emojiColorIndex.get(o.emoji) ?? 0;
           const reactSign = (o.type==='attractor')? 1 : -1;
           const sensScale = 1 + beta * (f.info[idx]||0) * reactSign;
-          const active = !(o.type==='attractor' && Number.isFinite(o.maxQty) && (o.qty||0) <= 0);
+          const active = !(Number.isFinite(o.maxQty) && (o.qty||0) <= 0);
           if (active){
             if (o.type==='attractor'){
               const mag = sensScale * (kAttr / r2);
@@ -275,10 +275,12 @@
             }
           }
           if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; f.info[idx] = clamp((f.info[idx]||0) + sgn * 1.2*dt, -1, 1); }
-          if (o.type==='attractor' && Number.isFinite(o.maxQty) && (o.qty||0) > 0 && r < consumeR){
+          if (Number.isFinite(o.maxQty) && (o.qty||0) > 0 && r < consumeR){
             const c = Math.min(consumeRate*dt, o.qty); o.qty -= c;
             const boost = 0.8 * (c/Math.max(1e-6, consumeRate));
-            f.info[idx] = clamp((f.info[idx]||0) + boost, -1, 1);
+            // attractors increase positive coding; repellents increase avoidance coding
+            if (o.type==='attractor') f.info[idx] = clamp((f.info[idx]||0) + boost, -1, 1);
+            else f.info[idx] = clamp((f.info[idx]||0) - boost, -1, 1);
           }
         }
         const risk = repSum / (attrSum + 1e-6);
@@ -371,8 +373,8 @@
         if (f.y<4){ f.y=4; f.vy=Math.abs(f.vy); }
         if (f.y>H-4){ f.y=H-4; f.vy=-Math.abs(f.vy); }
       }
-      // remove depleted consumables
-      state.objs = state.objs.filter(o => !(o.type==='attractor' && Number.isFinite(o.maxQty) && (o.qty||0) <= 0));
+      // remove depleted consumables (both attractors and repellents)
+      state.objs = state.objs.filter(o => !(Number.isFinite(o.maxQty) && (o.qty||0) <= 0));
     }
 
     function draw(){
@@ -400,12 +402,16 @@
         }
         ctx.fillText(o.emoji, o.x, o.y);
         // halo / resource ring
-        const isCons = (o.type==='attractor' && Number.isFinite(o.maxQty));
+        const isCons = Number.isFinite(o.maxQty);
         const frac = isCons ? clamp((o.qty||0)/o.maxQty, 0, 1) : 1;
         const baseR = (o.type==='attractor'? 56:44);
         ctx.globalAlpha = 0.12; ctx.beginPath(); ctx.arc(o.x,o.y, baseR*(0.6+0.4*frac), 0, Math.PI*2);
         ctx.fillStyle = (o.type==='attractor'? 'rgba(26,137,23,0.15)':'rgba(220,60,60,0.15)'); ctx.fill();
-        if (isCons){ ctx.globalAlpha = 0.35; ctx.strokeStyle='rgba(26,137,23,0.65)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(o.x,o.y, baseR*0.52, -Math.PI/2, -Math.PI/2 + frac*2*Math.PI); ctx.stroke(); }
+        if (isCons){
+          ctx.globalAlpha = 0.35;
+          ctx.strokeStyle = (o.type==='attractor'? 'rgba(26,137,23,0.65)' : 'rgba(220,60,60,0.65)');
+          ctx.lineWidth=2; ctx.beginPath(); ctx.arc(o.x,o.y, baseR*0.52, -Math.PI/2, -Math.PI/2 + frac*2*Math.PI); ctx.stroke();
+        }
         ctx.restore();
       }
       // flies with info dots (RGB) and direction hint
