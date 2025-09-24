@@ -32,7 +32,7 @@
     .tool-btn[data-emoji="🌶️"]::after { background: rgb(230,40,30); }
     .tool-btn[data-emoji="💀"]::after { background: rgb(40,90,220); }
     /* Collapsible math panel */
-    .panel.math { position: fixed; right: 12px; top: 72px; width: 380px; max-width: 92vw; z-index: 20; }
+    .panel.math { position: fixed; right: 12px; top: 12px; width: 380px; max-width: 92vw; z-index: 20; }
     .panel.collapsed { height: 48px; overflow: hidden; }
     .panel.collapsed .panel-content { display: none; }
     /* Controls panel */
@@ -41,12 +41,12 @@
     .controls .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .controls .row small { color: var(--muted); width: 80px; flex:0 0 auto; }
     .controls input[type=range] { width: 240px; flex: 1 1 auto; }
-    .panel-content { max-height: 70vh; overflow: auto; }
+    .panel-content { padding: 12px 16px 16px 16px; max-height: 70vh; overflow: auto; }
     @media (max-width: 600px){
       .panel.controls { width: 96vw; left: 2vw; }
       .controls input[type=range]{ width: 55vw; }
     }
-    .tabs { display:flex; gap:8px; margin-bottom:8px; }
+    .tabs { display:flex; gap:8px; margin: 8px 0; }
     .tab-btn { padding:6px 10px; border:1px solid var(--border); background:#fff; border-radius:8px; cursor:pointer; font-size:12px; }
     .tab-btn.active { outline:2px solid var(--accent); }
     .tab-section { display:none; }
