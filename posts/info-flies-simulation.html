@@ -246,7 +246,7 @@
 
     // Spatial hash for comm links
     function buildGrid(cell=80){
-      const cols=Math.ceil(W/cell), rows=Math.ceil(H/cell);
+      const cols=Math.max(1, Math.ceil((W||1)/cell)), rows=Math.max(1, Math.ceil((H||1)/cell));
       const g=Array.from({length:cols*rows},()=>[]);
       const idx=(x,y)=> clamp(Math.floor(x/cell),0,cols-1)+cols*clamp(Math.floor(y/cell),0,rows-1);
       for(let i=0;i<state.flies.length;i++){ const f=state.flies[i]; g[idx(f.x,f.y)].push(i); }
