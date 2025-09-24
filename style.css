@@ -104,6 +104,9 @@ a:hover { text-decoration: underline; }
 .article-content { max-width: 760px; margin: 0 auto; font-size: 20px; line-height: 1.8; }
 .article-content p { margin-bottom: 18px; }
 .article-content a { color: var(--accent); text-decoration: underline; }
+.article-content a.btn-primary { color: #fff; text-decoration: none; }
+.article-content a.btn-secondary { color: var(--link); text-decoration: none; }
+.article-content a.btn-primary:hover, .article-content a.btn-secondary:hover { text-decoration: none; }
 .article-content ul, .article-content ol { margin-bottom: 18px; padding-left: 24px; color: var(--text); }
 code { background: #f6f7f8; color: #111; padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.95em; }
 pre { background: #f6f7f8; color: #111; padding: 16px; border-radius: 10px; overflow: auto; border: 1px solid var(--border); }
