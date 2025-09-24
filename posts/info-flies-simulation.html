@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Information Flies — Emoji Attractors & Repellents</title>
+  <meta name="description" content="Place emoji concepts as attractors or repellents; watch flies move and pass information with finite speed." />
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    html, body { height: 100%; }
+    body { margin: 0; background: #fff; }
+    .sim-root { position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr; }
+    .toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+    .tool-group { display: flex; align-items: center; gap: 6px; }
+    .tool-label { font-size: 14px; color: var(--muted); }
+    .tool-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; }
+    .tool-btn.active { outline: 2px solid var(--accent); }
+    .tool { display: inline-flex; align-items: center; gap: 6px; }
+    .tool input[type=range] { width: 120px; }
+    .tool small { color: var(--muted); }
+    #canvas { width: 100%; height: 100%; display: block; background: #ffffff; cursor: crosshair; }
+    .hud { position: fixed; left: 12px; bottom: 12px; background: rgba(255,255,255,0.95); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 12px; color: var(--text); }
+    .legend { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="sim-root">
+    <div class="toolbar">
+      <div class="tool-group">
+        <span class="tool-label">Concept:</span>
+        <button class="tool-btn" data-emoji="🍎" title="Apple (attractor)">🍎</button>
+        <button class="tool-btn" data-emoji="🍊" title="Orange (attractor)">🍊</button>
+        <button class="tool-btn" data-emoji="📣" title="Beacon (attractor)">📣</button>
+        <button class="tool-btn" data-emoji="🌶️" title="Chili (repellent)">🌶️</button>
+        <button class="tool-btn" data-emoji="💀" title="Hazard (repellent)">💀</button>
+      </div>
+      <div class="tool-group" style="margin-left:14px;">
+        <span class="tool-label">Mode:</span>
+        <button class="tool-btn" id="modeAdd">Add</button>
+        <button class="tool-btn" id="modeRemove">Remove</button>
+      </div>
+      <div class="tool-group" style="margin-left:14px;">
+        <div class="tool">
+          <small>Flies</small>
+          <input id="flies" type="range" min="60" max="500" step="10" value="220" />
+          <small id="fliesV">220</small>
+        </div>
+        <div class="tool">
+          <small>Attract</small>
+          <input id="attr" type="range" min="0" max="240" step="1" value="120" />
+          <small id="attrV">120</small>
+        </div>
+        <div class="tool">
+          <small>Repel</small>
+          <input id="repel" type="range" min="0" max="240" step="1" value="140" />
+          <small id="repelV">140</small>
+        </div>
+        <div class="tool">
+          <small>Comm</small>
+          <input id="comm" type="range" min="20" max="200" step="1" value="90" />
+          <small id="commV">90</small>
+        </div>
+        <div class="tool">
+          <small>Info</small>
+          <input id="info" type="range" min="0" max="4" step="0.05" value="1.2" />
+          <small id="infoV">1.20</small>
+        </div>
+      </div>
+      <div class="tool-group" style="margin-left:auto;">
+        <button class="btn-secondary tool-btn" id="togglePause">Pause</button>
+        <button class="btn-secondary tool-btn" id="clear">Clear</button>
+        <a href="../index.html" class="btn-secondary tool-btn">Home</a>
+      </div>
+    </div>
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="hud" id="hud"></div>
+
+  <script>
+  (function(){
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let W=0, H=0, DPR=Math.max(1, Math.min(2, window.devicePixelRatio||1));
+    const rand = (a,b)=>Math.random()*(b-a)+a;
+    const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+    const dist2=(ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;};
+
+    const state = {
+      flies: [], // {x,y,vx,vy,knowledge: Map(emoji->val)}
+      objs: [],  // {x,y,emoji,type:'attractor'|'repellent'}
+      grid: null, // spatial hash
+      params: { N:220, kAttr:120, kRepel:140, commR:90, infoRate:1.2, speed:42 },
+      paused:false,
+      tool: { emoji:'🍎', mode:'add' },
+      emojiType: new Map([
+        ['🍎','attractor'], ['🍊','attractor'], ['📣','attractor'], ['🌶️','repellent'], ['💀','repellent']
+      ]),
+    };
+
+    function resize(){
+      W = canvas.clientWidth = window.innerWidth;
+      H = canvas.clientHeight = window.innerHeight - document.querySelector('.toolbar').offsetHeight;
+      canvas.width = Math.floor(W*DPR); canvas.height = Math.floor(H*DPR);
+      canvas.style.width = W+'px'; canvas.style.height = H+'px';
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+
+    function initFlies(N){
+      state.flies.length = 0;
+      for(let i=0;i<N;i++){
+        const x = Math.random()*W, y = Math.random()*H;
+        const ang = rand(-Math.PI,Math.PI), sp=state.params.speed;
+        state.flies.push({ x, y, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, knowledge:new Map() });
+      }
+    }
+
+    function addObject(x,y,emoji){
+      const type = state.emojiType.get(emoji)||'attractor';
+      state.objs.push({x,y,emoji,type});
+    }
+
+    function removeNearestObject(x,y){
+      if(!state.objs.length) return;
+      let best=-1, bd=1e9;
+      for(let i=0;i<state.objs.length;i++){
+        const o=state.objs[i]; const d=dist2(x,y,o.x,o.y);
+        if(d<bd){ bd=d; best=i; }
+      }
+      if(best>=0) state.objs.splice(best,1);
+    }
+
+    // Spatial hash for comm links
+    function buildGrid(cell=80){
+      const cols=Math.ceil(W/cell), rows=Math.ceil(H/cell);
+      const g=Array.from({length:cols*rows},()=>[]);
+      const idx=(x,y)=> clamp(Math.floor(x/cell),0,cols-1)+cols*clamp(Math.floor(y/cell),0,rows-1);
+      for(let i=0;i<state.flies.length;i++){ const f=state.flies[i]; g[idx(f.x,f.y)].push(i); }
+      state.grid={g,cell,cols,rows,idx};
+    }
+
+    function neighbors(i){
+      const {g,cell,cols,rows,idx} = state.grid; const f=state.flies[i];
+      const cx=clamp(Math.floor(f.x/cell),0,cols-1), cy=clamp(Math.floor(f.y/cell),0,rows-1);
+      const res=[];
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+        const X=cx+dx, Y=cy+dy; if(X<0||Y<0||X>=cols||Y>=rows) continue;
+        res.push(...g[X+cols*Y]);
+      }
+      return res;
+    }
+
+    function step(dt){
+      const {kAttr,kRepel,commR,infoRate,speed} = state.params;
+      const commR2 = commR*commR;
+      // Movement influenced by objects
+      for(const f of state.flies){
+        let ax=0, ay=0; // acceleration
+        for(const o of state.objs){
+          const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
+          const str = (o.type==='attractor'? kAttr : -kRepel) / r2;
+          ax += str * dx / r; ay += str * dy / r;
+          // Sense updates: close to object => raise knowledge of that emoji
+          if (r<60){ const k=f.knowledge.get(o.emoji)||0; f.knowledge.set(o.emoji, k + (1-k)*Math.min(1, 3*dt)); }
+        }
+        // integrate velocity (damped)
+        f.vx = clamp(f.vx + ax*dt, -140, 140);
+        f.vy = clamp(f.vy + ay*dt, -140, 140);
+      }
+      // Position + boundaries
+      for(const f of state.flies){
+        const v=Math.hypot(f.vx,f.vy)||1; const vmax=speed;
+        if(v>vmax){ f.vx=f.vx/v*vmax; f.vy=f.vy/v*vmax; }
+        f.x += f.vx*dt; f.y += f.vy*dt;
+        if (f.x<4){ f.x=4; f.vx=Math.abs(f.vx); }
+        if (f.x>W-4){ f.x=W-4; f.vx=-Math.abs(f.vx); }
+        if (f.y<4){ f.y=4; f.vy=Math.abs(f.vy); }
+        if (f.y>H-4){ f.y=H-4; f.vy=-Math.abs(f.vy); }
+      }
+      // Communication (information passing) via local diffusion with delay
+      buildGrid();
+      // collect all concepts present
+      const concepts = Array.from(new Set(state.objs.map(o=>o.emoji)));
+      const maxLinks=120; let drawn=0; // draw limited info links
+      for(let i=0;i<state.flies.length;i++){
+        const f = state.flies[i];
+        const neigh = neighbors(i);
+        for(const j of neigh){ if(j<=i) continue; const g=state.flies[j];
+          const d2 = dist2(f.x,f.y,g.x,g.y); if(d2>commR2) continue;
+          // exchange each concept
+          for(const c of concepts){
+            const a=f.knowledge.get(c)||0, b=g.knowledge.get(c)||0;
+            if (a===b) continue;
+            const flow = (a-b)*infoRate*dt; // finite rate
+            f.knowledge.set(c, clamp(a - flow, 0, 1));
+            g.knowledge.set(c, clamp(b + flow, 0, 1));
+            // draw info link if gradient large
+            if (drawn<maxLinks && Math.abs(a-b)>0.35){
+              ctx.save(); ctx.globalAlpha = 0.1 + 0.15*Math.min(1, Math.abs(a-b));
+              ctx.strokeStyle = '#1a8917'; ctx.beginPath(); ctx.moveTo(f.x,f.y); ctx.lineTo(g.x,g.y); ctx.stroke(); ctx.restore();
+              drawn++;
+            }
+          }
+        }
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      // objects
+      for(const o of state.objs){
+        ctx.save(); ctx.font = '20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(o.emoji, o.x, o.y);
+        // halo
+        ctx.globalAlpha = 0.1; ctx.beginPath(); ctx.arc(o.x,o.y, (o.type==='attractor'? 56:44), 0, Math.PI*2); ctx.fillStyle = (o.type==='attractor'? 'rgba(26,137,23,0.15)':'rgba(220,60,60,0.15)'); ctx.fill();
+        ctx.restore();
+      }
+      // flies (color by current tool concept knowledge)
+      const concept = state.tool.emoji; // highlight current concept
+      for(const f of state.flies){
+        const k = f.knowledge.get(concept)||0;
+        const c = Math.floor(160 + 80*k);
+        ctx.fillStyle = `rgb(${255-c}, ${c}, ${140})`;
+        ctx.beginPath(); ctx.arc(f.x, f.y, 2.2, 0, Math.PI*2); ctx.fill();
+      }
+    }
+
+    // HUD
+    function hud(){
+      const el=document.getElementById('hud');
+      const concept = state.tool.emoji;
+      // fraction aware of current concept
+      let aware=0; for(const f of state.flies){ if((f.knowledge.get(concept)||0)>0.6) aware++; }
+      el.innerHTML = `flies=${state.flies.length} • objs=${state.objs.length} • aware(${concept})=${aware}`+
+                     `<div class="legend">Click to ${state.tool.mode==='add'?'place':'remove'} ${concept}. Shift-click always removes.</div>`;
+    }
+
+    // Interaction
+    function pickTool(btn){
+      document.querySelectorAll('.tool-btn[data-emoji]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.tool.emoji = btn.getAttribute('data-emoji');
+    }
+    document.querySelectorAll('.tool-btn[data-emoji]').forEach(btn=>{
+      btn.addEventListener('click', ()=> pickTool(btn));
+    });
+    pickTool(document.querySelector('.tool-btn[data-emoji="🍎"]'));
+    const modeAdd=document.getElementById('modeAdd');
+    const modeRemove=document.getElementById('modeRemove');
+    function setMode(m){ state.tool.mode=m; modeAdd.classList.toggle('active', m==='add'); modeRemove.classList.toggle('active', m==='remove'); }
+    modeAdd.addEventListener('click', ()=>setMode('add'));
+    modeRemove.addEventListener('click', ()=>setMode('remove'));
+    setMode('add');
+
+    canvas.addEventListener('click', (e)=>{
+      const r=canvas.getBoundingClientRect(); const x=(e.clientX-r.left), y=(e.clientY-r.top);
+      if (e.shiftKey || state.tool.mode==='remove') removeNearestObject(x,y);
+      else addObject(x,y,state.tool.emoji);
+    });
+
+    // Controls
+    function bindRange(id, prop, fmt=(v)=>v){
+      const el=document.getElementById(id); const lab=document.getElementById(id+'V');
+      function upd(){ state.params[prop] = (id==='info'? parseFloat(el.value) : +el.value); lab.textContent = fmt(state.params[prop]); }
+      el.addEventListener('input', ()=>{ upd(); if(prop==='N'){ initFlies(state.params.N); } });
+      upd();
+    }
+    bindRange('flies','N');
+    bindRange('attr','kAttr');
+    bindRange('repel','kRepel');
+    bindRange('comm','commR');
+    bindRange('info','infoRate', v=>v.toFixed(2));
+
+    document.getElementById('togglePause').addEventListener('click', ()=>{ state.paused=!state.paused; document.getElementById('togglePause').textContent = state.paused?'Resume':'Pause'; });
+    document.getElementById('clear').addEventListener('click', ()=>{ state.objs.length=0; state.flies.forEach(f=>f.knowledge.clear()); });
+
+    // Loop
+    let last=performance.now();
+    function loop(now){
+      const dt = Math.min(50, now-last)/1000; last=now;
+      if(!state.paused){ step(dt); }
+      draw(); hud(); requestAnimationFrame(loop);
+    }
+
+    // Boot
+    function start(){ resize(); initFlies(state.params.N); requestAnimationFrame(loop); }
+    window.addEventListener('resize', ()=>{ resize(); });
+    start();
+  })();
+  </script>
+</body>
+</html>
+
