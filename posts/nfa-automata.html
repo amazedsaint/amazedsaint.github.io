@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NFAs from First Principles — Interactive</title>
+  <meta name="description" content="From first principles: nondeterministic finite automata (NFAs), ε‑moves, and subset construction, with live runners and a small builder." />
+  <link rel="stylesheet" href="../style.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["$","$"],["\\(","\\)"]], displayMath: [["$$","$$"],["\\[","\\]"]], packages: {'[+]':['base','ams']}, processEscapes: true },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
+    canvas { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
+    .controls input[type=text], .controls select{ padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
+    .controls button{ background:#fff; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:13px; cursor:pointer; }
+    .note { max-width:880px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
+    .table { max-width:880px; margin:8px auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; color:var(--text); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .table table{ width:100%; border-collapse:collapse; }
+    .table th, .table td{ border-bottom:1px solid var(--border); padding:6px 8px; text-align:left; }
+  </style>
+  <script>
+    (function(){
+      // ---------- Helpers ----------
+      function text(ctx, s, x, y, color){ ctx.fillStyle=color||'#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(s,x,y); }
+      function drawState(ctx, n, active, accept, start){ ctx.save(); ctx.lineWidth=2; ctx.strokeStyle=active? '#1a8917':'#555'; ctx.fillStyle=accept? 'rgba(26,137,23,0.06)':'#fff'; ctx.beginPath(); ctx.arc(n.x,n.y,20,0,Math.PI*2); ctx.fill(); ctx.stroke(); if(accept){ ctx.beginPath(); ctx.arc(n.x,n.y,16,0,Math.PI*2); ctx.strokeStyle='#1a8917'; ctx.stroke(); } if(start){ ctx.fillStyle='#1a8917'; ctx.beginPath(); ctx.moveTo(n.x-34,n.y); ctx.lineTo(n.x-24,n.y-6); ctx.lineTo(n.x-24,n.y+6); ctx.closePath(); ctx.fill(); } ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(n.id, n.x, n.y); ctx.restore(); }
+      function drawArrow(ctx, x1,y1,x2,y2,label){ const a=Math.atan2(y2-y1,x2-x1); const r=20; const sx=x1+Math.cos(a)*r, sy=y1+Math.sin(a)*r; const ex=x2-Math.cos(a)*r, ey=y2-Math.sin(a)*r; ctx.strokeStyle='#888'; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke(); const ah=9; ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex-ah*Math.cos(a-0.3), ey-ah*Math.sin(a-0.3)); ctx.lineTo(ex-ah*Math.cos(a+0.3), ey-ah*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle='#888'; ctx.fill(); if(label){ text(ctx, label, (sx+ex)/2, (sy+ey)/2 - 6); } }
+      function drawSelf(ctx, n, label){ ctx.strokeStyle='#888'; ctx.beginPath(); ctx.arc(n.x, n.y-30, 14, Math.PI*0.2, Math.PI*2.8); ctx.stroke(); text(ctx, label, n.x+20, n.y-40); }
+
+      // ---------- NFA runner (sample) ----------
+      function nfaRunner(){
+        const cv=document.getElementById('nfaRun'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=720, H=cv.height=280;
+        // Sample NFA for (a | ab): from q0 on 'a' you can accept immediately (qf) or go to q1 and then need 'b'.
+        const nodes=[{id:'q0',x:W*0.25,y:H*0.5},{id:'q1',x:W*0.55,y:H*0.35},{id:'qf',x:W*0.55,y:H*0.7,accept:true}];
+        const start='q0';
+        const trans={ q0:{ 'a':['q1','qf'] }, q1:{ 'b':['qf'] }, qf:{} };
+        const eps={}; // no epsilon in this example
+        let input=(document.getElementById('nfaInput').value||'ab').replace(/[^ab]/g,'');
+        let pos=0; let curSet=new Set([start]);
+        function closure(set){ // epsilon-closure
+          const res=new Set(set); let changed=true; while(changed){ changed=false; for(const q of Array.from(res)){ const outs=(eps[q]||[]); for(const t of outs){ if(!res.has(t)){ res.add(t); changed=true; } } } }
+          return res;
+        }
+        function step(){ curSet = closure(curSet); if(pos>=input.length){ render(); return; } const a=input[pos]; const next=new Set(); for(const q of Array.from(curSet)){ const outs=(trans[q]&&trans[q][a])||[]; outs.forEach(s=> next.add(s)); }
+          curSet=next; pos++; render(); }
+        function reset(){ input=(document.getElementById('nfaInput').value||'ab').replace(/[^ab]/g,''); pos=0; curSet=new Set([start]); render(); }
+        document.getElementById('nfaStep').onclick=step; document.getElementById('nfaReset').onclick=reset; document.getElementById('nfaInput').oninput=reset;
+        function render(){ ctx.clearRect(0,0,W,H); // edges
+          drawArrow(ctx, nodes[0].x,nodes[0].y, nodes[1].x,nodes[1].y, 'a');
+          drawArrow(ctx, nodes[0].x,nodes[0].y, nodes[2].x,nodes[2].y, 'a');
+          drawArrow(ctx, nodes[1].x,nodes[1].y, nodes[2].x,nodes[2].y, 'b');
+          for(const n of nodes){ drawState(ctx, n, curSet.has(n.id), !!n.accept, n.id===start); }
+          // input tape and status
+          const bx=20, by=30, cell=24; ctx.strokeStyle='#ddd'; ctx.fillStyle='#111'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          for(let i=0;i<Math.max(12,input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x,by,cell,cell); const ch=input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===pos){ ctx.fillStyle='#1a8917'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#111'; } }
+          const accepting = Array.from(curSet).some(id => nodes.find(n=>n.id===id && n.accept));
+          const status=document.getElementById('nfaStatus'); status.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} reading…` : `halted in {${Array.from(curSet).join(',')}} — ${accepting? 'accepted':'rejected'}`);
+        }
+        render(); return { step, reset };
+      }
+
+      // ---------- NFA Builder with ε and determinize table ----------
+      function nfaBuilder(){
+        const cv=document.getElementById('nfaBuild'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+        let nodes=[], start=null, acc=new Set(), trans={}, eps={}; let curSet=new Set(); let input="", pos=0; let placing=false;
+        const ui={ start:byId('nfabStart'), add:byId('nfabAdd'), toggle:byId('nfabToggle'), src:byId('nfabSrc'), dst:byId('nfabDst'), sym:byId('nfabSym'), addT:byId('nfabAddTrans'), inp:byId('nfabInput'), step:byId('nfabStep'), reset:byId('nfabReset'), stat:byId('nfabStatus'), det:byId('nfabDet'), detTable:byId('nfabDetTable') };
+        function byId(id){ return document.getElementById(id); }
+        function addNode(x,y){ const id=uniq(); nodes.push({id,x,y}); trans[id]=trans[id]||{}; eps[id]=eps[id]||[]; if(!start){ start=id; curSet=new Set([start]); } syncUI(); draw(); }
+        function uniq(){ let i=nodes.length; while(nodes.find(n=>n.id===`q${i}`)) i++; return `q${i}`; }
+        function syncUI(){ const opts=nodes.map(n=>`<option value="${n.id}">${n.id}</option>`).join(''); ['start','toggle','src','dst'].forEach(k=> ui[k].innerHTML=opts); }
+        function nodeAt(x,y){ return nodes.find(n=> Math.hypot(n.x-x,n.y-y)<=20 ); }
+        function draw(){ ctx.clearRect(0,0,W,H); for(const s of nodes){ for(const a in (trans[s.id]||{})){ for(const d of trans[s.id][a]) drawArrow(ctx, s.x,s.y, nodes.find(n=>n.id===d).x, nodes.find(n=>n.id===d).y, a); } for(const d of (eps[s.id]||[])) drawArrow(ctx, s.x,s.y, nodes.find(n=>n.id===d).x, nodes.find(n=>n.id===d).y, 'ε'); }
+          for(const n of nodes){ drawState(ctx, n, curSet.has(n.id), acc.has(n.id), n.id===start); } }
+        function closure(S){ const res=new Set(S); let changed=true; while(changed){ changed=false; for(const q of Array.from(res)){ for(const t of (eps[q]||[])){ if(!res.has(t)){ res.add(t); changed=true; } } } } return res; }
+        function step(){ curSet = closure(curSet); if(pos>=input.length){ renderStatus(); draw(); return; } const a=input[pos]||''; const next=new Set(); for(const q of Array.from(curSet)){ for(const d of ((trans[q]||{})[a]||[])) next.add(d); } curSet=next; pos++; renderStatus(); draw(); }
+        function reset(){ input=(ui.inp.value||''); pos=0; curSet = new Set([start]); renderStatus(); draw(); }
+        function renderStatus(){ const accepting = Array.from(curSet).some(id=>acc.has(id)); ui.stat.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} pos=${pos}/${input.length}` : `halted in {${Array.from(curSet).join(',')}} — ${accepting? 'accepted':'rejected'}`); }
+        // events
+        ui.add.onclick=()=>{ placing=!placing; };
+        cv.addEventListener('click', (e)=>{ if(!placing) return; const r=cv.getBoundingClientRect(); addNode(e.clientX-r.left, e.clientY-r.top); placing=false; });
+        ui.start.onchange=()=>{ start=ui.start.value; reset(); };
+        ui.toggle.onchange=()=>{ const id=ui.toggle.value; if(!id) return; if(acc.has(id)) acc.delete(id); else acc.add(id); draw(); };
+        ui.addT.onclick=()=>{ const s=ui.src.value, d=ui.dst.value, sym=(ui.sym.value||'').trim(); if(!s||!d||!sym) return; if(sym==='ε' || sym.toLowerCase()==='e') { eps[s]=eps[s]||[]; if(!eps[s].includes(d)) eps[s].push(d); } else { trans[s]=trans[s]||{}; trans[s][sym]=trans[s][sym]||[]; if(!trans[s][sym].includes(d)) trans[s][sym].push(d); } draw(); };
+        ui.step.onclick=step; ui.reset.onclick=reset; ui.inp.oninput=reset;
+        ui.det.onclick=()=>{ const dfa = determinize(); ui.detTable.innerHTML = renderDeterminizeTable(dfa); };
+        function determinize(){ const alph = Object.keys(nodes.reduce((A,n)=>{ for(const a in (trans[n.id]||{})) A[a]=1; return A; },{})); const startSet = Array.from(closure(new Set([start]))).sort(); const nameOf = (set)=>`{${set.sort().join(',')}}`;
+          const seen=new Set([nameOf(startSet)]); const queue=[startSet]; const states=[]; const delta={}; const accepting=(set)=> set.some(id=>acc.has(id));
+          while(queue.length){ const S=queue.shift(); const key=nameOf(S); states.push(S); delta[key]={}; for(const a of alph){ const N=new Set(); for(const q of S){ for(const d of ((trans[q]||{})[a]||[])) closure([d]).forEach(x=>N.add(x)); } const arr=Array.from(N).sort(); delta[key][a]=nameOf(arr); if(arr.length && !seen.has(nameOf(arr))){ seen.add(nameOf(arr)); queue.push(arr); } }
+          }
+          return { alph, start:nameOf(startSet), states:states.map(S=>nameOf(S)), delta, accept: (set)=>accepting(set) };
+        }
+        function renderDeterminizeTable(dfa){ let rows=`<tr><th>subset</th>${dfa.alph.map(a=>`<th>on ${a}</th>`).join('')}</tr>`; for(const s of dfa.states){ rows+=`<tr><td>${s}</td>${dfa.alph.map(a=>`<td>${dfa.delta[s][a]||'∅'}</td>`).join('')}</tr>`; } return `<div class="table"><table><tr><th colspan="${dfa.alph.length+1}">Subset construction (start ${dfa.start})</th></tr>${rows}</table></div>`; }
+        // seed
+        addNode(W*0.3,H*0.5); addNode(W*0.6,H*0.5); acc.add(nodes[1].id); trans[nodes[0].id]={'a':[nodes[1].id]}; trans[nodes[1].id]={'a':[nodes[0].id]}; syncUI(); reset();
+      }
+
+      function start(){ nfaRunner(); nfaBuilder(); }
+      if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="site-title"><a href="../index.html">antifold</a></h1>
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="https://github.com/amazedsaint">GitHub</a>
+        <a href="https://twitter.com/amazedsaint">Twitter</a>
+      </nav>
+    </header>
+
+    <article class="article-content">
+      <div class="article-header">
+        <span class="tile-category">Computation</span>
+        <h1 class="article-title">NFAs from First Principles — Interactive</h1>
+        <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
+        <p class="article-description">Nondeterministic finite automata: what they are, how ε‑moves work, and why they recognize the same languages as DFAs. Includes a runner, a small builder with ε, and a determinize table.</p>
+      </div>
+
+      <div class="section">
+        <h2>From Words to Machines</h2>
+        <p class="note">Pick an alphabet $\Sigma$ (e.g., $\{a,b\}$). Words are finite strings over $\Sigma$; the set of all words is $\Sigma^*$ and includes the empty word $\varepsilon$. An NFA is a five‑tuple $(Q,\Sigma,\delta,q_0,F)$ like a DFA, except $\delta(q,a)$ returns a <em>set</em> of possible next states, and we may also allow $\varepsilon$ moves that consume no input.</p>
+        <p class="note">The extended transition to sets and whole words is $$\hat{\delta}(S,\varepsilon)=\varepsilon\text{-closure}(S),\qquad \hat{\delta}(S,aw)=\hat{\delta}(\,\varepsilon\text{-closure}(\bigcup_{q\in S}\delta(q,a)),\,w\,).$$ A word $w$ is accepted when $\hat{\delta}(\{q_0\},w)$ intersects $F$. In plain words: keep all states you could be in, expand along $\varepsilon$ moves for free, then follow the next symbol from all of them at once.</p>
+      </div>
+
+      <div class="section">
+        <h2>Run a Tiny NFA (a | ab)</h2>
+        <p class="note">This NFA accepts either 'a' or 'ab'. On 'a' from the start, it can jump to accept immediately or go to a state that expects 'b'. That’s nondeterminism: explore both options; accept if at least one path reaches an accepting state.</p>
+        <div class="demo">
+          <canvas id="nfaRun" width="720" height="280"></canvas>
+          <div class="controls">
+            <label>Input (a/b): <input id="nfaInput" type="text" value="ab" /></label>
+            <button id="nfaStep">Step</button>
+            <button id="nfaReset">Reset</button>
+          </div>
+          <p class="note" id="nfaStatus">—</p>
+          <p class="note">Terms: $Q=\{q0,q1,qf\}$; $\Sigma=\{a,b\}$; $\delta(q0,a)=\{q1,qf\}$; $\delta(q1,b)=\{qf\}$; $q_0=q0$; $F=\{qf\}$. No $\varepsilon$ moves here.</p>
+      </div>
+
+      <div class="section">
+        <h2>Build an NFA (with ε)</h2>
+        <p class="note">Place states, pick a start, toggle accepting, and add transitions. Use 'ε' (or 'e') to add $\varepsilon$ moves. Enter input and step; the highlighted set shows “all places the machine might be now”. Click “Determinize” to see the subset construction table.</p>
+        <div class="demo">
+          <canvas id="nfaBuild" width="720" height="320"></canvas>
+          <div class="controls" style="gap:6px;">
+            <button id="nfabAdd">Add state (click canvas)</button>
+            <label>Start <select id="nfabStart"></select></label>
+            <label>Toggle accept <select id="nfabToggle"></select></label>
+            <label>Src <select id="nfabSrc"></select></label>
+            <label>Sym <input id="nfabSym" type="text" value="a" style="width:48px;" /></label>
+            <label>Dst <select id="nfabDst"></select></label>
+            <button id="nfabAddTrans">Add transition</button>
+          </div>
+          <div class="controls">
+            <label>Input <input id="nfabInput" type="text" value="" /></label>
+            <button id="nfabStep">Step</button>
+            <button id="nfabReset">Reset</button>
+            <button id="nfabDet">Determinize</button>
+          </div>
+          <p class="note" id="nfabStatus">—</p>
+          <div id="nfabDetTable"></div>
+          <p class="note">First principles recap: $\varepsilon$‑closure collects all states you can reach for free. Each input step follows transitions from the whole set, then re‑closes under $\varepsilon$. The determinized DFA has subsets as states; start at $\varepsilon$‑closure($\{q_0\}$) and follow symbols; accept subsets that contain any accepting NFA state.</p>
+        </div>
+      </div>
+
+      <div class="related-links">
+        <strong>Related:</strong>
+        <a href="turing-automata.html">Turing Machines & Automata</a> •
+        <a href="../index.html">Home</a>
+      </div>
+    </article>
+
+    <footer class="footer">
+      <p>&copy; 2025 antifold • Essays and simulations</p>
+      <p class="meta-mini">By Anoop • <a href="https://twitter.com/amazedsaint">Twitter</a> • <a href="https://github.com/amazedsaint">GitHub</a> • <a href="../index.html">Home</a></p>
+    </footer>
+  </div>
+</body>
+</html>
+
