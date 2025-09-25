@@ -373,6 +373,7 @@
         <p class="note">In our simple 1+1 picture (time and one space direction), a boost along $x$ mixes coordinates as $x' = \gamma(x-vt)$ and $t' = \gamma(t-vx)$ with $\gamma = 1/\sqrt{1-v^2}$. In the canvas, the light cone stays fixed. The blue $x'$ and $t'$ axes tilt as you change $v$. The gray curves show the same quantity $t^2-x^2$ staying constant.</p>
         <div class="demo">
           <canvas id="lorentz" class="demo-canvas" width="700" height="380"></canvas>
+          <p class="note">This picture shows a Lorentz boost: $x' = \gamma(x- v t)$ and $t' = \gamma(t- v x)$; the light cone stays fixed.</p>
           <div class="controls">
             <label>Velocity v/c <input id="vSlider" type="range" min="-0.95" max="0.95" step="0.01" value="0.60"/></label>
           </div>
@@ -389,6 +390,7 @@
         <p class="note">A rotation about $z$ looks like $R_z(\theta)=\exp\!\big(-\tfrac{i}{2}\,\theta\,\sigma_z\big)$. The factor $1/2$ explains the 720° return. In the canvas, the blue arrow shows the physical direction (period $2\pi$). The green hand shows the spinor phase (period $4\pi$).</p>
         <div class="demo">
           <canvas id="spinor" class="demo-canvas" width="540" height="260"></canvas>
+          <p class="note">This picture shows a spin‑1/2 rotation: $R_z(\theta)=\exp\!\big(-i\,\theta\,\sigma_z/2\big)$; $2\pi$ flips sign, $4\pi$ returns.</p>
           <div class="controls"><label>Rotation $\theta$ <input id="thetaSpin" type="range" min="0" max="6.283" step="0.01" value="0"/></label></div>
         </div>
       </div>
@@ -399,6 +401,7 @@
         <p class="note">The field strength is $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (and plus a commutator for non‑Abelian groups). A simple Lagrangian is $\mathcal L=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}+ i\bar\psi\gamma^\mu D_\mu\psi$. In the canvas, we pick $A_\mu=-(1/g)\,\partial_\mu\alpha$. That choice cancels the extra gradient from a pure phase so $\|D\psi\|$ is small when $|\psi|$ is constant.</p>
         <div class="demo">
           <canvas id="u1" class="demo-canvas" width="540" height="260"></canvas>
+          <p class="note">This picture shows gauge cancelation with the covariant derivative: $D_\mu=\partial_\mu+i g A_\mu$, choosing $A_\mu=-(1/g)\,\partial_\mu\alpha$.</p>
           <div class="controls"><label>Phase amplitude <input id="amp" type="range" min="0" max="1.5" step="0.01" value="0.8"/></label></div>
           <div class="kpis">
             <div class="kpi"><b>||∇ψ|| (naive)</b><div class="val" id="gradPsi">—</div></div>
@@ -413,6 +416,7 @@
         <p class="note">A simple model is $\mathcal L_\phi=|D_\mu\phi|^2-\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$. Around $|\phi|=v$, the radial mode has $m_H^2=2\lambda v^2$. The angular mode is “eaten”, giving a gauge boson $m_A=g v$ (Abelian case). A fermion that couples with $\mathcal L_Y=-y\,\bar\psi\phi\psi$ gets $m_f= y v/\sqrt{2}$. In the canvas, a point rolls downhill and the readouts show the masses from your settings.</p>
         <div class="demo">
           <canvas id="higgs" class="demo-canvas" width="700" height="380"></canvas>
+          <p class="note">This picture shows the Higgs setup: $V=\tfrac{\lambda}{4}(|\phi|^2- v^2)^2$, with $m_H^2=2\lambda v^2$, $m_A=g v$, and $m_f= y v/\sqrt{2}$.</p>
           <div class="controls">
             <label>λ <input id="lambda" type="range" min="0.1" max="1.5" step="0.05" value="0.50"/></label>
             <label>v (VEV) <input id="vev" type="range" min="0.5" max="2.0" step="0.05" value="1.00"/></label>
@@ -434,6 +438,7 @@
         <p class="note">In a two‑flavor model, $\lvert \nu_e\rangle=\cos\theta\,\lvert \nu_1\rangle+\sin\theta\,\lvert \nu_2\rangle$. Different masses pick up different phases, $\Delta\phi\sim \Delta m^2 L/(2E)$. The survival probability is $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV. Move the sliders to see how $L/E$ shifts the pattern.</p>
         <div class="demo">
           <canvas id="nu" class="demo-canvas" width="700" height="200"></canvas>
+          <p class="note">This picture shows two‑flavor oscillations: $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$.</p>
           <div class="controls">
             <label>θ <input id="theta" type="range" min="0.0" max="1.57" step="0.01" value="0.52"/></label>
             <label>Δm² (eV²) <input id="dm2" type="range" min="1e-5" max="3e-3" step="1e-5" value="7.5e-5"/></label>
@@ -453,6 +458,7 @@
         <p class="note">In the thin‑lens, small‑angle limit a point mass deflects by $\alpha=\tfrac{4GM}{c^2 b}$. In angles on the sky, $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$. The solutions are $\theta_{\pm}=\tfrac12\big(\beta\pm\sqrt{\beta^2+4\theta_E^2}\big)$. We draw in units where the Einstein radius $\theta_E$ is the green circle. Slide the source and watch the two images move and merge.</p>
         <div class="demo">
           <canvas id="lens" class="demo-canvas" width="540" height="300"></canvas>
+          <p class="note">This picture shows thin‑lens gravity: $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$, images $\theta_{\pm}=\tfrac12(\beta\pm\sqrt{\beta^2+4\theta_E^2})$.</p>
           <div class="controls">
             <label>Source angle $\beta/\theta_E$ <input id="betaSlider" type="range" min="-1.5" max="1.5" step="0.01" value="0.6"/></label>
             <label>$\theta_E$ (scale) <input id="thetaESlider" type="range" min="0.2" max="0.8" step="0.01" value="0.5"/></label>
