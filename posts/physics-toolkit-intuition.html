@@ -192,6 +192,8 @@
       <div class="section">
         <h2>Vectors and Dot Product</h2>
         <p class="note">The dot product measures alignment: $\mathbf a\cdot\mathbf b=\|a\|\,\|b\|\cos\theta$. It is projection times length.</p>
+        <p class="note">Think of one arrow asking the other, “how much of you points in my direction?” That number is the length of the projection, scaled by the length of the receiver. In mechanics this shows up as <em>work</em>: force dot displacement. In statistics it becomes correlation. In machine learning it becomes similarity. Same picture, same rule.</p>
+        <p class="note">When the green arrow swings to be perpendicular to the blue one, the dot product goes to zero: no alignment, no work. When they overlap, it’s maximal and positive; when they point opposite, it’s large in magnitude but negative—same line, opposite direction.</p>
         <div class="demo">
           <canvas id="dot" width="540" height="280"></canvas>
           <p class="note">This picture shows two vectors (blue, green), and the projection of one onto the other (orange). Readout: a·b = <span id="dotVal">…</span></p>
@@ -208,6 +210,8 @@
       <div class="section">
         <h2>Linear Maps and Eigenvectors</h2>
         <p class="note">A $2\times2$ matrix sends grids to sheared/scaled grids. Eigenvectors are directions that do not turn; they only stretch by $\lambda$.</p>
+        <p class="note">Watch the gray grid go to tan: that’s the map acting on space. The unit circle goes to a green ellipse. The ellipse’s principal axes are the special directions that the map doesn’t rotate—those are the eigenvectors (orange), and the radii along them are the eigenvalues.</p>
+        <p class="note">Why this matters: preferred directions show up everywhere. Diffusion is fastest along one axis of a crystal; a covariance matrix has principal components; stability near an equilibrium point is set by the eigenvalues of the linearized system. This little picture is the common thread.</p>
         <div class="demo">
           <canvas id="linmap" width="540" height="300"></canvas>
           <p class="note">This picture shows a grid (gray) and its image (tan), the unit circle (blue) and its image (green). Readout: <span id="eigVal">…</span></p>
@@ -224,6 +228,8 @@
       <div class="section">
         <h2>Basis Mixing</h2>
         <p class="note">Changing basis rotates coordinates. A rotation by $\theta$ mixes components: $\begin{bmatrix}\cos\theta & \sin\theta\\-\sin\theta & \cos\theta\end{bmatrix}$.</p>
+        <p class="note">You can describe the same vector using different rulers. Rotate the axes and the numbers change, even though the arrow is the same. That’s all a basis change is. In physics this shows up as moving between lab axes and a convenient frame, or between “flavor” and “mass” bases in mixing problems.</p>
+        <p class="note">What to notice: the columns of the rotation matrix are just the new axes drawn in old coordinates. Multiplying by the matrix answers, “where do the old basis vectors land?” Everything else follows by linearity.</p>
         <div class="demo">
           <canvas id="mix" width="540" height="260"></canvas>
           <p class="note">This picture shows original axes (gray), rotated axes (blue), a fixed vector (orange), and its coordinates in the rotated basis. Readout: <span id="mixVal">…</span></p>
@@ -235,6 +241,8 @@
       <div class="section">
         <h2>Damped Oscillator</h2>
         <p class="note">The equation $\ddot x + \gamma\dot x + \omega^2 x=0$ models a mass on a spring with drag. In phase space, spirals show energy loss.</p>
+        <p class="note">Set $\gamma=0$ and the trail is a closed loop: energy cycles between potential ($\omega^2x^2$) and kinetic ($\dot{x}^2$). Add damping and the loop spirals inward. Mathematically, $\tfrac{\mathrm d}{\mathrm dt}\big[\tfrac12(\omega^2x^2+\dot{x}^2)\big] = -\gamma\,\dot{x}^2 \le 0$—drag always drains energy.</p>
+        <p class="note">Three regimes sit in that one line: underdamped ($\gamma<2\omega$) spirals with decaying oscillations; critically damped ($\gamma=2\omega$) returns fastest without overshoot; overdamped ($\gamma>2\omega$) crawls back with no wiggles. Car suspensions, microphones, and qubits all live on this diagram.</p>
         <div class="demo">
           <canvas id="sho" width="540" height="280"></canvas>
           <p class="note">This picture shows the phase portrait trail from the current state. Readout: energy‑like value $E=\tfrac12(\omega^2 x^2 + \dot{x}^2)$ = <span id="shoE">…</span></p>
@@ -250,6 +258,8 @@
       <div class="section">
         <h2>A Tiny Fourier Builder</h2>
         <p class="note">Many signals can be written as a sum of tones: $s(t)=\sum_k A_k\cos(2\pi k t)$. Turning tones on/off changes shape instantly.</p>
+        <p class="note">Add a second harmonic and the curve grows shoulders; add a third and corners begin to form. Higher $k$ brings finer detail. This is the time–frequency tradeoff in action: the left plot is time, the tiny bars are “how much” of each frequency you used. Most real decompositions include sines and phases too; here we keep the idea minimal.</p>
+        <p class="note">Why this matters: waves, heat flow, circuits, and quantum dynamics all become easier when you think in frequencies. Many equations diagonalize in a Fourier basis, turning hard derivatives into simple multipliers.</p>
         <div class="demo">
           <canvas id="fourier" width="560" height="260"></canvas>
           <p class="note">This picture shows time signal (blue) and a small bar spectrum (green) for $k=1..5$.</p>
