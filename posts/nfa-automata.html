@@ -149,13 +149,13 @@
       </div>
 
       <div class="section">
-        <h2>From Words to Machines</h2>
+        <h2 id="nfa-from-words">From Words to Machines</h2>
         <p class="note">Pick an alphabet $\Sigma$ (e.g., $\{a,b\}$). Words are finite strings over $\Sigma$; the set of all words is $\Sigma^*$ and includes the empty word $\varepsilon$. An NFA is a five‑tuple $(Q,\Sigma,\delta,q_0,F)$ like a DFA, except $\delta(q,a)$ returns a <em>set</em> of possible next states, and we may also allow $\varepsilon$ moves that consume no input.</p>
         <p class="note">The extended transition to sets and whole words is $$\hat{\delta}(S,\varepsilon)=\varepsilon\text{-closure}(S),\qquad \hat{\delta}(S,aw)=\hat{\delta}(\,\varepsilon\text{-closure}(\bigcup_{q\in S}\delta(q,a)),\,w\,).$$ A word $w$ is accepted when $\hat{\delta}(\{q_0\},w)$ intersects $F$. In plain words: keep all states you could be in, expand along $\varepsilon$ moves for free, then follow the next symbol from all of them at once.</p>
       </div>
 
       <div class="section">
-        <h2>Run Preset NFAs</h2>
+        <h2 id="run-nfas">Run Preset NFAs</h2>
         <p class="note">Pick a simple pattern and watch the NFA process the input. Nondeterminism means “try all possible next steps at once”; accept if at least one path lands in an accepting state after the last symbol.</p>
         <div class="demo">
           <canvas id="nfaRun" width="720" height="280"></canvas>
@@ -178,7 +178,7 @@
         </div>
 
       <div class="section">
-        <h2>Build an NFA (with ε)</h2>
+        <h2 id="build-nfa">Build an NFA (with ε)</h2>
         <p class="note">Place states, pick a start, toggle accepting, and add transitions. Use 'ε' (or 'e') to add $\varepsilon$ moves. Enter input and step; the highlighted set shows “all places the machine might be now”. Click “Determinize” to see the subset construction table.</p>
         <div class="demo">
           <canvas id="nfaBuild" width="720" height="320"></canvas>
@@ -207,8 +207,8 @@
         <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
         <div class="content">
           <ul>
-            <li>Compare with DFAs: <a href="turing-automata.html">Turing Machines & Automata</a> (DFA parity & builder).</li>
-            <li>Determinized DFA mirrors subset products from linear algebra (see Toolkit).</li>
+            <li>Compare with DFAs: <a href="turing-automata.html#finite-automata-dfa">Turing Machines & Automata</a> (DFA parity & builder).</li>
+            <li>Determinized DFA mirrors subset products from linear algebra (see <a href="physics-toolkit-intuition.html#linear-maps-and-eigenvectors">Toolkit: Linear maps</a>).</li>
           </ul>
         </div>
       </div>

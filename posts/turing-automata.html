@@ -153,7 +153,7 @@
       </div>
 
       <div class="section">
-        <h2>Finite Automata (DFA)</h2>
+        <h2 id="finite-automata-dfa">Finite Automata (DFA)</h2>
         <p class="note">A DFA is a small machine that reads an input left to right and keeps only a <em>state</em>. The classic five‑tuple is $(Q,\Sigma,\delta,q_0,F)$: states $Q$, alphabet $\Sigma$, transition function $\delta$, start $q_0$, accepting set $F$. <span class="idea" data-note="Connections: NFAs extend this with sets of states and ε‑moves; see ‘NFAs from First Principles’.">related</span></p>
         <p class="note">Below is a DFA that accepts exactly the binary strings with an even number of 1s. Shift your attention between the tape and the highlighted state—the machine stores only “parity so far”. That’s the trick: limited memory, fast decisions.</p>
         <div class="demo">
@@ -181,7 +181,7 @@
       </div>
 
       <div class="section">
-        <h2>Turing Machines</h2>
+        <h2 id="turing-machines">Turing Machines</h2>
         <p class="note">A Turing machine is an idealized paper‑and‑pencil computer: a tape of symbols, a head that reads/writes, and a finite state control. Formally, $(Q,\Gamma,\Sigma,\delta,q_0,q_{acc},q_{rej})$ with tape alphabet $\Gamma$, input alphabet $\Sigma\subseteq\Gamma$, and $\delta$ mapping $(\text{state},\text{symbol})$ to $(\text{write},\text{move},\text{next})$.</p>
         <p class="note">Below: a tiny program that increments a <em>unary</em> number (a run of 1’s). It moves right over 1’s until it finds blank, writes a 1, and halts. Simple, but you can see the head walking, the local edit, and the stop—exactly how bigger programs behave.</p>
         <div class="demo">
@@ -199,13 +199,13 @@
       </div>
 
       <div class="section">
-        <h2>What Languages These Machines Recognize</h2>
+        <h2 id="language-classes">What Languages These Machines Recognize</h2>
         <p class="note">Automata sit in a simple ladder. A DFA recognizes exactly the <em>regular</em> languages (think: patterns with no unbounded counting). Add a stack and you get a <em>pushdown automaton</em> (PDA) for <em>context‑free</em> languages such as balanced parentheses. Give a machine a full read/write tape and you get Turing machines that can simulate any algorithm we know how to write.</p>
         <p class="note">Two helpful intuitions: (1) Regular languages have finitely many “situations that matter” (Myhill–Nerode equivalence classes). (2) A single unbounded counter (a stack) lets you match opens with closes, but not two counts at once (you need more memory for $a^n b^n c^n$). These pictures are the memory you’re allowed to carry.</p>
       </div>
 
       <div class="section">
-        <h2>Build a DFA</h2>
+        <h2 id="build-a-dfa">Build a DFA</h2>
         <p class="note">Click “Add state” and place a few nodes. Choose a start, toggle accepting states, and add transitions with symbols from your alphabet. Enter an input and step through. The highlight shows the current state; acceptance requires halting in an accepting state with all input consumed.</p>
         <div class="demo">
           <canvas id="dfaBuild" width="720" height="340"></canvas>
@@ -230,7 +230,7 @@
       </div>
 
       <div class="section">
-        <h2>Pushdown Automaton (Balanced Parentheses)</h2>
+        <h2 id="pushdown-automaton">Pushdown Automaton (Balanced Parentheses)</h2>
         <p class="note">A PDA is a finite control plus a stack. Here we check balanced parentheses. Read '(' and push; read ')' and pop; reject on underflow; accept if the stack is empty at the end. The stack is the one unbounded memory you carry.</p>
         <div class="demo">
           <div class="split">
@@ -252,7 +252,7 @@
       </div>
 
       <div class="section">
-        <h2>Edit a Turing Program</h2>
+        <h2 id="turing-program-editor">Edit a Turing Program</h2>
         <p class="note">Write rules as lines like <code>q0,1 -> 1,R,q0</code> and <code>q0,_ -> 1,S,qh</code>. The machine reads the current symbol, writes, moves L/R/S (stay), and changes state. Halt when no rule matches or you reach a designated halt state like <code>qh</code>.</p>
         <div class="demo">
           <div class="controls" style="flex-direction:column; align-items:stretch; max-width:880px;">
@@ -278,7 +278,7 @@ q0,_ -> 1,S,qh
         <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
         <div class="content">
           <ul>
-            <li>DFAs here connect to NFAs: <a href="nfa-automata.html">NFAs from First Principles</a> (ε‑moves, determinize).</li>
+            <li>DFAs here connect to NFAs: <a href="nfa-automata.html#run-nfas">NFAs from First Principles</a> (ε‑moves, determinize).</li>
             <li>State diagrams echo linear maps & basis views from the Toolkit.</li>
             <li>See also: <a href="../index.html">Computation & Automata path</a>.</li>
           </ul>

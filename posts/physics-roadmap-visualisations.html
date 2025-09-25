@@ -370,11 +370,11 @@
         <div class="content">
           <p class="desc">Where to go for the ideas that power each section:</p>
           <ul>
-            <li>Spacetime → Primer: <a href="physics-math-primer.html">Metric hyperbolas</a>; Toolkit: <a href="physics-toolkit-intuition.html">Basis mixing</a>.</li>
-            <li>Spin‑1/2 → Primer: <a href="physics-math-primer.html">Two‑state (Bloch) and rotations</a>.</li>
-            <li>Gauge → Primer: <a href="physics-math-primer.html">Phase & covariant derivative</a>; this page: U(1) demo.</li>
-            <li>Higgs → Primer: <a href="physics-math-primer.html">Potentials & curvature</a>.</li>
-            <li>Oscillations → Primer: <a href="physics-math-primer.html">Two‑state</a>; Toolkit: <a href="physics-toolkit-intuition.html">Fourier builder</a>.</li>
+            <li>Spacetime → Primer: <a href="physics-math-primer.html#euclidean-circles-vs-minkowski-cones">Metric hyperbolas</a>; Toolkit: <a href="physics-toolkit-intuition.html#basis-mixing">Basis mixing</a>.</li>
+            <li>Spin‑1/2 → Primer: <a href="physics-math-primer.html#two-state-systems-bloch-picture">Two‑state (Bloch)</a> and <a href="physics-math-primer.html#rotations-as-matrices">Rotations</a>.</li>
+            <li>Gauge → Primer: <a href="physics-math-primer.html#complex-numbers-and-phase">Phase</a> & <a href="physics-math-primer.html#covariant-derivative-1d">Covariant derivative</a>; this page: U(1) demo.</li>
+            <li>Higgs → Primer: <a href="physics-math-primer.html#potentials-and-small-oscillations">Potentials & curvature</a>.</li>
+            <li>Oscillations → Primer: <a href="physics-math-primer.html#two-state-systems-bloch-picture">Two‑state</a>; Toolkit: <a href="physics-toolkit-intuition.html#fourier-builder">Fourier builder</a>.</li>
           </ul>
         </div>
       </div>
@@ -392,12 +392,12 @@
       </div>
 
       <div class="section">
-        <h2>Before We Begin</h2>
+        <h2 id="before-we-begin">Before We Begin</h2>
         <p class="note">We keep the math light. You will see a few symbols: $\gamma=1/\sqrt{1-v^2}$ tells you how strong a boost is (we set $c=1$). The phase $e^{i\alpha}$ is a relabeling that does not change measurements. A “potential” is a simple hill or valley that pushes things toward lower values. Every canvas below draws exactly what the equation says.</p>
       </div>
 
       <div class="section">
-        <h2>Spacetime</h2>
+        <h2 id="spacetime">Spacetime</h2>
         <p class="note">Einstein kept one rule: everyone who moves at a constant speed measures the same speed of light. That rule forces space and time to mix when you change your speed. Minkowski showed it is easier to think of one thing called spacetime. Different observers take different “slices”, but the physics stays the same.</p>
         <p class="note">In our simple 1+1 picture (time and one space direction), a boost along $x$ mixes coordinates as $x' = \gamma(x-vt)$ and $t' = \gamma(t-vx)$ with $\gamma = 1/\sqrt{1-v^2}$. In the canvas, the light cone stays fixed. The blue $x'$ and $t'$ axes tilt as you change $v$. The gray curves show the same quantity $t^2-x^2$ staying constant.</p>
         <div class="demo">
@@ -415,7 +415,7 @@
       </div>
 
       <div class="section">
-        <h2>Spin‑1/2</h2>
+        <h2 id="spin-1-2">Spin‑1/2</h2>
         <p class="note">Electrons have spin. That means they behave like tiny magnets and come in two basic states we call “up” and “down”. When you rotate a spin‑1/2 particle by 360°, its wave picks up a minus sign. That does not change measured probabilities, but it matters when waves add together. After 720°, the wave comes back to itself.</p>
         <p class="note">A rotation about $z$ looks like $R_z(\theta)=\exp\!\big(-\tfrac{i}{2}\,\theta\,\sigma_z\big)$. The factor $1/2$ explains the 720° return. In the canvas, the blue arrow shows the physical direction (period $2\pi$). The green hand shows the spinor phase (period $4\pi$).</p>
         <div class="demo">
@@ -427,7 +427,7 @@
       </div>
 
       <div class="section">
-        <h2>Gauge Symmetry</h2>
+        <h2 id="gauge-symmetry">Gauge Symmetry</h2>
         <p class="note">A complex wave has a phase. If you change only the phase, measurements do not change. If you let that phase depend on position, ordinary derivatives create extra terms. We fix this by using the covariant derivative $D_\mu=\partial_\mu+i g A_\mu$. The new field $A_\mu$ is the gauge field. It keeps the math consistent when phases vary in space and time.</p>
         <p class="note">The field strength is $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (and plus a commutator for non‑Abelian groups). A simple Lagrangian is $\mathcal L=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}+ i\bar\psi\gamma^\mu D_\mu\psi$. In the canvas, we pick $A_\mu=-(1/g)\,\partial_\mu\alpha$. That choice cancels the extra gradient from a pure phase so $\|D\psi\|$ is small when $|\psi|$ is constant.</p>
         <div class="demo">
@@ -443,7 +443,7 @@
       </div>
 
       <div class="section">
-        <h2>The Higgs and Mass</h2>
+        <h2 id="the-higgs-and-mass">The Higgs and Mass</h2>
         <p class="note">Gauge symmetry blocks you from just writing a mass for many fields. A way around this is a scalar field with a potential that prefers a nonzero value everywhere. We call that the vacuum value. Small waves around that value behave like particles. One of them is the Higgs boson. Gauge fields also pick up mass from this background.</p>
         <p class="note">A simple model is $\mathcal L_\phi=|D_\mu\phi|^2-\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$. Around $|\phi|=v$, the radial mode has $m_H^2=2\lambda v^2$. The angular mode is “eaten”, giving a gauge boson $m_A=g v$ (Abelian case). A fermion that couples with $\mathcal L_Y=-y\,\bar\psi\phi\psi$ gets $m_f= y v/\sqrt{2}$. In the canvas, a point rolls downhill and the readouts show the masses from your settings.</p>
         <div class="demo">
@@ -466,7 +466,7 @@
       </div>
 
       <div class="section">
-        <h2>Neutrino Oscillations</h2>
+        <h2 id="neutrino-oscillations">Neutrino Oscillations</h2>
         <p class="note">Detectors on Earth saw fewer electron neutrinos from the Sun than expected. The reason: neutrinos can change flavor as they travel. The states that interact are not the same as the states with definite mass, so the flavor content varies with distance and energy.</p>
         <p class="note">In a two‑flavor model, $\lvert \nu_e\rangle=\cos\theta\,\lvert \nu_1\rangle+\sin\theta\,\lvert \nu_2\rangle$. Different masses pick up different phases, $\Delta\phi\sim \Delta m^2 L/(2E)$. The survival probability is $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV. Move the sliders to see how $L/E$ shifts the pattern.</p>
         <div class="demo">
@@ -487,7 +487,7 @@
       </div>
 
       <div class="section">
-        <h2>Gravitational Lensing</h2>
+        <h2 id="gravitational-lensing">Gravitational Lensing</h2>
         <p class="note">In general relativity, gravity is the shape of spacetime. Light follows the straightest possible path in that shape. Near a massive object the path bends. On the sky this looks like one object making multiple images of a more distant source. If the alignment is close, the image turns into a ring.</p>
         <p class="note">In the thin‑lens, small‑angle limit a point mass deflects by $\alpha=\tfrac{4GM}{c^2 b}$. In angles on the sky, $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$. The solutions are $\theta_{\pm}=\tfrac12\big(\beta\pm\sqrt{\beta^2+4\theta_E^2}\big)$. We draw in units where the Einstein radius $\theta_E$ is the green circle. Slide the source and watch the two images move and merge.</p>
         <div class="demo">
@@ -507,12 +507,12 @@
       </div>
 
       <div class="section">
-        <h2>Putting It Together</h2>
+        <h2 id="putting-it-together">Putting It Together</h2>
         <p class="note">These pieces fit well. Spacetime says how to relate moving observers. Gauge symmetry turns a relabeling rule into a force field. The Higgs field lets particles and some force carriers have mass without breaking the rules. Neutrino mixing shows how a change of basis can have clear effects in experiments. Gravity bends light because spacetime has curvature. The equations here are short, and the pictures let you see them act.</p>
       </div>
 
       <div class="section">
-        <h2>Try It Yourself</h2>
+        <h2 id="try-it-yourself">Try It Yourself</h2>
         <p class="note">Each canvas is a small experiment. Change a slider, watch what moves, and connect it to the line of math beside it. If something feels unclear, try a slower change and look for patterns. Plain rules, seen clearly, go a long way.</p>
       </div>
     </article>
