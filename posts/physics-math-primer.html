@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Physics & Math Primer — Simple Visuals</title>
-  <meta name="description" content="Plain-English primer for phase, rotations, spacetime metric, two-state systems, and simple potentials — each with a small interactive visual." />
+  <meta name="description" content="Plain-English primer for phase, rotations, spacetime metric, two-state systems, simple potentials, and basic gauge ideas — each with a small interactive visual." />
   <link rel="stylesheet" href="../style.css" />
   <script>
     window.MathJax = {
@@ -233,7 +233,7 @@
           <canvas id="metric" width="560" height="280"></canvas>
           <p class="note">This picture shows a unit circle (blue) and the hyperbola $t^2-x^2=s^2$ (green). Both express an invariant “distance”, but with different signs.</p>
           <div class="controls"><label>s <input id="sVal" type="range" min="0.3" max="2.5" step="0.01" value="1.00"/></label></div>
-          <p class="note">For boosts in the main article, the light cone stays fixed while axes tilt; these hyperbolas stay the same.</p>
+          <p class="note">In a Lorentz boost, the light cone stays fixed while the axes tilt; these hyperbolas stay the same.</p>
         </div>
       </div>
 
@@ -278,8 +278,12 @@
       </div>
 
       <div class="section">
-        <h2>Where to Go Next</h2>
-        <p class="note">You now have the small tools used in the main article: phase and rotations, spacetime’s sign flip, two‑state waves, potentials and curvature, and the basic gauge fix. Open the main page and match each canvas here to the bigger pictures there.</p>
+        <h2>What You Learned</h2>
+        <p class="note">These are the small tools behind many modern physics ideas:</p>
+        <p class="note">
+          • Complex phase is a simple rotation in the plane. • Rotations are matrices with sines and cosines. • Spacetime uses a sign‑flipped “distance” that keeps light cones fixed. • A two‑state wave has probabilities set by angles on a circle. • The curvature of a potential near a minimum sets a mass‑like scale. • A covariant derivative keeps calculations honest when phase depends on position.
+        </p>
+        <p class="note">Use the sliders above to build intuition. Each picture is driven directly by the equation next to it.</p>
       </div>
     </article>
 
@@ -289,4 +293,3 @@
   </div>
 </body>
 </html>
-
