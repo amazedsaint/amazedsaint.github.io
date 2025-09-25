@@ -14,6 +14,20 @@
     };
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
+    canvas.gt { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
+    .controls input[type=range], .controls select { padding:0; }
+    .controls input[type=range]{ width: 160px; }
+    .controls .val { width: 36px; text-align:right; font-variant-numeric: tabular-nums; color: var(--text); }
+    .controls select, .controls button, .controls input[type=text]{ padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:#fff; color:var(--text); }
+    .legend { font-size: 12px; color: var(--muted); text-align:center; margin-top: 8px; }
+    .note { max-width:880px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
+    .kpi { display:flex; gap:6px; justify-content:center; font-size: 12px; color: var(--muted); }
+    .kpi .pill { display:inline-block; padding:2px 6px; border:1px solid var(--border); border-radius:999px; }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -77,6 +91,58 @@
         <li><strong>Spectral</strong> intuition for clustering and semi‑supervised learning.</li>
       </ul>
 
+      <div class="section">
+        <h2>Interactive: BFS shortest paths</h2>
+        <div class="demo">
+          <canvas id="gtBfs" class="gt" width="720" height="360"></canvas>
+          <div class="controls">
+            <label>Nodes <input id="bfsN" type="range" min="6" max="28" value="12" step="1"><span class="val" id="bfsNV">12</span></label>
+            <label>Edge p <input id="bfsP" type="range" min="0.05" max="0.45" value="0.18" step="0.01"><span class="val" id="bfsPV">0.18</span></label>
+            <select id="bfsSrc"></select>
+            <button id="bfsGenerate">Generate</button>
+            <button id="bfsStep">Step</button>
+            <button id="bfsRun">Run</button>
+            <button id="bfsReset">Reset</button>
+          </div>
+          <div class="legend">Click a node to pick the source. Colors show layers (distance) from the source; thin arrows point along the BFS tree.</div>
+          <div class="note">BFS explores the <em>frontier</em> layer by layer. If $A$ is the adjacency matrix, the set of nodes at distance $k$ from $s$ appears in the support of $A^k \mathbf{e}_s$ that wasn’t seen earlier. Distances $d(v)$ and parents $\pi(v)$ form a shortest‑path tree.</div>
+          <div class="kpi"><span class="pill">Frontier size: <span id="bfsFrontier">…</span></span><span class="pill">Visited: <span id="bfsVisited">…</span></span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Interactive: Kruskal’s MST</h2>
+        <div class="demo">
+          <canvas id="gtMst" class="gt" width="720" height="360"></canvas>
+          <div class="controls">
+            <label>Nodes <input id="mstN" type="range" min="6" max="28" value="12" step="1"><span class="val" id="mstNV">12</span></label>
+            <label>Edge p <input id="mstP" type="range" min="0.08" max="0.45" value="0.22" step="0.01"><span class="val" id="mstPV">0.22</span></label>
+            <button id="mstGenerate">Generate</button>
+            <button id="mstStep">Step</button>
+            <button id="mstAuto">Auto</button>
+            <button id="mstReset">Reset</button>
+          </div>
+          <div class="legend">Edges are weighted (length on screen). Kruskal sorts edges by weight and adds one if it doesn’t create a cycle (via disjoint sets). Green = in MST, gray = unused, amber = next candidate.</div>
+          <div class="note">MST minimizes $\sum_{(u,v)\in T} w_{uv}$ subject to $T$ being a tree. Greedy works because cuts have a <em>safe</em> minimum edge (cut property). We show $\text{find}$/$\text{union}$ sets to explain cycle tests.</div>
+          <div class="kpi"><span class="pill">Total weight: <span id="mstTotal">0</span></span><span class="pill">Edges chosen: <span id="mstChosen">0</span></span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Interactive: Laplacian diffusion</h2>
+        <div class="demo">
+          <canvas id="gtDiff" class="gt" width="720" height="360"></canvas>
+          <div class="controls">
+            <label>α <input id="diffA" type="range" min="0.01" max="0.5" value="0.12" step="0.01"><span class="val" id="diffAV">0.12</span></label>
+            <button id="diffStep">Step</button>
+            <button id="diffRun">Run</button>
+            <button id="diffReset">Reset</button>
+          </div>
+          <div class="legend">Click nodes to toggle hot/cold seeds (fixed values). Others evolve by $x \leftarrow x - \alpha L x$ which decreases $\mathcal E(x)=x^\top L x$ (smooths values along edges).</div>
+          <div class="note">Here $L=D-A$ with $D_{uu}=\deg(u)$. Fixed seeds implement Dirichlet conditions. A small step $\alpha$ performs gradient descent on $\mathcal E(x)$; colors show $x_u$ (blue→white→red).</div>
+        </div>
+      </div>
+
       <div class="connections">
         <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
         <div class="content">
@@ -103,5 +169,119 @@
       <p class="meta-mini">By Anoop • <a href="https://twitter.com/amazedsaint">Twitter</a> • <a href="https://github.com/amazedsaint">GitHub</a> • <a href="../index.html">Home</a></p>
     </footer>
   </div>
+  <script>
+  (function(){
+    const ready = (fn)=>{ if(document.readyState==='complete'||document.readyState==='interactive') fn(); else document.addEventListener('DOMContentLoaded', fn); };
+    const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+    function rand(a,b){ return Math.random()*(b-a)+a; }
+
+    // ---------- Shared drawing helpers ----------
+    function drawNode(ctx, n, opts={}){
+      ctx.save();
+      const r=12;
+      ctx.lineWidth=2;
+      ctx.strokeStyle=opts.stroke||'#444';
+      ctx.fillStyle=opts.fill||'#fff';
+      ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      if (opts.badge){ ctx.fillStyle=opts.badgeColor||'#1a8917'; ctx.beginPath(); ctx.arc(n.x+10,n.y-10,4,0,Math.PI*2); ctx.fill(); }
+      ctx.fillStyle=opts.textColor||'#111'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(n.id), n.x, n.y);
+      ctx.restore();
+    }
+    function drawEdge(ctx, a,b, color='#bbb', width=1, label){
+      ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      if(label!=null){ ctx.fillStyle='#666'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; const mx=(a.x+b.x)/2, my=(a.y+b.y)/2; ctx.fillText(label, mx+6, my-6); }
+      ctx.restore();
+    }
+    function layoutCircle(N, W, H){ const cx=W*0.5, cy=H*0.5, R=Math.min(W,H)*0.35; return Array.from({length:N}, (_,i)=>({ id:i, x:cx+R*Math.cos(2*Math.PI*i/N), y:cy+R*Math.sin(2*Math.PI*i/N) })); }
+
+    // ---------- BFS ----------
+    function initBfs(){
+      const cv=document.getElementById('gtBfs'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+      const ui={ n:byId('bfsN'), p:byId('bfsP'), nv:byId('bfsNV'), pv:byId('bfsPV'), srcSel:byId('bfsSrc'), gen:byId('bfsGenerate'), step:byId('bfsStep'), run:byId('bfsRun'), reset:byId('bfsReset'), frontier:byId('bfsFrontier'), visited:byId('bfsVisited') };
+      let nodes=[], edges=[], adj=[], src=0, dist=[], parent=[], q=[], seen=[], levelColors=['#1a8917','#0ea5e9','#f59e0b','#ef4444','#8b5cf6','#10b981','#fb7185']; let running=false;
+      function byId(id){ return document.getElementById(id); }
+      function build(){ const N=+ui.n.value, p=parseFloat(ui.p.value); nodes=layoutCircle(N,W,H); edges=[]; adj=Array.from({length:N},()=>[]);
+        for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){ if(Math.random()<p){ edges.push({u:i,v:j}); adj[i].push(j); adj[j].push(i); } }
+        src=0; updateSrcSel(); reset(); draw(); }
+      function updateSrcSel(){ ui.srcSel.innerHTML = nodes.map((n,i)=>`<option value="${i}">s=${i}</option>`).join(''); ui.srcSel.value=String(src); }
+      function reset(){ dist=Array(nodes.length).fill(Infinity); parent=Array(nodes.length).fill(-1); seen=Array(nodes.length).fill(false); q=[]; dist[src]=0; seen[src]=true; q.push(src); running=false; ui.run.textContent='Run'; updKpi(); }
+      function step(){ if(q.length===0){ draw(); return; } const u=q.shift(); for(const v of adj[u]) if(!seen[v]){ seen[v]=true; dist[v]=dist[u]+1; parent[v]=u; q.push(v); } draw(); updKpi(); }
+      function run(){ running=!running; ui.run.textContent = running?'Pause':'Run'; if(running) tick(); }
+      function tick(){ if(!running) return; if(q.length>0){ step(); setTimeout(tick, 240); } else { running=false; ui.run.textContent='Run'; draw(); } }
+      function updKpi(){ ui.frontier.textContent = String(q.length); ui.visited.textContent = String(seen.reduce((a,b)=>a+(b?1:0),0)); }
+      function draw(){ ctx.clearRect(0,0,W,H); // edges
+        for(const e of edges){ const a=nodes[e.u], b=nodes[e.v]; const color='#ddd'; drawEdge(ctx,a,b,color,1); }
+        // Tree arrows and node layers
+        for(let v=0; v<nodes.length; v++){ if(parent[v]!==-1){ const a=nodes[parent[v]], b=nodes[v]; drawEdge(ctx,a,b,'#999',1.5); } }
+        for(let v=0; v<nodes.length; v++){ const d=dist[v]; const col = (d===Infinity? '#fff' : (levelColors[d%levelColors.length]));
+          drawNode(ctx, nodes[v], { fill: d===Infinity? '#fff' : col+'22', stroke: v===src? '#1a8917':'#444' }); }
+      }
+      // events
+      ui.n.oninput=()=>{ ui.nv.textContent=ui.n.value; };
+      ui.p.oninput=()=>{ ui.pv.textContent=parseFloat(ui.p.value).toFixed(2); };
+      ui.gen.onclick=build; ui.reset.onclick=reset; ui.step.onclick=step; ui.run.onclick=run; ui.srcSel.onchange=()=>{ src=+ui.srcSel.value; build(); };
+      cv.addEventListener('click', (e)=>{ const r=cv.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top; let best=-1,bd=1e9; for(let i=0;i<nodes.length;i++){ const d=(nodes[i].x-x)**2+(nodes[i].y-y)**2; if(d<bd){ bd=d; best=i; } } if(best>=0){ src=best; build(); } });
+      // init
+      ui.nv.textContent=ui.n.value; ui.pv.textContent=parseFloat(ui.p.value).toFixed(2); build();
+    }
+
+    // ---------- MST (Kruskal) ----------
+    function initMst(){
+      const cv=document.getElementById('gtMst'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+      const ui={ n:byId('mstN'), p:byId('mstP'), nv:byId('mstNV'), pv:byId('mstPV'), gen:byId('mstGenerate'), step:byId('mstStep'), auto:byId('mstAuto'), reset:byId('mstReset'), total:byId('mstTotal'), chosen:byId('mstChosen') };
+      function byId(id){ return document.getElementById(id); }
+      let nodes=[], edges=[], order=[], idx=0, parent=[], rank=[], inMst=new Set(), rejected=new Set(), total=0, running=false;
+      function find(x){ while(parent[x]!==x){ parent[x]=parent[parent[x]]; x=parent[x]; } return x; }
+      function unite(a,b){ a=find(a); b=find(b); if(a===b) return false; if(rank[a]<rank[b]) [a,b]=[b,a]; parent[b]=a; if(rank[a]===rank[b]) rank[a]++; return true; }
+      function build(){ const N=+ui.n.value, p=parseFloat(ui.p.value); nodes=layoutCircle(N,W,H); edges=[]; for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){ if(Math.random()<p){ const w=Math.hypot(nodes[i].x-nodes[j].x, nodes[i].y-nodes[j].y); edges.push({u:i,v:j,w}); } }
+        order = edges.slice().sort((a,b)=>a.w-b.w); idx=0; parent=Array.from({length:nodes.length}, (_,i)=>i); rank=Array(nodes.length).fill(0); inMst.clear(); rejected.clear(); total=0; running=false; ui.auto.textContent='Auto'; ui.total.textContent='0'; ui.chosen.textContent='0'; draw(); }
+      function step(){ if(idx>=order.length) { draw(); return; } const e=order[idx++]; const ok = unite(e.u, e.v); if(ok){ inMst.add(edgeKey(e)); total+=e.w; ui.total.textContent = total.toFixed(1); ui.chosen.textContent = String(inMst.size); } else { rejected.add(edgeKey(e)); } draw(); }
+      function edgeKey(e){ return `${Math.min(e.u,e.v)}-${Math.max(e.u,e.v)}`; }
+      function auto(){ running=!running; ui.auto.textContent=running? 'Pause':'Auto'; if(running) tick(); }
+      function tick(){ if(!running) return; if(idx<order.length){ step(); setTimeout(tick, 200); } else { running=false; ui.auto.textContent='Auto'; } }
+      function draw(){ ctx.clearRect(0,0,W,H); // candidate highlight
+        if(idx<order.length){ const e=order[idx]; drawEdge(ctx, nodes[e.u], nodes[e.v], '#f59e0b', 2, e.w.toFixed(1)); }
+        // edges base
+        for(const e of edges){ const key=edgeKey(e); if(inMst.has(key)) continue; const color = rejected.has(key)? '#ddd' : '#ccc'; drawEdge(ctx, nodes[e.u], nodes[e.v], color, 1, null); }
+        // MST edges on top
+        for(const key of inMst){ const [u,v]=key.split('-').map(s=>+s); const e={u,v}; drawEdge(ctx, nodes[u], nodes[v], '#1a8917', 3); }
+        // nodes
+        for(const n of nodes){ drawNode(ctx,n); }
+      }
+      ui.n.oninput=()=> ui.nv.textContent=ui.n.value; ui.p.oninput=()=> ui.pv.textContent=parseFloat(ui.p.value).toFixed(2);
+      ui.gen.onclick=build; ui.reset.onclick=build; ui.step.onclick=step; ui.auto.onclick=auto; ui.nv.textContent=ui.n.value; ui.pv.textContent=parseFloat(ui.p.value).toFixed(2); build();
+    }
+
+    // ---------- Laplacian diffusion ----------
+    function initDiff(){
+      const cv=document.getElementById('gtDiff'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+      const ui={ a:byId('diffA'), av:byId('diffAV'), step:byId('diffStep'), run:byId('diffRun'), reset:byId('diffReset') };
+      function byId(id){ return document.getElementById(id); }
+      // reuse a graph from BFS layout style
+      let nodes=layoutCircle(16,W,H), edges=[], adj=[], x=[], fixed=new Map(), running=false;
+      function build(){ // ring + chords
+        const N=nodes.length; edges=[]; adj=Array.from({length:N},()=>[]);
+        for(let i=0;i<N;i++){ const j=(i+1)%N; edges.push({u:i,v:j}); adj[i].push(j); adj[j].push(i); }
+        for(let k=0;k<N/2;k++){ const i=Math.floor(rand(0,N)), j=Math.floor(rand(0,N)); if(i!==j){ edges.push({u:Math.min(i,j), v:Math.max(i,j)}); adj[i].push(j); adj[j].push(i); } }
+        x=Array(N).fill(0); fixed.clear(); draw(); }
+      function toggleSeed(i){ if(fixed.has(i)) fixed.delete(i); else fixed.set(i, (fixed.size%2===0? 1 : -1)); }
+      function step(){ const N=nodes.length; const a=parseFloat(ui.a.value); const nx=x.slice(); for(let u=0; u<N; u++){
+          if(fixed.has(u)){ nx[u]=fixed.get(u); continue; }
+          const deg=adj[u].length||1; let sumN=0; for(const v of adj[u]) sumN+=x[v]; const Lu = deg*x[u] - sumN; nx[u] = x[u] - a*Lu; nx[u] = clamp(nx[u], -1.5, 1.5);
+        } x=nx; draw(); }
+      function run(){ running=!running; ui.run.textContent=running? 'Pause':'Run'; if(running) tick(); }
+      function tick(){ if(!running) return; step(); setTimeout(tick, 160); }
+      function draw(){ ctx.clearRect(0,0,W,H); for(const e of edges){ drawEdge(ctx, nodes[e.u], nodes[e.v], '#ddd', 1); }
+        for(let i=0;i<nodes.length;i++){ const v=x[i]; const col = valToColor(v); const isFix=fixed.has(i); drawNode(ctx, nodes[i], { fill: col, stroke: isFix? (fixed.get(i)>0? '#1a8917':'#b91c1c') : '#444', badge:isFix, badgeColor: fixed.get(i)>0? '#1a8917' : '#b91c1c' }); }
+      }
+      function valToColor(v){ // blue-white-red
+        const t=clamp((v+1)/2,0,1); const r=Math.floor(255*t), g=Math.floor(255*Math.min(1,1-Math.abs(t-0.5)*2)), b=Math.floor(255*(1-t)); return `rgba(${r},${g},${b},0.85)`; }
+      cv.addEventListener('click', (e)=>{ const r=cv.getBoundingClientRect(); const x0=e.clientX-r.left, y0=e.clientY-r.top; let best=-1,bd=1e9; for(let i=0;i<nodes.length;i++){ const d=(nodes[i].x-x0)**2 + (nodes[i].y-y0)**2; if(d<bd){ bd=d; best=i; } } if(best>=0){ toggleSeed(best); draw(); } });
+      ui.a.oninput=()=> ui.av.textContent=parseFloat(ui.a.value).toFixed(2); ui.reset.onclick=build; ui.step.onclick=step; ui.run.onclick=run; ui.av.textContent=parseFloat(ui.a.value).toFixed(2); build();
+    }
+
+    ready(()=>{ initBfs(); initMst(); initDiff(); });
+  })();
+  </script>
 </body>
 </html>
