@@ -10,7 +10,8 @@
     window.MathJax = {
       tex: {
         inlineMath: [["$","$"],["\\(","\\)"]],
-        displayMath: [["$$","$$"],["\\[","\\]"]]
+        displayMath: [["$$","$$"],["\\[","\\]"]],
+        packages: {'[+]': ['base','ams']}
       },
       options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
     };
@@ -129,7 +130,33 @@
         return { setV };
       }
 
-      // 2) Higgs Mexican hat potential + masses
+      // 2) Spinor double-cover (SU(2) -> SO(3))
+      function spinorSection(){
+        const cv = document.getElementById('spinor'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=260; let ang=0;
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const cx=W*0.5, cy=H*0.6, R=80;
+          // Bloch equator circle
+          ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+          // pointer showing physical orientation (needs 2π)
+          const bx=cx+Math.cos(ang)*R, by=cy-Math.sin(ang)*R;
+          ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(bx,by); ctx.stroke();
+          // spinor phase for |up> under rotation around z: ψ → e^{-i θ/2} |up>
+          const px=cx+Math.cos(ang/2)*R*0.7, py=cy-1.2*R;
+          ctx.strokeStyle='rgba(26,137,23,0.9)'; ctx.beginPath(); ctx.moveTo(cx,cy-1.2*R); ctx.lineTo(px,py); ctx.stroke();
+          ctx.fillStyle='#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.fillText('phase e^{-i θ/2}', cx-60, cy-1.2*R-16);
+          const sgn = Math.cos(ang/2) >= 0 ? '+1' : '-1';
+          ctx.fillStyle='#222'; ctx.fillText('spinor sign: '+sgn+' (returns after 4π)', 16, 22);
+          ctx.fillStyle='#666'; ctx.fillText('rotation θ = '+ang.toFixed(2)+' rad', 16, 40);
+        }
+        function setTheta(v){ ang=parseFloat(v); draw(); }
+        draw();
+        return { setTheta };
+      }
+
+      // 3) Higgs Mexican hat potential + masses
       function higgsSection(){
         const cv = document.getElementById('higgs'); if(!cv) return; const ctx = cv.getContext('2d');
         const W=cv.width=700, H=cv.height=380; let lambda=0.5, vev=1.0, damping=0.15;
@@ -166,11 +193,12 @@
           ctx.fillStyle = '#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           ctx.fillText('Mexican-hat potential contour (vacuum circle in green)', 20, 20);
           ctx.restore();
-          // masses at vacuum (radial vs angular)
+          // masses at vacuum
           const mH2 = 2*lambda*vev*vev; // radial mode mass^2
-          const mA = parseFloat(document.getElementById('higgsG').value) * vev; // gauge boson mass (Abelian) m = g v
+          const mA = parseFloat(document.getElementById('higgsG').value) * vev; // Abelian gauge boson: m = g v
           document.getElementById('mH').textContent = Math.sqrt(Math.max(0,mH2)).toFixed(3);
           document.getElementById('mA').textContent = mA.toFixed(3);
+          const yEl = document.getElementById('yuk'); if (yEl){ const y=parseFloat(yEl.value); const mf = y*vev/Math.SQRT2; document.getElementById('mf').textContent = mf.toFixed(3);}        
         }
         let raf=0; function loop(){ step(); draw(); if(!reduce) raf=requestAnimationFrame(loop); }
         function setLambda(v){ lambda = parseFloat(v); }
@@ -180,7 +208,42 @@
         return { setLambda, setVev, reset };
       }
 
-      // 3) Neutrino oscillations (2-flavor accurate formula)
+      // 4) U(1) gauge: local phase and covariant derivative
+      function gaugeSection(){
+        const cv = document.getElementById('u1'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=260; let amp=0.8, kx=2*Math.PI/200, ky=2*Math.PI/140, g=1.0;
+        function alpha(x,y){ return amp*Math.sin(kx*x)*Math.sin(ky*y); }
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          // grid of phases
+          const nx=18, ny=10; const dx=W/(nx+1), dy=H/(ny+1);
+          let sumGrad=0, sumCov=0, n=0;
+          for(let i=1;i<=nx;i++){
+            for(let j=1;j<=ny;j++){
+              const x=i*dx, y=j*dy;
+              const a=alpha(x,y);
+              // phase arrow
+              const r=8; const ux=Math.cos(a), uy=Math.sin(a);
+              ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+ux*r,y-uy*r); ctx.stroke();
+              // numeric gradients (central differences)
+              const ax = (alpha(x+1,y)-alpha(x-1,y))/2;
+              const ay = (alpha(x,y+1)-alpha(x,y-1))/2;
+              const grad = Math.hypot(ax,ay);
+              const cov = Math.hypot(ax+g*(-ax/g), ay+g*(-ay/g)); // with A = -(1/g) ∇α, Dψ ≈ 0 for ψ0 constant
+              sumGrad+=grad; sumCov+=cov; n++;
+            }
+          }
+          if(n>0){
+            const g1=document.getElementById('gradPsi'); if(g1) g1.textContent=(sumGrad/n).toFixed(3);
+            const g2=document.getElementById('covPsi'); if(g2) g2.textContent=(sumCov/n).toFixed(3);
+          }
+        }
+        function setAmp(v){ amp=parseFloat(v); draw(); }
+        draw();
+        return { setAmp };
+      }
+
+      // 5) Neutrino oscillations (2-flavor accurate formula)
       function neutrinoSection(){
         const cv = document.getElementById('nu'); if(!cv) return; const ctx=cv.getContext('2d');
         const W=cv.width=700, H=cv.height=200; let theta=Math.PI/6, dm2=7.5e-5; // eV^2 (solar scale)
@@ -217,22 +280,63 @@
         return { setTheta, setDm2, setL, setE };
       }
 
+      // 6) Gravity: thin-lens point-mass gravitational lensing
+      function lensingSection(){
+        const cv = document.getElementById('lens'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=300; let beta=0.6, thetaE=0.5;
+        function solveImages(beta){
+          const b=Math.abs(beta); const root=Math.sqrt(b*b+4*thetaE*thetaE); const thp=0.5*(b+root), thm=0.5*(b-root);
+          const s=Math.sign(beta)||1; return [s*thm, s*thp];
+        }
+        function draw(){
+          ctx.clearRect(0,0,W,H); const cx=W/2, cy=H/2, s=100;
+          // axes
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(10,cy); ctx.lineTo(W-10,cy); ctx.moveTo(cx,10); ctx.lineTo(cx,H-10); ctx.stroke();
+          // lens
+          ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill(); ctx.fillText('lens', cx+6, cy-6);
+          // Einstein radius
+          ctx.strokeStyle='rgba(26,137,23,0.8)'; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.arc(cx,cy,thetaE*s,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+          // source
+          const sx=cx+beta*s, sy=cy; ctx.fillStyle='rgba(0,120,255,0.9)'; ctx.beginPath(); ctx.arc(sx,sy,4,0,Math.PI*2); ctx.fill(); ctx.fillText('source', sx+6, sy-6);
+          // images
+          const [thm, thp] = solveImages(beta);
+          const ix1=cx+thm*s, ix2=cx+thp*s; const iy=cy;
+          ctx.fillStyle='#cc3333'; ctx.beginPath(); ctx.arc(ix1,iy,4,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(ix2,iy,4,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.fillText('θ_E', cx+thetaE*s+6, cy-6);
+          const bEl=document.getElementById('beta'); if(bEl) bEl.textContent = beta.toFixed(2);
+          const mEl=document.getElementById('thm'); if(mEl) mEl.textContent = thm.toFixed(2);
+          const pEl=document.getElementById('thp'); if(pEl) pEl.textContent = thp.toFixed(2);
+        }
+        function setBeta(v){ beta=parseFloat(v); draw(); }
+        function setThetaE(v){ thetaE=parseFloat(v); draw(); }
+        draw();
+        return { setBeta, setThetaE };
+      }
+
       // Wire up sections once DOM is ready
       function start(){
         const lorentz = lorentzSection();
+        const spinor = spinorSection();
         const higgs = higgsSection();
+        const u1 = gaugeSection();
         const nu = neutrinoSection();
+        const lens = lensingSection();
 
         // UI bindings
         const vSlider = document.getElementById('vSlider'); if(vSlider) vSlider.oninput = e => lorentz.setV(e.target.value);
+        const spin = document.getElementById('thetaSpin'); if(spin) spin.oninput = e => spinor.setTheta(e.target.value);
         const lam = document.getElementById('lambda'); if(lam) lam.oninput = e => higgs.setLambda(e.target.value);
         const vev = document.getElementById('vev'); if(vev) vev.oninput = e => higgs.setVev(e.target.value);
         const reset = document.getElementById('resetHiggs'); if(reset) reset.onclick = () => higgs.reset();
+        const amp = document.getElementById('amp'); if(amp) amp.oninput = e => u1.setAmp(e.target.value);
 
         const th = document.getElementById('theta'); if(th) th.oninput = e => nu.setTheta(e.target.value);
         const dm = document.getElementById('dm2'); if(dm) dm.oninput = e => nu.setDm2(e.target.value);
         const l = document.getElementById('L'); if(l) l.oninput = e => nu.setL(e.target.value);
         const eSlider = document.getElementById('E'); if(eSlider) eSlider.oninput = e => nu.setE(e.target.value);
+        const beta = document.getElementById('betaSlider'); if(beta) beta.oninput = e => lens.setBeta(e.target.value);
+        const the = document.getElementById('thetaESlider'); if(the) the.oninput = e => lens.setThetaE(e.target.value);
       }
       if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
     })();
@@ -261,14 +365,14 @@
         <h2>0) The toolkit (10‑second primer)</h2>
         <ul>
           <li>Vectors & tensors: components that rotate/boost between frames.</li>
-          <li>Groups: symmetry move sets like $U(1), SU(2), SU(3)$.</li>
+          <li>Groups: symmetry move sets like $U(1),\, SU(2),\, SU(3)$.</li>
           <li>Lagrangian/action: one compact formula; least action yields equations of motion.</li>
         </ul>
       </div>
 
       <div class="section">
         <h2>1) The stage: spacetime and the Lorentz group</h2>
-        <p class="note">Special relativity keeps light cones fixed. The Lorentz group (double cover $Spin(1,3)$) acts linearly on events $(t,x)$. Move the slider to apply a boost.</p>
+        <p class="note">Special relativity keeps light cones fixed. The Lorentz group (double cover $\mathrm{Spin}(1,3)$) acts linearly on events $(t,x)$. Move the slider to apply a boost. Equations: $x' = \gamma(x-vt)$, $t' = \gamma(t-vx)$, with $\gamma = 1/\sqrt{1-v^2}$ (units $c=1$).</p>
         <div class="demo">
           <canvas id="lorentz" class="demo-canvas" width="700" height="380"></canvas>
           <div class="controls">
@@ -282,26 +386,50 @@
       </div>
 
       <div class="section">
-        <h2>2–4) Actors and the rulebook: gauge principle and the Higgs</h2>
-        <p class="note">Gauge symmetry (local phase freedom) forces gauge fields. A complex scalar with $V(\phi)=\tfrac\lambda4(|\phi|^2-v^2)^2$ picks $|\phi|=v$; the angular mode is eaten (gauge boson mass $m=g v$), the radial mode has $m_H^2=2\lambda v^2$.</p>
+        <h2>2) Actors: spinors live in the double cover</h2>
+        <p class="note">Spin-$\tfrac12$ fields transform under the double cover of rotations: $\psi \mapsto e^{-\tfrac{i}{2}\,\theta\,\sigma_z}\,\psi$. A $2\pi$ rotation flips the sign (invisible to probabilities); only after $4\pi$ do spinors return exactly.</p>
+        <div class="demo">
+          <canvas id="spinor" class="demo-canvas" width="540" height="260"></canvas>
+          <div class="controls"><label>Rotation $\theta$ <input id="thetaSpin" type="range" min="0" max="6.283" step="0.01" value="0"/></label></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>3) Rulebook: gauge principle (U(1))</h2>
+        <p class="note">Local phase $\psi(x)\to e^{i\alpha(x)}\psi(x)$ demands a connection $A_\mu$ and the covariant derivative $D_\mu=\partial_\mu+i g A_\mu$. Field strength: $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (plus commutator for non‑Abelian groups). Lagrangians: $\mathcal L_{\rm YM}=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}$ and $\mathcal L_{\rm Dirac}= i\bar\psi\gamma^\mu D_\mu\psi$.</p>
+        <div class="demo">
+          <canvas id="u1" class="demo-canvas" width="540" height="260"></canvas>
+          <div class="controls"><label>Phase amplitude <input id="amp" type="range" min="0" max="1.5" step="0.01" value="0.8"/></label></div>
+          <div class="kpis">
+            <div class="kpi"><b>||∇ψ|| (naive)</b><div class="val" id="gradPsi">—</div></div>
+            <div class="kpi"><b>||Dψ|| (with Aμ)</b><div class="val" id="covPsi">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>4) Mass from a vacuum: Higgs and Yukawa</h2>
+        <p class="note">A complex scalar with $V(\phi)=\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$ chooses $|\phi|=v$. The angular mode gives the gauge boson a mass $m_A=g v$ (Abelian), and the radial mode has $m_H^2=2\lambda v^2$. Fermions get mass from Yukawa $\mathcal L_Y= -y\,\bar\psi\,\phi\,\psi\Rightarrow m_f=y v/\sqrt{2}$.</p>
         <div class="demo">
           <canvas id="higgs" class="demo-canvas" width="700" height="380"></canvas>
           <div class="controls">
             <label>λ <input id="lambda" type="range" min="0.1" max="1.5" step="0.05" value="0.50"/></label>
             <label>v (VEV) <input id="vev" type="range" min="0.5" max="2.0" step="0.05" value="1.00"/></label>
             <label>g <input id="higgsG" type="range" min="0.0" max="1.5" step="0.05" value="0.65"/></label>
+            <label>y (Yukawa) <input id="yuk" type="range" min="0.0" max="2.0" step="0.01" value="1.00"/></label>
             <button id="resetHiggs" class="btn">Reset</button>
           </div>
           <div class="kpis">
             <div class="kpi"><b>Higgs mass</b><div class="val" id="mH">—</div></div>
             <div class="kpi"><b>Gauge mass</b><div class="val" id="mA">—</div></div>
+            <div class="kpi"><b>Fermion mass</b><div class="val" id="mf">—</div></div>
           </div>
         </div>
       </div>
 
       <div class="section">
-        <h2>6) Flavor mixing: neutrino oscillations</h2>
-        <p class="note">Two‑flavor survival probability: $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2\,L/E\big)$. Adjust mixing and $\Delta m^2$; move $L$ and $E$ to see oscillation length.</p>
+        <h2>5) Flavor mixing: neutrino oscillations</h2>
+        <p class="note">Two‑flavor survival probability: $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV. This captures the main scale; three‑flavor uses PMNS angles and phases.</p>
         <div class="demo">
           <canvas id="nu" class="demo-canvas" width="700" height="200"></canvas>
           <div class="controls">
@@ -318,12 +446,29 @@
       </div>
 
       <div class="section">
+        <h2>6) Gravity’s piece: thin‑lens intuition</h2>
+        <p class="note">In weak fields, a point mass lenses light with deflection $\alpha=\dfrac{4GM}{c^2 b}$. The thin‑lens equation (in angles) is $\boldsymbol\beta=\boldsymbol\theta-\dfrac{\theta_E^2\,\boldsymbol\theta}{|\boldsymbol\theta|^2}$ with Einstein radius $\theta_E$. Move the source to see two images merge into an Einstein ring at alignment.</p>
+        <div class="demo">
+          <canvas id="lens" class="demo-canvas" width="540" height="300"></canvas>
+          <div class="controls">
+            <label>Source angle $\beta/\theta_E$ <input id="betaSlider" type="range" min="-1.5" max="1.5" step="0.01" value="0.6"/></label>
+            <label>$\theta_E$ (scale) <input id="thetaESlider" type="range" min="0.2" max="0.8" step="0.01" value="0.5"/></label>
+          </div>
+          <div class="kpis">
+            <div class="kpi"><b>β</b><div class="val" id="beta">—</div></div>
+            <div class="kpi"><b>θ−</b><div class="val" id="thm">—</div></div>
+            <div class="kpi"><b>θ+</b><div class="val" id="thp">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
         <h2>8–10) Putting the pieces together</h2>
         <ul>
           <li>Spacetime: Einstein–Hilbert term $\int \!\sqrt{-g}\,R$ (curved stage).</li>
-          <li>Forces: Yang–Mills $-\tfrac14 F_{\mu\nu}F^{\mu\nu}$ for $SU(3)\times SU(2)\times U(1)$.</li>
-          <li>Matter: Dirac $i\bar\psi \slashed{D}\psi$; covariant $D_\mu$ couples fields to forces.</li>
-          <li>Mass: Higgs potential + Yukawas turn VEV into particle masses.</li>
+          <li>Forces: Yang–Mills $-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}$ for $SU(3)\times SU(2)\times U(1)$.</li>
+          <li>Matter: Dirac $i\bar\psi\gamma^\mu D_\mu\psi$; covariant $D_\mu$ couples fields to forces.</li>
+          <li>Mass: Higgs potential + Yukawas turn the VEV into particle masses.</li>
           <li>Mixing: CKM/PMNS matrices rotate between mass and weak bases.</li>
         </ul>
       </div>
@@ -345,4 +490,3 @@
   </div>
 </body>
 </html>
-
