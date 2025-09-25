@@ -11,7 +11,8 @@
       tex: {
         inlineMath: [["$","$"],["\\(","\\)"]],
         displayMath: [["$$","$$"],["\\[","\\]"]],
-        packages: {'[+]': ['base','ams']}
+        packages: {'[+]': ['base','ams']},
+        processEscapes: true
       },
       options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
     };
@@ -372,7 +373,8 @@
 
       <div class="section">
         <h2>1) The stage: spacetime and the Lorentz group</h2>
-        <p class="note">Special relativity keeps light cones fixed. The Lorentz group (double cover $\mathrm{Spin}(1,3)$) acts linearly on events $(t,x)$. Move the slider to apply a boost. Equations: $x' = \gamma(x-vt)$, $t' = \gamma(t-vx)$, with $\gamma = 1/\sqrt{1-v^2}$ (units $c=1$).</p>
+        <p class="note">What it is: spacetime is a 4D arena with invariant interval $s^2 = t^2 - x^2 - y^2 - z^2$ (we use $c=1$ and plot 1+1D). Why it’s used: the same laws must hold for any inertial observer. Those changes of frame are Lorentz transformations that keep light cones and $s^2$ fixed.</p>
+        <p class="note">Equations: a boost along $x$ mixes $x$ and $t$ via $x' = \gamma(x-vt)$ and $t' = \gamma(t-vx)$ with $\gamma = 1/\sqrt{1-v^2}$. The blue lines show the $x'$ and $t'$ axes of the moving frame; hyperbolas depict $t^2-x^2=\text{const}$.</p>
         <div class="demo">
           <canvas id="lorentz" class="demo-canvas" width="700" height="380"></canvas>
           <div class="controls">
@@ -387,7 +389,8 @@
 
       <div class="section">
         <h2>2) Actors: spinors live in the double cover</h2>
-        <p class="note">Spin-$\tfrac12$ fields transform under the double cover of rotations: $\psi \mapsto e^{-\tfrac{i}{2}\,\theta\,\sigma_z}\,\psi$. A $2\pi$ rotation flips the sign (invisible to probabilities); only after $4\pi$ do spinors return exactly.</p>
+        <p class="note">What it is: spin is intrinsic angular momentum. Spin-$\tfrac12$ matter (electrons, quarks) is described by two‑component spinors. Why used: their transformation law captures how these particles respond to rotations and magnetic fields.</p>
+        <p class="note">Equation: a rotation about $z$ acts as $R_z(\theta)=\exp\!\big(-\tfrac{i}{2}\,\theta\,\sigma_z\big)$. Consequence: a $2\pi$ rotation multiplies the spinor by $-1$ (probabilities unchanged), and only after $4\pi$ does the state return exactly. The blue pointer shows physical orientation (SO(3), period $2\pi$); the green hand shows spinor phase (SU(2), period $4\pi$).</p>
         <div class="demo">
           <canvas id="spinor" class="demo-canvas" width="540" height="260"></canvas>
           <div class="controls"><label>Rotation $\theta$ <input id="thetaSpin" type="range" min="0" max="6.283" step="0.01" value="0"/></label></div>
@@ -396,7 +399,8 @@
 
       <div class="section">
         <h2>3) Rulebook: gauge principle (U(1))</h2>
-        <p class="note">Local phase $\psi(x)\to e^{i\alpha(x)}\psi(x)$ demands a connection $A_\mu$ and the covariant derivative $D_\mu=\partial_\mu+i g A_\mu$. Field strength: $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (plus commutator for non‑Abelian groups). Lagrangians: $\mathcal L_{\rm YM}=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}$ and $\mathcal L_{\rm Dirac}= i\bar\psi\gamma^\mu D_\mu\psi$.</p>
+        <p class="note">What it is: physics shouldn’t depend on how we label a field’s internal phase. Why used: demanding invariance under local rephasings $\psi(x)\to e^{i\alpha(x)}\psi(x)$ forces the introduction of a gauge field $A_\mu$ and the covariant derivative $D_\mu=\partial_\mu+i g A_\mu$ so that $D_\mu\psi$ transforms like $\psi$.</p>
+        <p class="note">Equations: the gauge field’s curvature is $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (plus commutator for non‑Abelian cases). A minimal Lagrangian is $\mathcal L=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}+ i\bar\psi\gamma^\mu D_\mu\psi$. The demo shows that picking $A_\mu=-(1/g)\,\partial_\mu\alpha$ cancels the spurious gradient from a pure phase, making $D\psi\approx 0$ when $|\psi|$ is uniform.</p>
         <div class="demo">
           <canvas id="u1" class="demo-canvas" width="540" height="260"></canvas>
           <div class="controls"><label>Phase amplitude <input id="amp" type="range" min="0" max="1.5" step="0.01" value="0.8"/></label></div>
@@ -409,7 +413,8 @@
 
       <div class="section">
         <h2>4) Mass from a vacuum: Higgs and Yukawa</h2>
-        <p class="note">A complex scalar with $V(\phi)=\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$ chooses $|\phi|=v$. The angular mode gives the gauge boson a mass $m_A=g v$ (Abelian), and the radial mode has $m_H^2=2\lambda v^2$. Fermions get mass from Yukawa $\mathcal L_Y= -y\,\bar\psi\,\phi\,\psi\Rightarrow m_f=y v/\sqrt{2}$.</p>
+        <p class="note">What it is: a scalar field with a symmetric “Mexican‑hat” potential chooses a nonzero magnitude everywhere (spontaneous symmetry breaking). Why used: gauge symmetry forbids naive mass terms; interacting with a field that has a vacuum value generates masses without breaking local symmetry.</p>
+        <p class="note">Equations: $\mathcal L_\phi=|D_\mu\phi|^2-\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$. Small oscillations give a radial mass $m_H^2=2\lambda v^2$; the angular (phase) mode is eaten, giving the gauge boson mass $m_A=g v$ (Abelian case). Fermions get $m_f= y v/\sqrt{2}$ from the Yukawa $\mathcal L_Y=-y\,\bar\psi\phi\psi$.</p>
         <div class="demo">
           <canvas id="higgs" class="demo-canvas" width="700" height="380"></canvas>
           <div class="controls">
@@ -429,7 +434,8 @@
 
       <div class="section">
         <h2>5) Flavor mixing: neutrino oscillations</h2>
-        <p class="note">Two‑flavor survival probability: $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV. This captures the main scale; three‑flavor uses PMNS angles and phases.</p>
+        <p class="note">What it is: interaction (flavor) states are superpositions of mass states. Why used: different masses accumulate different quantum phases in flight, so the flavor content oscillates with distance/energy.</p>
+        <p class="note">Equations (2‑flavor): $\lvert \nu_e\rangle=\cos\theta\,\lvert \nu_1\rangle+\sin\theta\,\lvert \nu_2\rangle$. The phase difference grows like $\Delta\phi\sim \Delta m^2 L/(2E)$, giving $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV.</p>
         <div class="demo">
           <canvas id="nu" class="demo-canvas" width="700" height="200"></canvas>
           <div class="controls">
@@ -447,7 +453,8 @@
 
       <div class="section">
         <h2>6) Gravity’s piece: thin‑lens intuition</h2>
-        <p class="note">In weak fields, a point mass lenses light with deflection $\alpha=\dfrac{4GM}{c^2 b}$. The thin‑lens equation (in angles) is $\boldsymbol\beta=\boldsymbol\theta-\dfrac{\theta_E^2\,\boldsymbol\theta}{|\boldsymbol\theta|^2}$ with Einstein radius $\theta_E$. Move the source to see two images merge into an Einstein ring at alignment.</p>
+        <p class="note">What it is: light follows geodesics in curved spacetime. In the weak‑field, small‑angle limit, a foreground mass deflects light like a thin optical lens. Why used: it predicts multiple images and arcs seen in astrophysics and requires only simple geometry.</p>
+        <p class="note">Equations: deflection $\alpha=\tfrac{4GM}{c^2 b}$. In the thin‑lens equation (angles), the Einstein radius sets the scale, and for an on‑axis point source the image positions are $\theta_{\pm}=\tfrac12\big(\beta\pm\sqrt{\beta^2+4\theta_E^2}\big)$. The demo rescales units so $\theta_E$ is the green circle.</p>
         <div class="demo">
           <canvas id="lens" class="demo-canvas" width="540" height="300"></canvas>
           <div class="controls">
