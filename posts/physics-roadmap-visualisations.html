@@ -353,26 +353,22 @@
     <article class="article-content">
       <div class="article-header">
         <span class="tile-category">Theory</span>
-        <h1 class="article-title">First Principles Physics: Spacetime, Fields, and Symmetry</h1>
-        <div class="article-meta">Interactive • Self‑contained • From fundamentals</div>
-        <p class="article-description">A self‑contained, intuitive tour of the core ideas — spacetime, fields, symmetry, mass generation, mixing, and lensing — each paired with a faithful visual and equation.</p>
+        <h1 class="article-title">A Gentle Story of Spacetime, Fields, and Light</h1>
+        <div class="article-meta">Interactive • Self‑contained • A narrative with equations</div>
+        <p class="article-description">One continuous tale—how geometry became time, how twists became matter, how relabeling turned into forces, how a quiet field gave mass, how neutrinos change their minds, and how gravity became a lens—each idea paired with a faithful, simple visual.</p>
       </div>
 
       <div class="intro" style="max-width:820px; margin:0 auto 14px auto; color:var(--muted);">
-        Think of physics as three ingredients: spacetime (the stage), fields (the actors), and symmetries (the rules). Each block below is a faithful, minimal visual tied to the standard formulas—no metaphor-only animations.
+        Imagine you’re holding a loaf that is everything that happens—past and future baked together. Different travelers slice that loaf at different angles and call each slice “now.” That was the first surprise of modern physics. The others came when we discovered that matter is a kind of twist, forces are the bookkeeping that keeps our labels honest, and a quiet field humming everywhere gives particles heft. Along the way, neutrinos change their minds mid‑journey and gravity bends light like glass.
       </div>
 
       <div class="section">
-        <h2>0) The toolkit (10‑second primer)</h2>
-        <ul>
-          <li>Vectors & tensors: components that rotate/boost between frames.</li>
-          <li>Groups: symmetry move sets like $U(1),\, SU(2),\, SU(3)$.</li>
-          <li>Lagrangian/action: one compact formula; least action yields equations of motion.</li>
-        </ul>
+        <h2>Before We Begin</h2>
+        <p class="note">We’ll keep the math small and honest. When a symbol appears, it earns its keep. You’ll see $\gamma=1/\sqrt{1-v^2}$ for how fast you’re slicing the loaf, a little $e^{i\alpha}$ for a harmless phase relabeling, and simple potentials that act like hills and valleys. Each canvas below is a literal picture of the equation beside it.</p>
       </div>
 
       <div class="section">
-        <h2>1) The stage: spacetime and the Lorentz group</h2>
+        <h2>The Loaf of Spacetime</h2>
         <p class="note">In 1905, Einstein made a stubborn bet: if every steady rider on the cosmic highway measures the same speed of light, then “time” and “space” can’t be what we thought. A few years later, Minkowski took that bet and turned it into geometry. Instead of separate clocks and rulers, you get one loaf—spacetime—and different observers just slice it at different angles. The argument that raged between Newton and Maxwell over whose rules time should obey simply dissolves when you look at the loaf.</p>
         <p class="note">The equations are short and sharp. In units with $c=1$, a constant‑velocity change of frame along $x$ mixes coordinates as $x' = \gamma(x-vt)$ and $t' = \gamma(t-vx)$ with $\gamma = 1/\sqrt{1-v^2}$. The light cone doesn’t care who’s slicing—it stays put—while the blue $x'$ and $t'$ axes tilt, and the gray hyperbolas trace the same invariant $t^2-x^2=\text{const}$. Time dilation and length contraction are just the shadows of this geometry.</p>
         <div class="demo">
@@ -388,7 +384,7 @@
       </div>
 
       <div class="section">
-        <h2>2) Actors: spinors live in the double cover</h2>
+        <h2>Twisting a Quantum Coin</h2>
         <p class="note">Early quantum experiments kept hinting that electrons were odd little tops: they acted like magnets and came in discrete “up/down” flavors. Pauli wrote down $2\times2$ matrices to keep score, and then Dirac did something outrageous—he wrote a relativistic wave equation that forced this two‑component structure and quietly predicted antimatter along the way. The weirdest part isn’t the math; it’s the geometry: a full 360° turn flips the sign of the quantum state. That sounds illegal until you remember that probabilities depend on the square, and $(-1)^2=1$.</p>
         <p class="note">You can feel it in the formula for a rotation about $z$: $R_z(\theta)=\exp\!\big(-\tfrac{i}{2}\,\theta\,\sigma_z\big)$. The factor of $\tfrac12$ in the exponent is the culprit. On the canvas, the blue arrow shows ordinary orientation (period $2\pi$), while the green “phase hand” tracks the spinor’s extra twist (period $4\pi$). Only after two full turns does the quantum state come back exactly.</p>
         <div class="demo">
@@ -398,7 +394,7 @@
       </div>
 
       <div class="section">
-        <h2>3) Rulebook: gauge principle (U(1))</h2>
+        <h2>When Relabeling Becomes a Force</h2>
         <p class="note">Maxwell’s equations already hid a quiet freedom: you can relabel the phase of a wave and nothing physical changes. Mid‑century, Yang and Mills asked, “What if that freedom varies from point to point—and what if there are richer kinds of labels?” The answer was a small revolution: to keep experiments oblivious to your relabeling, you must introduce a field that compensates for those changes. Geometry and force turned out to be the same thing wearing different hats.</p>
         <p class="note">Write the relabeling as $\psi(x)\to e^{i\alpha(x)}\psi(x)$. To make derivatives behave, promote $\partial_\mu$ to the covariant $D_\mu=\partial_\mu+i g A_\mu$ so that $D_\mu\psi$ transforms like $\psi$. The field’s curvature is $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (plus a commutator for non‑Abelian groups), and a minimal action is $\mathcal L=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}+ i\bar\psi\gamma^\mu D_\mu\psi$. In the canvas, choosing $A_\mu=-(1/g)\,\partial_\mu\alpha$ cancels the fake gradient from a pure phase so $\|D\psi\|$ collapses toward zero.</p>
         <div class="demo">
@@ -412,7 +408,7 @@
       </div>
 
       <div class="section">
-        <h2>4) Mass from a vacuum: Higgs and Yukawa</h2>
+        <h2>A Field That Fills Space</h2>
         <p class="note">The electroweak theory wanted to be elegant and massless, but nature kept pointing to heavy W and Z bosons and a zoo of fermion masses. The trick, discovered in 1964 and wired in by Weinberg and Salam, is to let a scalar field choose a nonzero background everywhere. The symmetry isn’t smashed; it’s hidden by the choice of vacuum, and one of the field’s ripples becomes the mass of the force carrier.</p>
         <p class="note">The math is compact: $\mathcal L_\phi=|D_\mu\phi|^2-\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$. Around the vacuum circle $|\phi|=v$, the radial fluctuation weighs $m_H^2=2\lambda v^2$; the angular mode is “eaten,” giving the gauge boson $m_A=g v$ (Abelian case). Couple a fermion with $\mathcal L_Y=-y\,\bar\psi\phi\psi$ and its mass pops out as $m_f= y v/\sqrt{2}$. The canvas’s ball rolls down the Mexican hat and the KPIs report the masses set by your sliders.</p>
         <div class="demo">
@@ -433,7 +429,7 @@
       </div>
 
       <div class="section">
-        <h2>5) Flavor mixing: neutrino oscillations</h2>
+        <h2>Particles That Change Their Minds</h2>
         <p class="note">For decades the Sun seemed stingy: detectors on Earth counted too few electron neutrinos. The plot twist was delightful—those neutrinos were slipping into other flavors mid‑flight. A simple idea explains it: the states that interact (flavors) aren’t the same as the states that travel (masses), and the mismatch lets the identity slosh back and forth with distance and energy.</p>
         <p class="note">In the two‑flavor caricature, $\lvert \nu_e\rangle=\cos\theta\,\lvert \nu_1\rangle+\sin\theta\,\lvert \nu_2\rangle$. Different masses collect different phases, $\Delta\phi\sim \Delta m^2 L/(2E)$, which drives an oscillation $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV. Drag the sliders and watch the probability wave slide along the $L/E$ axis.</p>
         <div class="demo">
@@ -452,7 +448,7 @@
       </div>
 
       <div class="section">
-        <h2>6) Gravity’s piece: thin‑lens intuition</h2>
+        <h2>Gravity, Seen Sideways</h2>
         <p class="note">General relativity replaced “force” with “geometry,” and light took the hint. During a 1919 eclipse, starlight skimming the Sun arrived from slightly wrong directions—the sky itself had bent. On cosmic scales, whole galaxies and clusters act like lenses, splitting and stretching the light from things far behind them. It’s gravity’s way of letting us peek around corners.</p>
         <p class="note">In the thin‑lens, small‑angle limit the bookkeeping is pleasantly simple. A point mass deflects by $\alpha=\tfrac{4GM}{c^2 b}$. Measured in angles on the sky, the lens equation reads $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$, with image solutions $\theta_{\pm}=\tfrac12\big(\beta\pm\sqrt{\beta^2+4\theta_E^2}\big)$. The demo rescales things so the Einstein radius $\theta_E$ is the green circle; slide the source until the two images merge into a ring.</p>
         <div class="demo">
@@ -470,24 +466,13 @@
       </div>
 
       <div class="section">
-        <h2>7) Putting the pieces together</h2>
-        <ul>
-          <li>Spacetime: Einstein–Hilbert term $\int \!\sqrt{-g}\,R$ (curved stage).</li>
-          <li>Forces: Yang–Mills $-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}$ for $SU(3)\times SU(2)\times U(1)$.</li>
-          <li>Matter: Dirac $i\bar\psi\gamma^\mu D_\mu\psi$; covariant $D_\mu$ couples fields to forces.</li>
-          <li>Mass: Higgs potential + Yukawas turn the VEV into particle masses.</li>
-          <li>Mixing: CKM/PMNS matrices rotate between mass and weak bases.</li>
-        </ul>
+        <h2>Threads, Woven</h2>
+        <p class="note">One geometry for time and space; one rule that relabeling demands a connection; one field that quietly fills the vacuum; one simple reason a particle can change its mind; and one stage where gravity is just the shape of the path. Written compactly, it’s Einstein–Hilbert for the stage, Yang–Mills for the forces, Dirac for the actors, a Higgs potential for mass, and mixing matrices for flavor. But read as a story, it’s all the same idea: symmetry and geometry deciding how the world moves.</p>
       </div>
 
       <div class="section">
-        <h2>8) Intuition snapshots</h2>
-        <ul>
-          <li>Symmetry → force: local relabeling requires a gauge connection.</li>
-          <li>Geometry → gravity: letting lengths depend on position gives curvature.</li>
-          <li>Vacuum isn’t empty: a field’s VEV reshapes what “massless” means.</li>
-          <li>Mixing is misalignment: flavor oscillations are basis rotations in flight.</li>
-        </ul>
+        <h2>Take It With You</h2>
+        <p class="note">If a picture lingers, let it be the loaf, the twist, the relabeling, the quiet field, the wavering identity, and the bent sky. Each canvas here is the equation made visible—feel free to play with the sliders until the math turns into instinct.</p>
       </div>
     </article>
 
