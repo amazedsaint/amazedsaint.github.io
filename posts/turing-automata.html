@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turing Machines & Automata — Interactive</title>
+  <meta name="description" content="Interactive visuals for finite automata and Turing machines with step‑by‑step execution, history, and intuitive breakdowns of the formal parts." />
+  <link rel="stylesheet" href="../style.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["$","$"],["\\(","\\)"]], displayMath: [["$$","$$"],["\\[","\\]"]], packages: {'[+]':['base','ams']}, processEscapes: true },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
+    canvas { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
+    .controls input[type=text]{ padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
+    .controls button{ background:#fff; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:13px; cursor:pointer; }
+    .note { max-width:880px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
+    .table { max-width:880px; margin:8px auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; color:var(--text); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .table table{ width:100%; border-collapse:collapse; }
+    .table th, .table td{ border-bottom:1px solid var(--border); padding:6px 8px; text-align:left; }
+    .state-accept{ fill: rgba(26,137,23,0.08); stroke:#1a8917; }
+  </style>
+  <script>
+    (function(){
+      // ========== DFA: even number of 1s over {0,1} ==========
+      function dfaDemo(){
+        const cv = document.getElementById('dfa'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=680, H=cv.height=280; const nodes=[
+          {id:'q0', x: W*0.33, y:H*0.5, accept:true},
+          {id:'q1', x: W*0.66, y:H*0.5, accept:false},
+        ];
+        const trans={ 'q0':{ '0':'q0', '1':'q1' }, 'q1':{ '0':'q1', '1':'q0' } };
+        let input="", head=0, cur='q0', running=false, raf=0;
+        function draw(){ ctx.clearRect(0,0,W,H); arrows(); states(); tape(); }
+        function nodeOf(id){ return nodes.find(n=>n.id===id); }
+        function stateCircle(n, active){ ctx.save(); ctx.lineWidth=2; ctx.strokeStyle=active?'#1a8917':'#555'; ctx.fillStyle=n.accept? 'rgba(26,137,23,0.06)':'#fff'; ctx.beginPath(); ctx.arc(n.x,n.y,36,0,Math.PI*2); ctx.fill(); ctx.stroke(); if(n.accept){ ctx.beginPath(); ctx.arc(n.x,n.y,30,0,Math.PI*2); ctx.strokeStyle='#1a8917'; ctx.stroke(); } ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='13px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(n.id, n.x, n.y); ctx.restore(); }
+        function arrow(x1,y1,x2,y2,label){ const a=Math.atan2(y2-y1,x2-x1); const r=36; const sx=x1+Math.cos(a)*r, sy=y1+Math.sin(a)*r; const ex=x2-Math.cos(a)*r, ey=y2-Math.sin(a)*r; ctx.strokeStyle='#888'; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke(); const ah=10; ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex-ah*Math.cos(a-0.3), ey-ah*Math.sin(a-0.3)); ctx.lineTo(ex-ah*Math.cos(a+0.3), ey-ah*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle='#888'; ctx.fill(); if(label){ ctx.fillStyle='#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(label, (sx+ex)/2, (sy+ey)/2 - 10); } }
+        function selfLoop(n, label){ ctx.strokeStyle='#888'; ctx.beginPath(); ctx.arc(n.x, n.y-52, 20, Math.PI*0.2, Math.PI*2.8); ctx.stroke(); ctx.fillStyle='#888'; ctx.beginPath(); ctx.moveTo(n.x+20, n.y-52); ctx.lineTo(n.x+10, n.y-48); ctx.lineTo(n.x+12, n.y-58); ctx.fill(); ctx.fillStyle='#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(label, n.x+34, n.y-64); }
+        function arrows(){ const a=nodeOf('q0'), b=nodeOf('q1'); arrow(a.x,a.y,b.x,b.y,'1'); arrow(b.x,b.y,a.x,a.y,'1'); selfLoop(a,'0'); selfLoop(b,'0'); }
+        function states(){ nodes.forEach(n=> stateCircle(n, n.id===cur)); }
+        function tape(){ const bx=30, by=30; const cell=24; ctx.strokeStyle='#ddd'; ctx.fillStyle='#111'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; for(let i=0;i<Math.max(12, input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x, by, cell, cell); const ch = input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===head){ ctx.fillStyle='#1a8917'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#111'; } }
+          const acc = nodeOf(cur).accept && head>=input.length; const out=document.getElementById('dfaStatus'); if(out) out.textContent = (head<input.length? `state=${cur}, reading…` : `halted in ${cur} — ${acc? 'accepted':'rejected'}`); }
+        function step(){ if(head>=input.length){ draw(); return; } const sym=input[head]; const nxt = trans[cur][sym]; cur=nxt; head++; draw(); }
+        function reset(){ input=(document.getElementById('dfaInput').value||'').replace(/[^01]/g,''); head=0; cur='q0'; draw(); }
+        document.getElementById('dfaStep').onclick=step; document.getElementById('dfaReset').onclick=reset; document.getElementById('dfaInput').oninput=reset;
+        draw(); return { reset, step };
+      }
+
+      // ========== Turing Machine: default unary increment ==========
+      function tmDemo(){
+        const tapeEl = document.getElementById('tmTape'); if(!tapeEl) return; let tape=['1','1','1','_','_','_'], head=0, state='q0', halt=false;
+        const rules = { // (state, read) -> [write, move, next]
+          'q0,1': ['1','R','q0'],
+          'q0,_': ['1','S','qh']
+        };
+        function render(){ tapeEl.innerHTML=''; for(let i=0;i<tape.length;i++){ const cell=document.createElement('div'); cell.style.cssText='display:inline-block; width:26px; height:26px; border:1px solid var(--border); margin:2px; text-align:center; line-height:26px; border-radius:6px; position:relative;'; cell.textContent=tape[i]==='_'?'':tape[i]; if(i===head){ const caret=document.createElement('div'); caret.style.cssText='position:absolute; left:50%; transform:translateX(-50%); top:-10px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:8px solid #1a8917;'; cell.appendChild(caret); cell.style.outline='2px solid #1a8917'; } tapeEl.appendChild(cell);} const st=document.getElementById('tmStatus'); st.textContent = halt? `halted in ${state}` : `state=${state}`; const spec=document.getElementById('tmSpec'); spec.textContent = '{ (q0,1)->(1,R,q0), (q0,_)->(1,S,qh) }'; }
+        function ensureBounds(){ if(head<0){ tape.unshift('_'); head=0; } if(head>=tape.length){ tape.push('_'); } }
+        function step(){ if(halt) return; ensureBounds(); const sym=tape[head]; const key=`${state},${sym}`; const rule=rules[key]; if(!rule){ halt=true; render(); return; } const [write, move, next]=rule; tape[head]=write; if(move==='L') head--; else if(move==='R') head++; state=next; if(state==='qh') halt=true; render(); }
+        function reset(){ const inp=(document.getElementById('tmInput').value||'111').replace(/[^1]/g,''); tape=inp.split('').concat(['_','_']); head=0; state='q0'; halt=false; render(); }
+        document.getElementById('tmStep').onclick=step; document.getElementById('tmReset').onclick=reset; render(); return { step, reset };
+      }
+
+      function start(){ dfaDemo(); tmDemo(); }
+      if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="site-title"><a href="../index.html">antifold</a></h1>
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="https://github.com/amazedsaint">GitHub</a>
+        <a href="https://twitter.com/amazedsaint">Twitter</a>
+      </nav>
+    </header>
+
+    <article class="article-content">
+      <div class="article-header">
+        <span class="tile-category">Computation</span>
+        <h1 class="article-title">Turing Machines & Automata — Interactive</h1>
+        <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
+        <p class="article-description">A hands‑on tour of the core models of computation: finite automata (tiny, fast pattern checkers) and Turing machines (general, step‑by‑step algorithms). Each comes with a live visual and a breakdown of the parts.</p>
+      </div>
+
+      <div class="section">
+        <h2>Finite Automata (DFA)</h2>
+        <p class="note">A DFA is a small machine that reads an input left to right and keeps only a <em>state</em>. The classic five‑tuple is $(Q,\Sigma,\delta,q_0,F)$: states $Q$, alphabet $\Sigma$, transition function $\delta$, start $q_0$, accepting set $F$.</p>
+        <p class="note">Below is a DFA that accepts exactly the binary strings with an even number of 1s. Shift your attention between the tape and the highlighted state—the machine stores only “parity so far”. That’s the trick: limited memory, fast decisions.</p>
+        <div class="demo">
+          <canvas id="dfa" width="680" height="280"></canvas>
+          <div class="controls">
+            <label>Input (0/1): <input id="dfaInput" type="text" value="10110" /></label>
+            <button id="dfaStep">Step</button>
+            <button id="dfaReset">Reset</button>
+          </div>
+          <p class="note" id="dfaStatus">state=q0</p>
+          <div class="table">
+            <table>
+              <tr><th colspan="3">$\delta$ transitions</th></tr>
+              <tr><th>state</th><th>on 0</th><th>on 1</th></tr>
+              <tr><td>q0 (accept)</td><td>q0</td><td>q1</td></tr>
+              <tr><td>q1</td><td>q1</td><td>q0</td></tr>
+            </table>
+          </div>
+          <p class="note">Terms in the formula: $Q=\{q0,q1\}$; $\Sigma=\{0,1\}$; $\delta(q,\sigma)$ picks the next state; $q_0=q0$ is the start; $F=\{q0\}$ accepts even‑parity strings.</p>
+        </div>
+        <p class="note">Context: Kleene and others used such automata to formalize “regular patterns”. They are fast and simple, but they can’t count arbitrarily far—that needs a stack (pushdown) or a tape (Turing).</p>
+      </div>
+
+      <div class="section">
+        <h2>Turing Machines</h2>
+        <p class="note">A Turing machine is an idealized paper‑and‑pencil computer: a tape of symbols, a head that reads/writes, and a finite state control. Formally, $(Q,\Gamma,\Sigma,\delta,q_0,q_{acc},q_{rej})$ with tape alphabet $\Gamma$, input alphabet $\Sigma\subseteq\Gamma$, and $\delta$ mapping $(\text{state},\text{symbol})$ to $(\text{write},\text{move},\text{next})$.</p>
+        <p class="note">Below: a tiny program that increments a <em>unary</em> number (a run of 1’s). It moves right over 1’s until it finds blank, writes a 1, and halts. Simple, but you can see the head walking, the local edit, and the stop—exactly how bigger programs behave.</p>
+        <div class="demo">
+          <div class="controls">
+            <label>Unary input (1s): <input id="tmInput" type="text" value="111" /></label>
+            <button id="tmStep">Step</button>
+            <button id="tmReset">Reset</button>
+          </div>
+          <div id="tmTape" style="text-align:center; margin-top:8px;"></div>
+          <p class="note" id="tmStatus">state=q0</p>
+          <p class="note">Program (rules): <span id="tmSpec"></span></p>
+          <p class="note">Terms in the formula: $Q=\{q0,qh\}$; $\Gamma=\{1,\_\}$; $\Sigma=\{1\}$; $q_0=q0$; $q_{acc}=qh$; $\delta(q0,1)=(1,R,q0)$, $\delta(q0,\_)=(1,S,qh)$. The head writes, moves L/R/S (stay), and changes state until it halts.</p>
+        </div>
+        <p class="note">Context: Turing’s 1936 paper used these machines to pin down “effective procedure”. The surprising part is how little you need to get general computation: a finite control and a long enough tape.</p>
+      </div>
+
+      <div class="related-links">
+        <strong>Related:</strong>
+        <a href="physics-math-primer.html">Primer</a> •
+        <a href="physics-toolkit-intuition.html">Toolkit</a> •
+        <a href="physics-roadmap-visualisations.html">Spacetime, Fields, and Light</a> •
+        <a href="../index.html">Home</a>
+      </div>
+    </article>
+
+    <footer class="footer">
+      <p>&copy; 2025 antifold • Essays and simulations</p>
+      <p class="meta-mini">By Anoop • <a href="https://twitter.com/amazedsaint">Twitter</a> • <a href="https://github.com/amazedsaint">GitHub</a> • <a href="../index.html">Home</a></p>
+    </footer>
+  </div>
+</body>
+</html>
+
