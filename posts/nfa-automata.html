@@ -14,6 +14,7 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script defer src="../js/notes.js"></script>
+  <script defer src="../js/connections.js"></script>
   <style>
     .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
@@ -199,6 +200,16 @@
           <p class="note" id="nfabStatus">—</p>
           <div id="nfabDetTable"></div>
           <p class="note">First principles recap: $\varepsilon$‑closure collects all states you can reach for free. Each input step follows transitions from the whole set, then re‑closes under $\varepsilon$. The determinized DFA has subsets as states; start at $\varepsilon$‑closure($\{q_0\}$) and follow symbols; accept subsets that contain any accepting NFA state.</p>
+        </div>
+      </div>
+
+      <div class="connections">
+        <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
+        <div class="content">
+          <ul>
+            <li>Compare with DFAs: <a href="turing-automata.html">Turing Machines & Automata</a> (DFA parity & builder).</li>
+            <li>Determinized DFA mirrors subset products from linear algebra (see Toolkit).</li>
+          </ul>
         </div>
       </div>
 

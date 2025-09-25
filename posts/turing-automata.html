@@ -14,6 +14,7 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script defer src="../js/notes.js"></script>
+  <script defer src="../js/connections.js"></script>
   <style>
     .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
@@ -270,6 +271,17 @@ q0,_ -> 1,S,qh
           <div id="tm2Tape" style="text-align:center; margin-top:8px;"></div>
           <p class="note" id="tm2Status">—</p>
           <p class="note">Terms: each line is $\delta(q,\sigma)=(\sigma',\text{move},q')$. Use '_' for blank. You can add states freely; halting occurs when no rule applies or you reach a halt state you designate (e.g., qh).</p>
+        </div>
+      </div>
+
+      <div class="connections">
+        <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
+        <div class="content">
+          <ul>
+            <li>DFAs here connect to NFAs: <a href="nfa-automata.html">NFAs from First Principles</a> (ε‑moves, determinize).</li>
+            <li>State diagrams echo linear maps & basis views from the Toolkit.</li>
+            <li>See also: <a href="../index.html">Computation & Automata path</a>.</li>
+          </ul>
         </div>
       </div>
 

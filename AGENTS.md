@@ -3,7 +3,7 @@
 
 ## Introduction
 
-This is a dynamic blog repository. You are creating pages for a blog, with a linking tile in the home page. Ensure the pages are consistent visually with proper links etc. Also, use the current date when publish articles. Refer other articles to understand the writing style, especially the physics roadmap article. Please make sure that for new articles you write, the header and bottom is consistent with other articles
+This is a dynamic blog repository. You are creating pages for a blog, with a linking tile in the home page. Ensure the pages are consistent visually with proper links etc. Also, use the current date when publish articles. Refer other articles to understand the writing style, especially the physics roadmap article. Please make sure that for new articles you write, the header and bottom is consistent with other articles. For every article, implement a better connection visualiser with links. make it more collapsible section collapsed by default called Connections, and when expanding it, explain the connections with links to other relevant articles
 
 ## Project Structure & Module Organization
 - Source: `index.html` (home), `posts/*.html` (articles and simulations).

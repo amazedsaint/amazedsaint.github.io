@@ -101,6 +101,13 @@ a:hover { text-decoration: underline; }
 .meta-mini { font-size: 12px; color: var(--muted); }
 .related-links { margin: 16px auto; max-width: 820px; font-size: 0.95em; }
 .related-links a { color: var(--link); }
+.connections { max-width: 820px; margin: 16px auto; border:1px solid var(--border); border-radius:10px; background:#fff; }
+.connections .header { padding: 10px 12px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
+.connections .title { font-weight:700; font-size:13px; text-transform: uppercase; letter-spacing:1px; color: var(--text); }
+.connections .content { padding: 0 12px 12px 12px; display:none; }
+.connections.open .content { display:block; }
+.connections .desc { color: var(--muted); font-size: 0.95em; margin: 0 0 8px 0; }
+.connections ul { margin: 8px 0 0 18px; }
 
 /* Article pages */
 .article-header { text-align: left; margin-bottom: 28px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
