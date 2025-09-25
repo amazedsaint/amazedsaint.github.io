@@ -210,6 +210,7 @@
         <div class="demo">
           <canvas id="phaseWheel" width="420" height="240"></canvas>
           <p class="note">This picture shows $e^{i\alpha}=(\cos\alpha,\,\sin\alpha)$. Re/Im are the x/y components.</p>
+          <p class="note">Terms in the formula: $\alpha$ is the rotation angle; $i$ rotates by 90° in the plane; $\cos\alpha$ is the horizontal component; $\sin\alpha$ is the vertical component; the length stays 1.</p>
           <div class="controls"><label>α <input id="alpha" type="range" min="0" max="6.283" step="0.01" value="0.80"/></label></div>
           <p class="note" id="phaseRead">cos(α)=…, sin(α)=…</p>
         </div>
@@ -221,6 +222,7 @@
         <div class="demo">
           <canvas id="rot2D" width="420" height="240"></canvas>
           <p class="note">This picture shows $R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}$ rotating an arrow by $\theta$.</p>
+          <p class="note">Terms in the formula: $\theta$ is the rotation angle; $\cos\theta$ keeps the component along the original axis; $\sin\theta$ swaps components with a sign; columns show where unit basis vectors move; determinant $=1$ means no stretching.</p>
           <div class="controls"><label>θ <input id="thetaR" type="range" min="0" max="6.283" step="0.01" value="0.60"/></label></div>
           <p class="note" id="rotMat">R(θ) = …</p>
         </div>
@@ -232,6 +234,7 @@
         <div class="demo">
           <canvas id="metric" width="560" height="280"></canvas>
           <p class="note">This picture shows a unit circle (blue) and the hyperbola $t^2-x^2=s^2$ (green). Both express an invariant “distance”, but with different signs.</p>
+          <p class="note">Terms in the relation: $t$ is time, $x$ is space (with $c=1$); $s$ is the invariant interval (proper time when timelike); the sign flip (minus) encodes that time and space contribute differently; lines $t=\pm x$ are light rays.</p>
           <div class="controls"><label>s <input id="sVal" type="range" min="0.3" max="2.5" step="0.01" value="1.00"/></label></div>
           <p class="note">In a Lorentz boost, the light cone stays fixed while the axes tilt; these hyperbolas stay the same.</p>
         </div>
@@ -243,6 +246,7 @@
         <div class="demo">
           <canvas id="bloch" width="420" height="240"></canvas>
           <p class="note">This picture shows the state’s direction on the Bloch circle (equator projection) and reports $P(0)$ and $P(1)$.</p>
+          <p class="note">Terms in the formula: $\theta$ sets the split between $|0\rangle$ and $|1\rangle$ (probabilities $\cos^2(\theta/2)$ and $\sin^2(\theta/2)$); $\phi$ is the relative phase that matters for interference; $|0\rangle,|1\rangle$ are the measurement outcomes.</p>
           <div class="controls">
             <label>θ <input id="thetaB" type="range" min="0" max="3.1416" step="0.005" value="1.5708"/></label>
             <label>φ <input id="phiB" type="range" min="0" max="6.283" step="0.01" value="0.00"/></label>
@@ -257,6 +261,7 @@
         <div class="demo">
           <canvas id="potential" width="560" height="260"></canvas>
           <p class="note">This picture shows $V(x)=\tfrac{\lambda}{4}(x^2-v^2)^2$. The readout shows $m^2=V''(x_\text{min})=2\lambda v^2$.</p>
+          <p class="note">Terms in the formula: $x$ is the field/position; $v$ sets where the minima sit; $\lambda$ controls how steep the walls are; $V'(x)$ is the slope (force $=-V'$); the curvature $V''$ at a minimum sets the small‑oscillation scale.</p>
           <div class="controls">
             <label>λ <input id="lam" type="range" min="0.1" max="1.5" step="0.01" value="0.60"/></label>
             <label>v <input id="vmin" type="range" min="0.5" max="2.0" step="0.01" value="1.00"/></label>
@@ -272,6 +277,7 @@
         <div class="demo">
           <canvas id="gauge1D" width="560" height="160"></canvas>
           <p class="note">This picture shows a 1D phase $\alpha(x)$ and compares the average size of $\partial_x\psi$ vs. $D_x\psi$ with $A_x=-(1/g)\,\partial_x\alpha$.</p>
+          <p class="note">Terms in the formula: $\psi$ is a complex wave with amplitude and phase; $\alpha(x)$ is the position‑dependent phase; $\partial_x$ is the ordinary derivative; $A_x$ is the gauge field that cancels pure phase gradients; $g$ sets how strongly $A_x$ enters; $D_x=\partial_x+i g A_x$ respects the relabeling.</p>
           <div class="controls"><label>Phase amplitude <input id="amp1D" type="range" min="0" max="1.5" step="0.01" value="0.90"/></label></div>
           <p class="note">Readout: ⟨|∂xψ|⟩ = <span id="g1">…</span>; ⟨|Dxψ|⟩ = <span id="g2">…</span></p>
         </div>

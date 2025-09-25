@@ -374,6 +374,7 @@
         <div class="demo">
           <canvas id="lorentz" class="demo-canvas" width="700" height="380"></canvas>
           <p class="note">This picture shows a Lorentz boost: $x' = \gamma(x- v t)$ and $t' = \gamma(t- v x)$; the light cone stays fixed.</p>
+          <p class="note">Terms in the formula: $x,t$ are the original space and time; $v$ is speed as a fraction of $c$; $\gamma=1/\sqrt{1-v^2}$ stretches time and squeezes length; the lines $t=\pm x$ are light rays and do not change under boosts; $t^2-x^2$ stays the same for all inertial observers.</p>
           <div class="controls">
             <label>Velocity v/c <input id="vSlider" type="range" min="-0.95" max="0.95" step="0.01" value="0.60"/></label>
           </div>
@@ -391,6 +392,7 @@
         <div class="demo">
           <canvas id="spinor" class="demo-canvas" width="540" height="260"></canvas>
           <p class="note">This picture shows a spin‑1/2 rotation: $R_z(\theta)=\exp\!\big(-i\,\theta\,\sigma_z/2\big)$; $2\pi$ flips sign, $4\pi$ returns.</p>
+          <p class="note">Terms in the formula: $\theta$ is the rotation angle; $\sigma_z=\begin{bmatrix}1&0\\0&-1\end{bmatrix}$ is the Pauli matrix that distinguishes up/down; the exponential makes a unitary rotation; the factor $1/2$ causes the 720° return; an overall minus sign leaves probabilities unchanged.</p>
           <div class="controls"><label>Rotation $\theta$ <input id="thetaSpin" type="range" min="0" max="6.283" step="0.01" value="0"/></label></div>
         </div>
       </div>
@@ -402,6 +404,7 @@
         <div class="demo">
           <canvas id="u1" class="demo-canvas" width="540" height="260"></canvas>
           <p class="note">This picture shows gauge cancelation with the covariant derivative: $D_\mu=\partial_\mu+i g A_\mu$, choosing $A_\mu=-(1/g)\,\partial_\mu\alpha$.</p>
+          <p class="note">Terms in the formula: $\psi$ is the complex field (amplitude + phase); $\alpha(x)$ is the local phase relabeling; $\partial_\mu$ is the ordinary derivative; $A_\mu$ is the gauge field; $g$ is the coupling strength; $D_\mu$ adjusts derivatives so relabeling does not change physics; $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ is the field’s curl‑like strength.</p>
           <div class="controls"><label>Phase amplitude <input id="amp" type="range" min="0" max="1.5" step="0.01" value="0.8"/></label></div>
           <div class="kpis">
             <div class="kpi"><b>||∇ψ|| (naive)</b><div class="val" id="gradPsi">—</div></div>
@@ -417,6 +420,7 @@
         <div class="demo">
           <canvas id="higgs" class="demo-canvas" width="700" height="380"></canvas>
           <p class="note">This picture shows the Higgs setup: $V=\tfrac{\lambda}{4}(|\phi|^2- v^2)^2$, with $m_H^2=2\lambda v^2$, $m_A=g v$, and $m_f= y v/\sqrt{2}$.</p>
+          <p class="note">Terms in the formula: $\phi$ is the scalar field; $|\phi|$ is its size; $v$ is the vacuum value picked by the minimum; $\lambda$ sets how stiff the potential is; $m_H$ is the mass of the radial ripple; $g$ controls the gauge boson mass $m_A$; $y$ (Yukawa) sets the fermion mass $m_f$.</p>
           <div class="controls">
             <label>λ <input id="lambda" type="range" min="0.1" max="1.5" step="0.05" value="0.50"/></label>
             <label>v (VEV) <input id="vev" type="range" min="0.5" max="2.0" step="0.05" value="1.00"/></label>
@@ -439,6 +443,7 @@
         <div class="demo">
           <canvas id="nu" class="demo-canvas" width="700" height="200"></canvas>
           <p class="note">This picture shows two‑flavor oscillations: $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$.</p>
+          <p class="note">Terms in the formula: $\theta$ is the mixing angle between flavor and mass states; $\Delta m^2$ is the mass‑squared difference; $L$ is travel distance (km); $E$ is energy (GeV); the factor $1.267$ makes the units work; $P_{ee}$ is the chance to remain electron flavor and oscillates with $L/E$.</p>
           <div class="controls">
             <label>θ <input id="theta" type="range" min="0.0" max="1.57" step="0.01" value="0.52"/></label>
             <label>Δm² (eV²) <input id="dm2" type="range" min="1e-5" max="3e-3" step="1e-5" value="7.5e-5"/></label>
@@ -459,6 +464,7 @@
         <div class="demo">
           <canvas id="lens" class="demo-canvas" width="540" height="300"></canvas>
           <p class="note">This picture shows thin‑lens gravity: $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$, images $\theta_{\pm}=\tfrac12(\beta\pm\sqrt{\beta^2+4\theta_E^2})$.</p>
+          <p class="note">Terms in the formula: $\theta$ is the apparent image angle; $\beta$ is the source angle without lensing; $\theta_E$ is the Einstein radius set by mass and distances; the two solutions $\theta_\pm$ are the bright images; at $\beta=0$ they form a ring at $\theta=\theta_E$.</p>
           <div class="controls">
             <label>Source angle $\beta/\theta_E$ <input id="betaSlider" type="range" min="-1.5" max="1.5" step="0.01" value="0.6"/></label>
             <label>$\theta_E$ (scale) <input id="thetaESlider" type="range" min="0.2" max="0.8" step="0.01" value="0.5"/></label>
