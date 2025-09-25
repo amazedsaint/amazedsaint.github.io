@@ -35,35 +35,55 @@
 
       // ---------- NFA runner (sample) ----------
       function nfaRunner(){
-        const cv=document.getElementById('nfaRun'); if(!cv) return; const ctx=cv.getContext('2d');
-        const W=cv.width=720, H=cv.height=280;
-        // Sample NFA for (a | ab): from q0 on 'a' you can accept immediately (qf) or go to q1 and then need 'b'.
-        const nodes=[{id:'q0',x:W*0.25,y:H*0.5},{id:'q1',x:W*0.55,y:H*0.35},{id:'qf',x:W*0.55,y:H*0.7,accept:true}];
-        const start='q0';
-        const trans={ q0:{ 'a':['q1','qf'] }, q1:{ 'b':['qf'] }, qf:{} };
-        const eps={}; // no epsilon in this example
-        let input=(document.getElementById('nfaInput').value||'ab').replace(/[^ab]/g,'');
-        let pos=0; let curSet=new Set([start]);
-        function closure(set){ // epsilon-closure
-          const res=new Set(set); let changed=true; while(changed){ changed=false; for(const q of Array.from(res)){ const outs=(eps[q]||[]); for(const t of outs){ if(!res.has(t)){ res.add(t); changed=true; } } } }
-          return res;
-        }
-        function step(){ curSet = closure(curSet); if(pos>=input.length){ render(); return; } const a=input[pos]; const next=new Set(); for(const q of Array.from(curSet)){ const outs=(trans[q]&&trans[q][a])||[]; outs.forEach(s=> next.add(s)); }
-          curSet=next; pos++; render(); }
-        function reset(){ input=(document.getElementById('nfaInput').value||'ab').replace(/[^ab]/g,''); pos=0; curSet=new Set([start]); render(); }
-        document.getElementById('nfaStep').onclick=step; document.getElementById('nfaReset').onclick=reset; document.getElementById('nfaInput').oninput=reset;
-        function render(){ ctx.clearRect(0,0,W,H); // edges
-          drawArrow(ctx, nodes[0].x,nodes[0].y, nodes[1].x,nodes[1].y, 'a');
-          drawArrow(ctx, nodes[0].x,nodes[0].y, nodes[2].x,nodes[2].y, 'a');
-          drawArrow(ctx, nodes[1].x,nodes[1].y, nodes[2].x,nodes[2].y, 'b');
+        const cv=document.getElementById('nfaRun'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=720, H=cv.height=280;
+        const presetSel = document.getElementById('nfaPreset'); const inputEl=document.getElementById('nfaInput'); const explain=document.getElementById('nfaExplain');
+        // Presets with fractional positions for layout
+        const presets={
+          'endsWithA': {
+            desc: "Ends with 'a' over {a,b}: remember the last letter only.", hint:"Try: bba, abb, abab",
+            nodes:[{id:'q0',px:0.28,py:0.50},{id:'q1',px:0.70,py:0.50,accept:true}], start:'q0',
+            trans:{ q0:{a:['q1'], b:['q0']}, q1:{a:['q1'], b:['q0']} }, eps:{}
+          },
+          'containsAB': {
+            desc: "Contains 'ab' somewhere: once seen, stay accepting.", hint:"Try: ab, aaab, baa",
+            nodes:[{id:'q0',px:0.20,py:0.60},{id:'q1',px:0.50,py:0.40},{id:'qf',px:0.80,py:0.60,accept:true}], start:'q0',
+            trans:{ q0:{a:['q1'], b:['q0']}, q1:{a:['q1'], b:['qf']}, qf:{a:['qf'], b:['qf']} }, eps:{}
+          },
+          'aStarB': {
+            desc: "a* b (zero or more a's then a single b): after b, no more input allowed.", hint:"Try: b, aaab, aba",
+            nodes:[{id:'q0',px:0.28,py:0.50},{id:'qf',px:0.70,py:0.50,accept:true}], start:'q0',
+            trans:{ q0:{a:['q0'], b:['qf']}, qf:{} }, eps:{}
+          },
+          'aOrAb': {
+            desc: "(a | ab): on 'a', either accept or expect 'b'.", hint:"Try: a, ab, b",
+            nodes:[{id:'q0',px:0.25,py:0.50},{id:'q1',px:0.55,py:0.35},{id:'qf',px:0.55,py:0.70,accept:true}], start:'q0',
+            trans:{ q0:{ a:['q1','qf'] }, q1:{ b:['qf'] }, qf:{} }, eps:{}
+          },
+          'abOrBa': {
+            desc: "(ab | ba): choose a path based on first symbol.", hint:"Try: ab, ba, aa",
+            nodes:[{id:'q0',px:0.20,py:0.50},{id:'qa',px:0.50,py:0.35},{id:'qb',px:0.50,py:0.65},{id:'qf',px:0.80,py:0.50,accept:true}], start:'q0',
+            trans:{ q0:{ a:['qa'], b:['qb'] }, qa:{ b:['qf'] }, qb:{ a:['qf'] }, qf:{} }, eps:{}
+          }
+        };
+        let nodes=[], start=null, trans={}, eps={}; let input=''; let pos=0; let curSet=new Set();
+        function toPix(n){ return {x: n.px*W, y: n.py*H}; }
+        function closure(set){ const res=new Set(set); let changed=true; while(changed){ changed=false; for(const q of Array.from(res)){ for(const t of (eps[q]||[])){ if(!res.has(t)){ res.add(t); changed=true; } } } } return res; }
+        function step(){ curSet = closure(curSet); if(pos>=input.length){ render(); return; } const a=input[pos]; const next=new Set(); for(const q of Array.from(curSet)){ const outs=(trans[q]&&trans[q][a])||[]; outs.forEach(s=> next.add(s)); } curSet=next; pos++; render(); }
+        function reset(){ input=(inputEl.value||'').replace(/[^ab]/g,''); pos=0; curSet=new Set([start]); render(); }
+        function loadPreset(name){ const p=presets[name]; if(!p) return; nodes=p.nodes.map(n=>({...n, ...toPix(n)})); start=p.start; trans=p.trans; eps=p.eps; explain.textContent = `${p.desc} • Examples: ${p.hint}`; if(!inputEl.value) inputEl.value = (name==='aOrAb'? 'ab' : name==='abOrBa'? 'ab' : name==='aStarB'? 'aaab' : name==='containsAB'? 'aaab' : 'bba'); reset(); }
+        document.getElementById('nfaStep').onclick=step; document.getElementById('nfaReset').onclick=reset; inputEl.oninput=reset; presetSel.onchange=()=> loadPreset(presetSel.value);
+        function render(){ ctx.clearRect(0,0,W,H); // draw edges
+          for(const s of nodes){ const outs=trans[s.id]||{}; for(const a in outs){ for(const d of outs[a]){ const t=nodes.find(n=>n.id===d); drawArrow(ctx, s.x,s.y,t.x,t.y, a); } } for(const d of (eps[s.id]||[])){ const t=nodes.find(n=>n.id===d); drawArrow(ctx, s.x,s.y,t.x,t.y, 'ε'); } }
           for(const n of nodes){ drawState(ctx, n, curSet.has(n.id), !!n.accept, n.id===start); }
           // input tape and status
           const bx=20, by=30, cell=24; ctx.strokeStyle='#ddd'; ctx.fillStyle='#111'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           for(let i=0;i<Math.max(12,input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x,by,cell,cell); const ch=input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===pos){ ctx.fillStyle='#1a8917'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#111'; } }
-          const accepting = Array.from(curSet).some(id => nodes.find(n=>n.id===id && n.accept));
+          const accepting = Array.from(curSet).some(id => (nodes.find(n=>n.id===id)||{}).accept);
           const status=document.getElementById('nfaStatus'); status.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} reading…` : `halted in {${Array.from(curSet).join(',')}} — ${accepting? 'accepted':'rejected'}`);
         }
-        render(); return { step, reset };
+        // init
+        loadPreset(presetSel.value || 'aOrAb');
+        return { step, reset };
       }
 
       // ---------- NFA Builder with ε and determinize table ----------
@@ -132,18 +152,27 @@
       </div>
 
       <div class="section">
-        <h2>Run a Tiny NFA (a | ab)</h2>
-        <p class="note">This NFA accepts either 'a' or 'ab'. On 'a' from the start, it can jump to accept immediately or go to a state that expects 'b'. That’s nondeterminism: explore both options; accept if at least one path reaches an accepting state.</p>
+        <h2>Run Preset NFAs</h2>
+        <p class="note">Pick a simple pattern and watch the NFA process the input. Nondeterminism means “try all possible next steps at once”; accept if at least one path lands in an accepting state after the last symbol.</p>
         <div class="demo">
           <canvas id="nfaRun" width="720" height="280"></canvas>
           <div class="controls">
-            <label>Input (a/b): <input id="nfaInput" type="text" value="ab" /></label>
+            <label>Preset
+              <select id="nfaPreset">
+                <option value="endsWithA">Ends with 'a' (over a,b)</option>
+                <option value="containsAB">Contains 'ab'</option>
+                <option value="aStarB">a* b</option>
+                <option value="aOrAb" selected>(a | ab)</option>
+                <option value="abOrBa">(ab | ba)</option>
+              </select>
+            </label>
+            <label>Input (a/b): <input id="nfaInput" type="text" value="" /></label>
             <button id="nfaStep">Step</button>
             <button id="nfaReset">Reset</button>
           </div>
           <p class="note" id="nfaStatus">—</p>
-          <p class="note">Terms: $Q=\{q0,q1,qf\}$; $\Sigma=\{a,b\}$; $\delta(q0,a)=\{q1,qf\}$; $\delta(q1,b)=\{qf\}$; $q_0=q0$; $F=\{qf\}$. No $\varepsilon$ moves here.</p>
-      </div>
+          <p class="note" id="nfaExplain">—</p>
+        </div>
 
       <div class="section">
         <h2>Build an NFA (with ε)</h2>
@@ -185,4 +214,3 @@
   </div>
 </body>
 </html>
-
