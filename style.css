@@ -39,6 +39,8 @@ a:hover { text-decoration: underline; }
   padding: 28px 0; border-bottom: 1px solid var(--border);
 }
 .site-title { font-family: Georgia, Cambria, "Times New Roman", Times, serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.site-title a { color: var(--text); text-decoration: none; }
+.site-title a:hover { text-decoration: underline; }
 .site-subtitle { color: var(--muted); font-size: 16px; margin-top: 4px; }
 .nav { display: flex; gap: 16px; }
 .nav a { color: var(--link); font-weight: 600; }
@@ -94,6 +96,9 @@ a:hover { text-decoration: underline; }
 /* Footer */
 .footer { border-top: 1px solid var(--border); padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
 .footer a { color: var(--link); font-weight: 600; }
+.meta-mini { font-size: 12px; color: var(--muted); }
+.related-links { margin: 16px auto; max-width: 820px; font-size: 0.95em; }
+.related-links a { color: var(--link); }
 
 /* Article pages */
 .article-header { text-align: left; margin-bottom: 28px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }

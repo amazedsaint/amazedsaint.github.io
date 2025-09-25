@@ -1,5 +1,10 @@
 # Repository Guidelines
 
+
+## Introduction
+
+This is a dynamic blog repository. You are creating pages for a blog, with a linking tile in the home page. Ensure the pages are consistent visually with proper links etc. Also, use the current date when publish articles. Refer other articles to understand the writing style, especially the physics roadmap article. Please make sure that for new articles you write, the header and bottom is consistent with other articles
+
 ## Project Structure & Module Organization
 - Source: `index.html` (home), `posts/*.html` (articles and simulations).
 - Scripts: `js/lattice.js`, `js/matrix.js`, `js/card_creatures.js` (page‑scoped IIFEs; each guards for required DOM).
