@@ -45,12 +45,22 @@
         </header>
 
         <main>
+            <style>
+              .section-block { margin: 24px 0 8px 0; }
+              .section-title { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; }
+              .section-desc { color: var(--muted); margin: 0 0 8px 0; }
+              .path { color: var(--muted); font-size: 13px; margin: 6px 0 10px 0; }
+            </style>
             <section class="hero">
                 <p>Essays and interactive demos on neural networks, evolution, and consciousness.</p>
             </section>
 
-            <section class="article-grid">
-                <!-- Newest first -->
+            <!-- Learning Path 1: Foundations -->
+            <div class="section-block">
+              <div class="section-title">Foundations</div>
+              <p class="section-desc">Build the basics, then see them in action with live physics visuals.</p>
+              <div class="path">Path: Primer → Core ideas</div>
+              <section class="article-grid">
                 <a class="card is-theory" href="posts/physics-math-primer.html">
                     <div class="card-cover"><span class="card-tag">Primer</span></div>
                     <div class="card-body">
@@ -67,27 +77,20 @@
                         <div class="card-meta">Sep 23, 2025 • Interactive • Physics</div>
                     </div>
                 </a>
-                <a class="card is-theory" href="posts/topology-inspired-visualisation-article.html">
-                    <div class="card-cover"><span class="card-tag">Theory</span></div>
-                    <div class="card-body">
-                        <div class="card-title">Shapes, Paths, and Patterns — Simple Visuals</div>
-                        <div class="card-desc">Hands‑on pictures that make symmetry, shapes, and motion easy to see and understand.</div>
-                        <div class="card-meta">Aug 9, 2025 • Interactive • Math</div>
-                    </div>
-                </a>
-                <a class="card is-simulation" href="posts/info-flies-simulation.html">
-                    <div class="card-cover"><span class="card-tag">Simulation</span></div>
-                    <div class="card-body">
-                        <div class="card-title">Game of Flies</div>
-                        <div class="card-desc">Place houses and hazards. Flies join teams, orbit flags, and sometimes switch sides.</div>
-                        <div class="card-meta">Feb 14, 2025 • 2D • Sandbox</div>
-                    </div>
-                </a>
+              </section>
+            </div>
+
+            <!-- Learning Path 2: Agents and 3D Motion -->
+            <div class="section-block">
+              <div class="section-title">Agents and 3D Motion</div>
+              <p class="section-desc">Read the idea, then explore the simulator that implements it.</p>
+              <div class="path">Path: Article → Simulator</div>
+              <section class="article-grid">
                 <a class="card is-research" href="posts/physics-aware-flies-article.html">
-                    <div class="card-cover"><span class="card-tag">Research</span></div>
+                    <div class="card-cover"><span class="card-tag">Article</span></div>
                     <div class="card-body">
-                        <div class="card-title">How Flies Move in 3D (Article)</div>
-                        <div class="card-desc">A clear explainer on 3D motion (SE(3)) and the ideas behind the simulator.</div>
+                        <div class="card-title">How Flies Move in 3D</div>
+                        <div class="card-desc">3D motion on SE(3): rotations + translations, proposals, and on‑manifold updates.</div>
                         <div class="card-meta">Aug 28, 2024 • Article • 3D</div>
                     </div>
                 </a>
@@ -99,7 +102,40 @@
                         <div class="card-meta">Sep 15, 2024 • 3D • Simulator</div>
                     </div>
                 </a>
-            </section>
+              </section>
+            </div>
+
+            <!-- Learning Path 3: Shapes and Patterns -->
+            <div class="section-block">
+              <div class="section-title">Shapes and Patterns</div>
+              <p class="section-desc">Interact with symmetry and topology‑inspired visuals.</p>
+              <section class="article-grid">
+                <a class="card is-theory" href="posts/topology-inspired-visualisation-article.html">
+                    <div class="card-cover"><span class="card-tag">Interactive</span></div>
+                    <div class="card-body">
+                        <div class="card-title">Shapes, Paths, and Patterns</div>
+                        <div class="card-desc">Hands‑on pictures that make symmetry, shapes, and motion easy to see and understand.</div>
+                        <div class="card-meta">Aug 9, 2025 • Interactive • Math</div>
+                    </div>
+                </a>
+              </section>
+            </div>
+
+            <!-- Playground -->
+            <div class="section-block">
+              <div class="section-title">Playground</div>
+              <p class="section-desc">Open‑ended sandbox to try ideas quickly.</p>
+              <section class="article-grid">
+                <a class="card is-simulation" href="posts/info-flies-simulation.html">
+                    <div class="card-cover"><span class="card-tag">Simulation</span></div>
+                    <div class="card-body">
+                        <div class="card-title">Game of Flies</div>
+                        <div class="card-desc">Place houses and hazards. Flies join teams, orbit flags, and sometimes switch sides.</div>
+                        <div class="card-meta">Feb 14, 2025 • 2D • Sandbox</div>
+                    </div>
+                </a>
+              </section>
+            </div>
         </main>
 
         <footer class="footer">
