@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physics & Math Primer — Simple Visuals</title>
+  <meta name="description" content="Plain-English primer for phase, rotations, spacetime metric, two-state systems, and simple potentials — each with a small interactive visual." />
+  <link rel="stylesheet" href="../style.css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["$","$"],["\\(","\\)"]],
+        displayMath: [["$$","$$"],["\\[","\\]"]],
+        packages: {'[+]': ['base','ams']},
+        processEscapes: true
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:820px; margin:12px auto; }
+    canvas { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
+    .controls label { font-size:12px; color: var(--muted); }
+    .controls input[type=range] { width: 160px; accent-color: var(--accent); }
+    .note { max-width:820px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
+  </style>
+  <script>
+    (function(){
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // 1) Complex phase wheel: e^{i alpha}
+      function phaseWheel(){
+        const cv = document.getElementById('phaseWheel'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=420, H=cv.height=240; let a=0.8; // radians
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const cx=W*0.35, cy=H*0.6, R=80;
+          // axes
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(cx-R-20, cy); ctx.lineTo(cx+R+20, cy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx, cy-R-20); ctx.lineTo(cx, cy+R+20); ctx.stroke();
+          // unit circle
+          ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+          // vector
+          const x = Math.cos(a), y = Math.sin(a);
+          ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+x*R, cy-y*R); ctx.stroke();
+          // labels
+          ctx.fillStyle='#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.fillText('Re', cx+R+10, cy-2); ctx.fillText('Im', cx+4, cy-R-10);
+          // readout
+          const rx = document.getElementById('phaseRead'); if(rx){ rx.textContent = `cos(α)=${x.toFixed(3)}, sin(α)=${y.toFixed(3)}`; }
+        }
+        function setAlpha(v){ a=parseFloat(v); draw(); }
+        draw();
+        return { setAlpha };
+      }
+
+      // 2) 2D rotation matrix
+      function rot2D(){
+        const cv = document.getElementById('rot2D'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=420, H=cv.height=240; let th=0.6;
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const cx=W*0.35, cy=H*0.65, R=80;
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(cx-R-20, cy); ctx.lineTo(cx+R+20, cy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx, cy-R-20); ctx.lineTo(cx, cy+R+20); ctx.stroke();
+          ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+          const x = Math.cos(th), y = Math.sin(th);
+          ctx.strokeStyle='rgba(26,137,23,0.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+x*R, cy-y*R); ctx.stroke();
+          // matrix text
+          const m = document.getElementById('rotMat'); if(m){ m.textContent = `R(θ) = [[cosθ, -sinθ],[sinθ, cosθ]] with θ=${th.toFixed(2)}`; }
+        }
+        function setTheta(v){ th=parseFloat(v); draw(); }
+        draw();
+        return { setTheta };
+      }
+
+      // 3) Metric shapes: circle vs hyperbola
+      function metricShapes(){
+        const cv = document.getElementById('metric'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=560, H=cv.height=280; let s=1.0;
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const cx=W*0.5, cy=H*0.8, R=80, S=80;
+          // axes
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,cy); ctx.lineTo(W-20,cy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx,H-10); ctx.lineTo(cx,10); ctx.stroke();
+          // circle x^2 + y^2 = r^2 (Euclidean)
+          ctx.strokeStyle='rgba(0,120,255,0.8)'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.stroke();
+          // hyperbola t^2 - x^2 = s^2 (Minkowski)
+          ctx.strokeStyle='rgba(26,137,23,0.9)'; ctx.beginPath();
+          for(let x=-2.5; x<=2.5; x+=0.01){ const t = Math.sqrt(x*x + s*s); const X=cx+x*S, T=cy - t*S; if(x===-2.5) ctx.moveTo(X,T); else ctx.lineTo(X,T); }
+          ctx.stroke();
+          const sEl=document.getElementById('metricS'); if(sEl) sEl.textContent = s.toFixed(2);
+        }
+        function setS(v){ s = Math.max(0.3, Math.min(2.5, parseFloat(v))); draw(); }
+        draw();
+        return { setS };
+      }
+
+      // 4) Two-state system (Bloch equator/sphere lite)
+      function bloch(){
+        const cv = document.getElementById('bloch'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=420, H=cv.height=240; let theta=Math.PI/2, phi=0.0;
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const cx=W*0.35, cy=H*0.6, R=80;
+          ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+          const bx = Math.cos(phi)*Math.sin(theta), by = Math.sin(phi)*Math.sin(theta); // projection
+          ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+bx*R, cy-by*R); ctx.stroke();
+          const p0 = Math.cos(theta/2)**2, p1 = Math.sin(theta/2)**2;
+          const pEl = document.getElementById('blochP'); if(pEl) pEl.textContent = `P(0)=${p0.toFixed(3)}, P(1)=${p1.toFixed(3)}`;
+        }
+        function setTheta(v){ theta=parseFloat(v); draw(); }
+        function setPhi(v){ phi=parseFloat(v); draw(); }
+        draw();
+        return { setTheta, setPhi };
+      }
+
+      // 5) 1D potential and curvature (mass^2 ~ V'')
+      function potential(){
+        const cv = document.getElementById('potential'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=560, H=cv.height=260; let lambda=0.6, v=1.0; let x=0.2, vx=0, damp=0.12; const dt=0.016;
+        function V(x){ return 0.25*lambda*(x*x - v*v)*(x*x - v*v); }
+        function dV(x){ return 0.5*lambda*(x*x - v*v)*2*x; } // d/dx
+        function VppAtMin(){ return 2*lambda*v*v; }
+        function step(){ const a = -dV(x); vx = (vx + a*dt)*(1-damp*dt); x += vx*dt; }
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const cx=W*0.5, cy=H*0.75, S=100;
+          // axes
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,cy); ctx.lineTo(W-20,cy); ctx.stroke();
+          // potential curve
+          ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.beginPath();
+          for(let X=20; X<=W-20; X+=2){ const xx=(X-cx)/S; const YY=cy - V(xx)*S; if(X===20) ctx.moveTo(X,YY); else ctx.lineTo(X,YY); }
+          ctx.stroke();
+          // particle
+          const px = cx + x*S, py = cy - V(x)*S; ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fill();
+          // readout
+          const m2 = VppAtMin(); const mEl=document.getElementById('m2'); if(mEl){ mEl.textContent = m2.toFixed(3); }
+        }
+        function setLam(vv){ lambda=parseFloat(vv); }
+        function setV(vv){ v=parseFloat(vv); }
+        function reset(){ x=0.2; vx=0; }
+        function loop(){ step(); draw(); if(!reduce) requestAnimationFrame(loop); }
+        draw(); loop();
+        return { setLam, setV, reset };
+      }
+
+      // 6) 1D gauge phase and covariant derivative (lite)
+      function gauge1D(){
+        const cv = document.getElementById('gauge1D'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=560, H=cv.height=160; let amp=0.9, k=2*Math.PI/180, g=1.0;
+        function alpha(x){ return amp*Math.sin(k*x); }
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          // arrows along a line
+          const y=H/2; const step=20; let sumG=0, sumD=0, n=0;
+          for(let x=20; x<=W-20; x+=step){
+            const a=alpha(x); const r=12; const ux=Math.cos(a), uy=Math.sin(a);
+            ctx.strokeStyle='rgba(26,137,23,0.9)'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+ux*r,y-uy*r); ctx.stroke();
+            const ax = (alpha(x+1)-alpha(x-1))/2; const grad=Math.abs(ax);
+            const cov = Math.abs(ax + g*(-ax/g)); // with A_x = -(1/g) ∂x α
+            sumG+=grad; sumD+=cov; n++;
+          }
+          const g1=document.getElementById('g1'); if(g1) g1.textContent=(sumG/n).toFixed(3);
+          const g2=document.getElementById('g2'); if(g2) g2.textContent=(sumD/n).toFixed(3);
+        }
+        function setAmp(v){ amp=parseFloat(v); draw(); }
+        draw();
+        return { setAmp };
+      }
+
+      function start(){
+        const pw = phaseWheel(); const r2 = rot2D(); const ms = metricShapes(); const bl = bloch(); const pot = potential(); const g1 = gauge1D();
+        const a = document.getElementById('alpha'); if(a) a.oninput = e => pw.setAlpha(e.target.value);
+        const th = document.getElementById('thetaR'); if(th) th.oninput = e => r2.setTheta(e.target.value);
+        const s = document.getElementById('sVal'); if(s) s.oninput = e => ms.setS(e.target.value);
+        const tB = document.getElementById('thetaB'); if(tB) tB.oninput = e => bl.setTheta(e.target.value);
+        const pB = document.getElementById('phiB'); if(pB) pB.oninput = e => bl.setPhi(e.target.value);
+        const lam = document.getElementById('lam'); if(lam) lam.oninput = e => pot.setLam(e.target.value);
+        const vv = document.getElementById('vmin'); if(vv) vv.oninput = e => pot.setV(e.target.value);
+        const rs = document.getElementById('resetPot'); if(rs) rs.onclick = () => pot.reset();
+        const ap = document.getElementById('amp1D'); if(ap) ap.oninput = e => g1.setAmp(e.target.value);
+      }
+      if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="site-title">antifold</h1>
+      <nav class="nav"><a href="../index.html">← Home</a></nav>
+    </header>
+
+    <article class="article-content">
+      <div class="article-header">
+        <span class="tile-category">Primer</span>
+        <h1 class="article-title">Physics & Math Primer — Simple Visuals</h1>
+        <div class="article-meta">September 24, 2025 • Primer • Interactive</div>
+        <p class="article-description">Short, plain‑English notes with small visuals for the ideas used in the main article: phase, rotations, spacetime metric, two‑state systems, potentials, and basic gauge thinking.</p>
+      </div>
+
+      <div class="section">
+        <h2>Complex Numbers and Phase</h2>
+        <p class="note">The number $e^{i\alpha}$ is a unit arrow in the plane: it rotates by angle $\alpha$ without changing length. Real and imaginary parts are $\cos\alpha$ and $\sin\alpha$.</p>
+        <div class="demo">
+          <canvas id="phaseWheel" width="420" height="240"></canvas>
+          <p class="note">This picture shows $e^{i\alpha}=(\cos\alpha,\,\sin\alpha)$. Re/Im are the x/y components.</p>
+          <div class="controls"><label>α <input id="alpha" type="range" min="0" max="6.283" step="0.01" value="0.80"/></label></div>
+          <p class="note" id="phaseRead">cos(α)=…, sin(α)=…</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Rotations as Matrices</h2>
+        <p class="note">A 2D rotation is a simple matrix acting on a vector. The matrix entries are sines and cosines of the angle.</p>
+        <div class="demo">
+          <canvas id="rot2D" width="420" height="240"></canvas>
+          <p class="note">This picture shows $R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}$ rotating an arrow by $\theta$.</p>
+          <div class="controls"><label>θ <input id="thetaR" type="range" min="0" max="6.283" step="0.01" value="0.60"/></label></div>
+          <p class="note" id="rotMat">R(θ) = …</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Euclidean Circles vs. Minkowski Cones</h2>
+        <p class="note">In ordinary space, $x^2+y^2=r^2$ draws a circle. In spacetime (with $c=1$ in 1+1D), $t^2-x^2=s^2$ draws hyperbolas that keep the “spacetime distance” fixed.</p>
+        <div class="demo">
+          <canvas id="metric" width="560" height="280"></canvas>
+          <p class="note">This picture shows a unit circle (blue) and the hyperbola $t^2-x^2=s^2$ (green). Both express an invariant “distance”, but with different signs.</p>
+          <div class="controls"><label>s <input id="sVal" type="range" min="0.3" max="2.5" step="0.01" value="1.00"/></label></div>
+          <p class="note">For boosts in the main article, the light cone stays fixed while axes tilt; these hyperbolas stay the same.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Two‑State Systems (Bloch Picture)</h2>
+        <p class="note">A two‑state wave can be written as $|\psi\rangle=\cos\tfrac{\theta}{2}\,|0\rangle+e^{i\phi}\sin\tfrac{\theta}{2}\,|1\rangle$. Probabilities are $P(0)=\cos^2(\theta/2)$ and $P(1)=\sin^2(\theta/2)$.</p>
+        <div class="demo">
+          <canvas id="bloch" width="420" height="240"></canvas>
+          <p class="note">This picture shows the state’s direction on the Bloch circle (equator projection) and reports $P(0)$ and $P(1)$.</p>
+          <div class="controls">
+            <label>θ <input id="thetaB" type="range" min="0" max="3.1416" step="0.005" value="1.5708"/></label>
+            <label>φ <input id="phiB" type="range" min="0" max="6.283" step="0.01" value="0.00"/></label>
+          </div>
+          <p class="note" id="blochP">P(0)=…, P(1)=…</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Potentials and Small Oscillations</h2>
+        <p class="note">A particle tends to roll downhill in a potential $V(x)$. Near a minimum, the curvature $V''(x_\text{min})$ sets the small‑oscillation frequency. In particle physics, with $\hbar=c=1$, a mass behaves like $m^2\sim V''$.</p>
+        <div class="demo">
+          <canvas id="potential" width="560" height="260"></canvas>
+          <p class="note">This picture shows $V(x)=\tfrac{\lambda}{4}(x^2-v^2)^2$. The readout shows $m^2=V''(x_\text{min})=2\lambda v^2$.</p>
+          <div class="controls">
+            <label>λ <input id="lam" type="range" min="0.1" max="1.5" step="0.01" value="0.60"/></label>
+            <label>v <input id="vmin" type="range" min="0.5" max="2.0" step="0.01" value="1.00"/></label>
+            <button class="btn" id="resetPot">Reset</button>
+          </div>
+          <p class="note">Readout: m² = <span id="m2">…</span></p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Why We Need a Covariant Derivative (1D)</h2>
+        <p class="note">If a wave’s phase $\alpha(x)$ varies with position, an ordinary derivative “sees” that variation even when the amplitude is constant. A gauge field $A_\mu$ fixes this so that the derivative respects the relabeling.</p>
+        <div class="demo">
+          <canvas id="gauge1D" width="560" height="160"></canvas>
+          <p class="note">This picture shows a 1D phase $\alpha(x)$ and compares the average size of $\partial_x\psi$ vs. $D_x\psi$ with $A_x=-(1/g)\,\partial_x\alpha$.</p>
+          <div class="controls"><label>Phase amplitude <input id="amp1D" type="range" min="0" max="1.5" step="0.01" value="0.90"/></label></div>
+          <p class="note">Readout: ⟨|∂xψ|⟩ = <span id="g1">…</span>; ⟨|Dxψ|⟩ = <span id="g2">…</span></p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Where to Go Next</h2>
+        <p class="note">You now have the small tools used in the main article: phase and rotations, spacetime’s sign flip, two‑state waves, potentials and curvature, and the basic gauge fix. Open the main page and match each canvas here to the bigger pictures there.</p>
+      </div>
+    </article>
+
+    <footer class="footer">
+      <p>&copy; 2025 antifold • Essays and simulations</p>
+    </footer>
+  </div>
+</body>
+</html>
+
