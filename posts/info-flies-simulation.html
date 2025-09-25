@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Information Flies — Emoji Attractors & Repellents</title>
-  <meta name="description" content="Place emoji concepts as attractors or repellents; watch flies move and pass information with finite speed." />
+  <title>Game Of Flies — Houses and Hazards</title>
+  <meta name="description" content="Place houses and hazards; watch flies flock and spread information with physics-based rules." />
   <link rel="stylesheet" href="../style.css" />
   <style>
     html, body { height: 100%; }
@@ -152,30 +152,29 @@
   <div class="legend-mini" id="legendMini"></div>
   <div class="panel math collapsed" id="mathPanel">
     <div class="panel-header" id="mathHeader">
-      <span class="panel-title">Flag Influence — Model</span>
+      <span class="panel-title">Game of Flies — Axioms</span>
       <button class="panel-toggle" id="mathToggle">▼</button>
     </div>
     <div class="panel-content">
       <div class="article-content" style="font-size:14px;">
-        <p>We place control flags $k$ (red/blue/white) in the plane. Each fly $i$ carries an allegiance label $L_i$ (the flag it follows)
-        and a scalar influence strength $s_i \in [0,1]$ (neutral if $s_i \approx 0$). Physics couples motion, sensing, and local communication.</p>
-        <p>Motion (with damping):</p>
-        $$\dot x_i = v_i,\quad \dot v_i = \sum_k F_k(x_i,L_i,s_i) - \gamma v_i$$
-        where the flag force near flag $k$ is attractive and scales with allegiance:
-        $$F_k \propto \frac{\alpha(L_i,k,s_i)}{\|x_i-x_k\|^2}\, \frac{x_k - x_i}{\|x_k-x_i\|},\qquad
-          \alpha = \begin{cases}
-          \alpha_0 & L_i<0 \text{ (neutral: stronger bias)}\\
-          \alpha_1(0.8+0.4s_i) & L_i=k \text{ (follow own flag)}\\
-          \alpha_2 & L_i\neq k \text{ (weak cross-bias)}
-          \end{cases} $$
-        <p>Sensing and forgetting:</p>
-        $$\dot s_i = \eta\,\sigma(\|x_i-x_{L_i}\|) - \lambda s_i,$$
-        where $\sigma$ increases near a flag; neutral flies adopt the nearest flag on contact.</p>
-        <p>Local communication (label propagation):</p>
-        $$\dot s_i \mathrel{+}= \sum_j w_{ij}(s_j - s_i),\qquad
-          L_i \leftarrow L_j \text{ if } s_j > s_i,$$
-        with $w_{ij}=\phi(\|x_i-x_j\|)\,\psi(\|v_i-v_j\|)$ decaying with distance and relative speed.
-        <p>Social terms (cohesion/separation/alignment) are awareness-weighted so informed flies coordinate flocks while neutrals seek flags.</p>
+        <p>This simulation follows a few simple axioms that couple motion, sensing, social dynamics, and morale.</p>
+        <h3 style="margin:8px 0 4px;">Axioms</h3>
+        <ul>
+          <li><b>Agents</b>: Each fly has position x, velocity v, health h∈[0,1], and a 3‑channel opinion q=[q0,q1,q2].</li>
+          <li><b>Fields</b>: Placed objects are <i>attractors</i> (houses) or <i>repellents</i> (hazards). They exert 1/r² forces and inject local sensing into the matching opinion channel.</li>
+          <li><b>Self‑propulsion</b>: A motor + damping maintains motion with a minimum cruising speed; neutrals add correlated exploration noise.</li>
+          <li><b>Awareness</b>: Opinion strength |q| raises sensitivity to fields and social terms; like‑minded neighbors <i>reinforce</i> opinions.</li>
+          <li><b>Allegiance</b>: If max(qk) exceeds a threshold, allegiance=k. Allegiant flies orbit the nearest same‑channel flag (spring + swirl).</li>
+          <li><b>Social + Combat</b>: Similar opinions align; opposed opinions anti‑align and can chase and attack at close range (health reduces speed).</li>
+          <li><b>Morale</b>: Under local dominance and low health/weak belief, opinions drift toward the dominant side (allegiance can switch).</li>
+          <li><b>Events</b>: Hazards pulse (expanding ring) that temporarily amplifies repulsion/damage on the ring.</li>
+        </ul>
+        <h3 style="margin:8px 0 4px;">Controls & Legend</h3>
+        <ul>
+          <li><b>Place</b>: Click to add Houses (attractors) or Hazards (repellents). Shift‑click removes nearest.</li>
+          <li><b>HUD</b>: Shows counts, average health, and clashes. Thin colored lines indicate flag influence on flies.</li>
+          <li><b>Panels</b>: Math toggles this help; Pause halts motion; Reset restores defaults; Clear removes objects.</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -193,9 +192,47 @@
       flies: [], // {x,y,vx,vy,info:[r,g,b], allegiance:-1, s:0}
       objs: [],  // {x,y,emoji,type:'flag', color?:'red'|'blue'|'white', qty?, maxQty?}
       grid: null, // spatial hash
-      params: { N:220, kFlag:140, commR:110, influence:1.2, speed:42, forget:0.18, social:72, cohesion:36, separation:120, sepDist:28 },
+      // Align names with usage in step(); prevent undefined -> NaN
+      params: {
+        N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8,
+        social:72, cohesion:36, separation:120, sepDist:28, hazardAlpha:1.2,
+        // new dynamics
+        gamma:1.2,               // velocity damping (s^-1)
+        allyAlign:1.0,           // alignment with similar opinions
+        enemyAntiAlign:0.7,      // anti-alignment with opposing opinions
+        hostility:80,            // chase acceleration towards opponents
+        attackRange:18,          // attack distance (px)
+        attackDamage:0.35,       // damage per second at point-blank when both strong
+        healRate:0.08,           // healing per second near friendly attractor
+        healBase:0.015,          // baseline healing everywhere
+        hazardDamage:0.08,       // damage per second near hazards
+        // exploration for neutral flies
+        explore:80,              // random exploration accel for neutral flies
+        noiseTau:0.8,            // correlation time (s) for exploration direction
+        // self-propulsion (active matter)
+        motor:8.0,               // gain driving speed to target
+        vmin:10,                 // minimum cruising speed
+        // group morale / allegiance shift
+        submissionRate:0.35,     // rate at which losing side shifts opinions
+        dominanceThresh:1.25,    // local dominance ratio to trigger shift
+        // home-orbit around owned flags
+        homeR:80,                // preferred orbit radius around owned flag
+        homeK:2.2,               // spring toward orbit radius
+        homeSwirl:1.2,           // tangential swirl around home
+        homeStick:4.0,           // extra inward clamp when far from home
+        // event pulse (impact cycle) around hazards
+        eventPeriod:3.5,         // seconds per pulse
+        eventSigma:20,           // ring thickness for hazard boost
+        eventBoost:1.8,          // multiplier for hazard at ring
+        eventRmin:40,
+        eventRmax:160,
+        // compounding awareness
+        awarenessGain:0.6,       // local reinforcement gain when among like-minded
+        allegianceThresh:0.3     // threshold to set allegiance from opinion
+      },
       paused:false,
-      tool: { flag:'red', mode:'add' },
+      tool: { house:'stark', mode:'add' },
+      conflicts:0,
     };
 
     // no legacy emoji mapping
@@ -213,25 +250,26 @@
       for(let i=0;i<N;i++){
         const x = Math.random()*W, y = Math.random()*H;
         const ang = rand(-Math.PI,Math.PI), sp=state.params.speed;
-        state.flies.push({ x, y, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, info:[0,0,0], allegiance:-1, s:0 });
+        const na = rand(-Math.PI,Math.PI);
+        state.flies.push({ x, y, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, info:[0,0,0], allegiance:-1, s:0, h:1, anger:0, noiseX: Math.cos(na), noiseY: Math.sin(na) });
       }
     }
 
     // Defaults for reset
-    const defaultParams = { N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:72, cohesion:36, separation:120, sepDist:28, hazardAlpha:1.2 };
+    const defaultParams = { N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8, social:72, cohesion:36, separation:120, sepDist:28, hazardAlpha:1.2, gamma:1.2, allyAlign:1.0, enemyAntiAlign:0.7, hostility:80, attackRange:18, attackDamage:0.35, healRate:0.08, healBase:0.015, hazardDamage:0.08, explore:80, noiseTau:0.8, motor:8.0, vmin:10, submissionRate:0.35, dominanceThresh:1.25, homeR:80, homeK:2.2, homeSwirl:1.2, homeStick:4.0, eventPeriod:3.5, eventSigma:20, eventBoost:1.8, eventRmin:40, eventRmax:160, awarenessGain:0.6, allegianceThresh:0.3 };
 
     const HOUSES = {
-      stark:      { type:'attractor', idx:1, color:'#6b7280', name:'Stark' },
-      lannister:  { type:'attractor', idx:0, color:'#b91c1c', name:'Lannister' },
-      targaryen:  { type:'attractor', idx:2, color:'#111827', name:'Targaryen' },
-      tyrell:     { type:'attractor', idx:1, color:'#065f46', name:'Tyrell' },
-      walkers:    { type:'repellent', idx:2, color:'#3b82f6', name:'Walkers' },
-      wildfire:   { type:'repellent', idx:1, color:'#10b981', name:'Wildfire' },
+      stark:      { type:'attractor', idx:1, color:'#6b7280', name:'Stark', emoji:'🐺' },
+      lannister:  { type:'attractor', idx:0, color:'#b91c1c', name:'Lannister', emoji:'🦁' },
+      targaryen:  { type:'attractor', idx:2, color:'#111827', name:'Targaryen', emoji:'🐉' },
+      tyrell:     { type:'attractor', idx:1, color:'#065f46', name:'Tyrell', emoji:'🌿' },
+      walkers:    { type:'repellent', idx:2, color:'#3b82f6', name:'Walkers', emoji:'🧟' },
+      wildfire:   { type:'repellent', idx:1, color:'#10b981', name:'Wildfire', emoji:'🔥' },
     };
 
     function addObject(x,y,house){
       const h=HOUSES[house]||HOUSES.stark;
-      state.objs.push({x,y,type:h.type, idx:h.idx, color:h.color, name:h.name});
+      state.objs.push({x,y,type:h.type, idx:h.idx, color:h.color, name:h.name, emoji:h.emoji, pulse:Math.random()});
     }
 
     function removeNearestObject(x,y){
@@ -249,7 +287,12 @@
       const cols=Math.max(1, Math.ceil((W||1)/cell)), rows=Math.max(1, Math.ceil((H||1)/cell));
       const g=Array.from({length:cols*rows},()=>[]);
       const idx=(x,y)=> clamp(Math.floor(x/cell),0,cols-1)+cols*clamp(Math.floor(y/cell),0,rows-1);
-      for(let i=0;i<state.flies.length;i++){ const f=state.flies[i]; g[idx(f.x,f.y)].push(i); }
+      for(let i=0;i<state.flies.length;i++){
+        const f=state.flies[i];
+        if (Number.isFinite(f.x) && Number.isFinite(f.y)) {
+          g[idx(f.x,f.y)].push(i);
+        }
+      }
       state.grid={g,cell,cols,rows,idx};
     }
 
@@ -262,6 +305,50 @@
         res.push(...g[X+cols*Y]);
       }
       return res;
+    }
+
+    // Color helpers — make display colors match placed objects
+    function hexToRgb(hex){
+      let h = String(hex||'').trim();
+      if (h[0]==='#') h = h.slice(1);
+      if (h.length===3) h = h.split('').map(c=>c+c).join('');
+      if (h.length!==6) return [200,200,200];
+      const num = parseInt(h,16); if (Number.isNaN(num)) return [200,200,200];
+      return [(num>>16)&255, (num>>8)&255, num&255];
+    }
+    function nearestObjForChannel(x,y,ch){
+      let best=null, bd=Infinity;
+      for(const o of state.objs){
+        if (o.idx!==ch) continue;
+        const dx=o.x-x, dy=o.y-y; const d2=dx*dx+dy*dy;
+        if (d2<bd){ bd=d2; best=o; }
+      }
+      return best;
+    }
+    function channelColorRgbForFly(f, ch){
+      const o = nearestObjForChannel(f.x, f.y, ch);
+      if (o && o.color) return hexToRgb(o.color);
+      // Fallback palette aligned with typical house/hazard hues
+      if (ch===0) return hexToRgb('#b91c1c'); // Lannister red
+      if (ch===1) return hexToRgb('#065f46'); // Tyrell green
+      return hexToRgb('#3b82f6');            // Walkers blue (default for ch=2)
+    }
+
+    function nearestAttractorForChannel(x,y,ch){
+      let best=null, bd=Infinity;
+      for(const o of state.objs){
+        if (o.type!=='attractor' || o.idx!==ch) continue;
+        const dx=o.x-x, dy=o.y-y; const d2=dx*dx+dy*dy; if(d2<bd){ bd=d2; best=o; }
+      }
+      return best;
+    }
+
+    function updateAllegiance(f){
+      // allegiance = argmax positive info channel, else -1
+      const thr = state.params.allegianceThresh||0.3;
+      let k=0, m=f.info[0]||0; for(let i=1;i<3;i++){ const v=f.info[i]||0; if(v>m){ m=v; k=i; } }
+      f.allegiance = (m>thr)? k : -1;
+      return f.allegiance;
     }
 
     function parallelTransport(info, vx, vy, dt, speed){
@@ -280,9 +367,10 @@
     }
 
     function step(dt){
-      const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social,cohesion,separation,sepDist,hazardAlpha} = state.params;
+      const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social,cohesion,separation,sepDist,hazardAlpha,gamma,allyAlign,enemyAntiAlign,hostility,attackRange,attackDamage,healRate,healBase,hazardDamage,explore,noiseTau,motor,vmin,submissionRate,dominanceThresh} = state.params;
       const commR2 = commR*commR;
       const N = state.flies.length; const ax = new Float32Array(N), ay = new Float32Array(N);
+      let conflicts = 0;
       // forgetting and object forces with hazard dominance
       for(let i=0;i<N;i++){
         const f = state.flies[i];
@@ -291,29 +379,64 @@
         f.info[1] = Math.max(-1, Math.min(1, f.info[1] - forget*f.info[1]*dt));
         f.info[2] = Math.max(-1, Math.min(1, f.info[2] - forget*f.info[2]*dt));
         let axAttr=0, ayAttr=0, axRep=0, ayRep=0, attrSum=0, repSum=0;
+        const aware = Math.max(Math.abs(f.info[0]||0), Math.abs(f.info[1]||0), Math.abs(f.info[2]||0));
+        const baseSens = 0.6 + 0.4*aware; // neutrals are less sensitive; informed feel stronger forces
+        // dominant channel for healing affinity
+        const a0=Math.abs(f.info[0]||0), a1=Math.abs(f.info[1]||0), a2=Math.abs(f.info[2]||0);
+        let kdom=0, adom=a0; if(a1>adom){kdom=1; adom=a1;} if(a2>adom){kdom=2; adom=a2;}
         for(const o of state.objs){
           const dx=o.x-f.x, dy=o.y-f.y; const r2=dx*dx+dy*dy+25; const r=Math.sqrt(r2);
           const idx = o.idx;
           const reactSign = (o.type==='attractor')? 1 : -1;
           const sensScale = 1 + beta * (f.info[idx]||0) * reactSign;
           if (o.type==='attractor'){
-            const mag = sensScale * (kAttr / r2);
+            const mag = baseSens * sensScale * (kAttr / r2);
             axAttr += mag * dx / r; ayAttr += mag * dy / r; attrSum += (kAttr / r2);
+            // healing near friendly banners
+            if (r<48){
+              const aff = (idx===kdom? 1.0 : 0.5);
+              f.h = Math.min(1, f.h + healRate * aff * (1 - r/48) * dt);
+            }
           } else {
-            const mag = sensScale * (kRepel / r2);
+            // hazard pulse boost (impact cycle)
+            const period = Math.max(0.2, state.params.eventPeriod||3.5);
+            o.pulse = (o.pulse||0) + dt/period; if (o.pulse>1) o.pulse-=1;
+            const ringR = (state.params.eventRmin||40) + (state.params.eventRmax||160 - (state.params.eventRmin||40)) * o.pulse;
+            const sigma = state.params.eventSigma||20;
+            const boost = 1 + (state.params.eventBoost||1.5) * Math.exp(-((r-ringR)*(r-ringR))/(2*sigma*sigma));
+            const mag = baseSens * sensScale * (kRepel / r2) * boost;
             axRep += -mag * dx / r; ayRep += -mag * dy / r; repSum += (kRepel / r2);
+            // hazard hurts health at close range
+            if (r<60){ f.h = Math.max(0, f.h - hazardDamage * (1 - r/60) * dt); }
           }
           // sensing update
           if (r<60){ const sgn = (o.type==='attractor')? 1 : -1; const v=(f.info[idx]||0) + sgn * 1.2*dt; f.info[idx] = Math.max(-1, Math.min(1, v)); }
         }
+        updateAllegiance(f);
+        // exploration for neutral flies: correlated random acceleration
+        if (!Number.isFinite(f.noiseX) || !Number.isFinite(f.noiseY)){
+          const ang = rand(-Math.PI,Math.PI); f.noiseX=Math.cos(ang); f.noiseY=Math.sin(ang);
+        }
+        const aExp = explore * (1 - aware);
+        const kappa = Math.max(0.0001, noiseTau);
+        const w = dt / kappa;
+        f.noiseX = f.noiseX * (1 - w) + (Math.random()*2-1) * w;
+        f.noiseY = f.noiseY * (1 - w) + (Math.random()*2-1) * w;
+        const nrm = Math.hypot(f.noiseX, f.noiseY) || 1;
+        ax[i] += aExp * (f.noiseX/nrm);
+        ay[i] += aExp * (f.noiseY/nrm);
         const risk = repSum / (attrSum + 1e-6);
         const scaleA = 1/(1 + hazardAlpha * risk);
         const scaleR = 1 + hazardAlpha * risk;
         ax[i] += axAttr * scaleA + axRep * scaleR;
         ay[i] += ayAttr * scaleA + ayRep * scaleR;
+        // baseline slow regeneration
+        f.h = Math.min(1, f.h + healBase * dt);
       }
       // communication + social alignment
       buildGrid();
+      // local channel influence accumulators for group-level allegiance shifts
+      const lch0 = new Float32Array(N), lch1 = new Float32Array(N), lch2 = new Float32Array(N), lw = new Float32Array(N);
       const maxLinks=120; let drawn=0;
       for(let i=0;i<N;i++){
         const f = state.flies[i]; const vfi = Math.hypot(f.vx,f.vy)||1e-6; const ufi=[f.vx/vfi, f.vy/vfi];
@@ -324,6 +447,9 @@
           const vrel = Math.hypot(f.vx-g.vx, f.vy-g.vy);
           const psi = 1/(1+vrel/40);
           const k = infoRate * phi * psi;
+          // accumulate local channel weights for both i and j
+          lch0[i] += phi * Math.abs(g.info[0]||0); lch1[i] += phi * Math.abs(g.info[1]||0); lch2[i] += phi * Math.abs(g.info[2]||0); lw[i] += phi;
+          lch0[j] += phi * Math.abs(f.info[0]||0); lch1[j] += phi * Math.abs(f.info[1]||0); lch2[j] += phi * Math.abs(f.info[2]||0); lw[j] += phi;
           const dr = ((g.info[0]||0)-(f.info[0]||0)) * k * dt;
           const dg = ((g.info[1]||0)-(f.info[1]||0)) * k * dt;
           const db = ((g.info[2]||0)-(f.info[2]||0)) * k * dt;
@@ -332,10 +458,39 @@
           f.info[2]=Math.max(-1, Math.min(1, (f.info[2]||0)+db)); g.info[2]=Math.max(-1, Math.min(1, (g.info[2]||0)-db));
           const infG = Math.max(Math.abs(g.info[0]||0), Math.abs(g.info[1]||0), Math.abs(g.info[2]||0));
           const infF = Math.max(Math.abs(f.info[0]||0), Math.abs(f.info[1]||0), Math.abs(f.info[2]||0));
-          const w = social * phi * psi * 0.5;
-          const vgj = Math.hypot(g.vx,g.vy)||1e-6; const ugj=[g.vx/vgj, g.vy/vgj];
-          ax[i] += (ugj[0]-ufi[0]) * w * infG; ay[i] += (ugj[1]-ufi[1]) * w * infG;
-          ax[j] += (ufi[0]-ugj[0]) * w * infF; ay[j] += (ufi[1]-ugj[1]) * w * infF;
+          // similarity of opinions (cosine in info space)
+          const qf=f.info, qg=g.info;
+          const nf=Math.hypot(qf[0]||0,qf[1]||0,qf[2]||0), ng=Math.hypot(qg[0]||0,qg[1]||0,qg[2]||0);
+          const sim = (nf>1e-3 && ng>1e-3)? ((qf[0]*qg[0]+qf[1]*qg[1]+qf[2]*qg[2])/(nf*ng)) : 0;
+          const wBase = social * phi * psi * 0.5;
+          if (sim>=0){
+            const wS = allyAlign * wBase * (0.5 + 0.5*sim);
+            const vgj = Math.hypot(g.vx,g.vy)||1e-6; const ugj=[g.vx/vgj, g.vy/vgj];
+            ax[i] += (ugj[0]-ufi[0]) * wS * infG; ay[i] += (ugj[1]-ufi[1]) * wS * infG;
+            ax[j] += (ufi[0]-ugj[0]) * wS * infF; ay[j] += (ufi[1]-ugj[1]) * wS * infF;
+          } else {
+            const wE = enemyAntiAlign * phi * psi * (0.5 + 0.5*(-sim)) * 0.5;
+            const vgj = Math.hypot(g.vx,g.vy)||1e-6; const ugj=[g.vx/vgj, g.vy/vgj];
+            ax[i] -= (ugj[0]-ufi[0]) * wE * infG; ay[i] -= (ugj[1]-ufi[1]) * wE * infG;
+            ax[j] -= (ufi[0]-ugj[0]) * wE * infF; ay[j] -= (ufi[1]-ugj[1]) * wE * infF;
+          }
+          // hostility: chase and attack when opposed and strong
+          let kfi=0, sfi=Math.abs(f.info[0]||0); if(Math.abs(f.info[1]||0)>sfi){kfi=1; sfi=Math.abs(f.info[1]||0);} if(Math.abs(f.info[2]||0)>sfi){kfi=2; sfi=Math.abs(f.info[2]||0);}
+          let kgi=0, sgi=Math.abs(g.info[0]||0); if(Math.abs(g.info[1]||0)>sgi){kgi=1; sgi=Math.abs(g.info[1]||0);} if(Math.abs(g.info[2]||0)>sgi){kgi=2; sgi=Math.abs(g.info[2]||0);}
+          if (kfi!==kgi && sfi>0.65 && sgi>0.65){
+            const dx=g.x-f.x, dy=g.y-f.y; const invd = 1/(d+1e-6);
+            const chase = hostility * phi * psi;
+            ax[i] += dx*invd * chase; ay[i] += dy*invd * chase;
+            ax[j] -= dx*invd * chase; ay[j] -= dy*invd * chase;
+            if (d < attackRange){
+              conflicts++;
+              const dmg = attackDamage * (0.5 + 0.5*phi) * (sfi*sgi);
+              f.anger = Math.min(1, f.anger + 0.7*phi);
+              g.anger = Math.min(1, g.anger + 0.7*phi);
+              f.h = Math.max(0, f.h - dmg*dt);
+              g.h = Math.max(0, g.h - dmg*dt);
+            }
+          }
           if (drawn<maxLinks){
             const mr = Math.abs(f.info[0]-g.info[0]);
             const mg = Math.abs(f.info[1]-g.info[1]);
@@ -348,7 +503,36 @@
           }
         }
       }
-      // boids-style cohesion and separation (awareness weighted)
+      // compounding awareness: reinforce opinions when surrounded by like-minded
+      for(let i=0;i<N;i++){
+        const f=state.flies[i]; const w = lw[i]; if (w>1e-3){
+          const g = state.params.awarenessGain||0;
+          const s0 = lch0[i]/w, s1 = lch1[i]/w, s2 = lch2[i]/w;
+          if ((f.info[0]||0) > 0) f.info[0] = clamp((f.info[0]||0) + g * s0 * (1-Math.abs(f.info[0]||0)) *  dt, -1, 1);
+          if ((f.info[1]||0) > 0) f.info[1] = clamp((f.info[1]||0) + g * s1 * (1-Math.abs(f.info[1]||0)) *  dt, -1, 1);
+          if ((f.info[2]||0) > 0) f.info[2] = clamp((f.info[2]||0) + g * s2 * (1-Math.abs(f.info[2]||0)) *  dt, -1, 1);
+        }
+      }
+      // group-level allegiance shift based on local dominance, health, and weak belief
+      for(let i=0;i<N;i++){
+        const f = state.flies[i];
+        const s0 = lch0[i], s1 = lch1[i], s2 = lch2[i];
+        const arr = [s0,s1,s2];
+        let kd=0, md=arr[0], sec=0;
+        for(let k=1;k<3;k++){ const v=arr[k]; if(v>md){ sec=md; md=v; kd=k; } else if(v>sec){ sec=v; } }
+        const ratio = (md+1e-6)/(sec+1e-6);
+        // current dominant channel of fly
+        let kf=0, mf=Math.abs(f.info[0]||0); if(Math.abs(f.info[1]||0)>mf){ kf=1; mf=Math.abs(f.info[1]||0);} if(Math.abs(f.info[2]||0)>mf){ kf=2; mf=Math.abs(f.info[2]||0);} 
+        if (kd!==kf && ratio>dominanceThresh){
+          const pressure = submissionRate * (ratio - dominanceThresh) * (lw[i]/(lw[i]+1)) * (1 - (f.h||0)) * (1 - mf);
+          // shift opinions toward kd, away from kf
+          const signF = (f.info[kf]||0) >= 0 ? 1 : -1;
+          const signD = (f.info[kd]||0) >= 0 ? 1 : -1;
+          f.info[kf] = clamp((f.info[kf]||0) - signF * pressure * 0.6 * dt, -1, 1);
+          f.info[kd] = clamp((f.info[kd]||0) + signD * pressure * dt, -1, 1);
+        }
+      }
+      // boids-style cohesion and separation (awareness weighted) + home-orbit force
       for(let i=0;i<N;i++){
         const f = state.flies[i];
         const neigh = neighbors(i);
@@ -370,21 +554,66 @@
         }
         ax[i] += separation * sx * 0.0025;
         ay[i] += separation * sy * 0.0025;
+        // home-orbit: flies with allegiance orbit near the nearest owned flag
+        if (f.allegiance!=null && f.allegiance>=0){
+          // find nearest attractor with same channel index
+          let best=null, bd=Infinity;
+          for(const o of state.objs){ if (o.type!=='attractor') continue; if (o.idx!==f.allegiance) continue; const d2=(o.x-f.x)*(o.x-f.x)+(o.y-f.y)*(o.y-f.y); if(d2<bd){ bd=d2; best=o; } }
+          if (best){
+            const dx=best.x-f.x, dy=best.y-f.y; const r=Math.hypot(dx,dy)||1; const ux=dx/r, uy=dy/r;
+            const dr = r - (state.params.homeR||80);
+            const kspring = state.params.homeK||2.2; const swirl = state.params.homeSwirl||1.2;
+            ax[i] += kspring * dr * ux + swirl * (-uy);
+            ay[i] += kspring * dr * uy + swirl * ( ux);
+            // extra inward clamp when too far from home orbit
+            const stick = state.params.homeStick||0;
+            if (r > 1.7*(state.params.homeR||80)){
+              const extra = stick * (r/(state.params.homeR||80) - 1.7);
+              ax[i] += extra * ux; ay[i] += extra * uy;
+            }
+          }
+        }
+      }
+      // self-propulsion to maintain motion
+      for(let i=0;i<N;i++){
+        const f=state.flies[i];
+        const v=Math.hypot(f.vx,f.vy);
+        const vt = Math.max(vmin, speed * (0.6 + 0.4*(f.h||0)));
+        if (v>1e-4){
+          ax[i] += motor * (vt - v) * (f.vx/v);
+          ay[i] += motor * (vt - v) * (f.vy/v);
+        } else {
+          // kick in exploration direction
+          const nrm = Math.hypot(f.noiseX||1, f.noiseY||0) || 1;
+          ax[i] += motor * vt * ( (f.noiseX||1)/nrm );
+          ay[i] += motor * vt * ( (f.noiseY||0)/nrm );
+        }
       }
       // integrate
       for(let i=0;i<N;i++){
         const f=state.flies[i];
-        f.vx = Math.max(-160, Math.min(160, f.vx + ax[i]*dt));
-        f.vy = Math.max(-160, Math.min(160, f.vy + ay[i]*dt));
+        // apply damping
+        f.vx = (f.vx + ax[i]*dt) * (1 - Math.max(0, Math.min(0.95, gamma*dt)));
+        f.vy = (f.vy + ay[i]*dt) * (1 - Math.max(0, Math.min(0.95, gamma*dt)));
         parallelTransport(f.info, f.vx, f.vy, dt, speed);
-        const v=Math.hypot(f.vx,f.vy)||1; const vmax=speed;
+        // health affects max speed; keep a minimum cruise
+        const v=Math.hypot(f.vx,f.vy)||1; const vmax=Math.max(vmin, speed * (0.6 + 0.4*(f.h||0)));
         if(v>vmax){ f.vx=f.vx/v*vmax; f.vy=f.vy/v*vmax; }
         f.x += f.vx*dt; f.y += f.vy*dt;
         if (f.x<4){ f.x=4; f.vx=Math.abs(f.vx); }
         if (f.x>W-4){ f.x=W-4; f.vx=-Math.abs(f.vx); }
         if (f.y<4){ f.y=4; f.vy=Math.abs(f.vy); }
         if (f.y>H-4){ f.y=H-4; f.vy=-Math.abs(f.vy); }
+        // decay anger effect
+        f.anger = Math.max(0, (f.anger||0) - 1.5*dt);
+        // respawn on zero health
+        if ((f.h||0) <= 0){
+          f.x = Math.random()*W; f.y = Math.random()*H;
+          const ang = rand(-Math.PI,Math.PI), sp=speed*0.5; f.vx=Math.cos(ang)*sp; f.vy=Math.sin(ang)*sp;
+          f.info[0]*=0.4; f.info[1]*=0.4; f.info[2]*=0.4; f.h=1; f.anger=0;
+        }
       }
+      state.conflicts = conflicts;
     }
 
     function draw(){
@@ -392,44 +621,83 @@
       // objects
       for(const o of state.objs){
         ctx.save(); ctx.font = '20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        // no heatmap for flags
-        // draw a simple flag (pole + colored banner)
-        const col = (o.color==='red')? '#e44242' : (o.color==='blue')? '#3b82f6' : '#f3f4f6';
+        // draw flag banner and emoji
+        const col = (typeof o.color==='string' && o.color) ? o.color : '#e5e7eb';
         const w=28, h=16, pole=10;
         ctx.globalAlpha=1; ctx.strokeStyle='#888'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(o.x-pole, o.y-h/2); ctx.lineTo(o.x-pole, o.y+h/2+6); ctx.stroke();
         ctx.fillStyle=col; ctx.strokeStyle='#222'; ctx.lineWidth=1;
         ctx.beginPath(); ctx.rect(o.x-pole+2, o.y-h/2, w, h); ctx.fill(); ctx.stroke();
+        // emoji label
+        if (o.emoji){ ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, system-ui'; ctx.fillText(o.emoji, o.x-pole+w+10, o.y); }
+        // hazard impact cycle ring
+        if (o.type==='repellent'){
+          const period=Math.max(0.2, state.params.eventPeriod||3.5);
+          o.pulse = (o.pulse||0); // updated in step
+          const rmin=state.params.eventRmin||40, rmax=state.params.eventRmax||160;
+          const ring=rmin+(rmax-rmin)*(o.pulse||0);
+          ctx.strokeStyle=col; ctx.globalAlpha=0.25; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(o.x,o.y, ring, 0, Math.PI*2); ctx.stroke();
+        }
         ctx.restore();
       }
-      // flies with info dots (RGB) and direction hint
+      // flies with influence lines, info dots (RGB), and direction hint
       for(const f of state.flies){
+        // influence line from flag to fly (based on allegiance or dominant positive channel)
+        let ch = (f.allegiance!=null && f.allegiance>=0)? f.allegiance : -1;
+        if (ch<0){
+          let m=-1, k=-1; for(let i=0;i<3;i++){ const v=f.info[i]||0; if(v>m){ m=v; k=i; } }
+          if (m>0.15) ch=k;
+        }
+        if (ch>=0){
+          const o = nearestAttractorForChannel(f.x, f.y, ch);
+          if (o){
+            const w = Math.max(0, f.info[ch]||0);
+            const rgb = hexToRgb(o.color||'#888888');
+            ctx.save();
+            ctx.globalAlpha = 0.12 + 0.55*Math.min(1,w);
+            ctx.strokeStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+            ctx.lineWidth = 0.7;
+            ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(f.x, f.y); ctx.stroke();
+            ctx.restore();
+          }
+        }
         // body
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.beginPath(); ctx.arc(f.x, f.y, 3.8, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.stroke();
+        // under-attack ring
+        if ((f.anger||0) > 0.05){
+          ctx.strokeStyle = `rgba(220,40,30,${0.25+0.45*Math.min(1,f.anger)})`;
+          ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(f.x, f.y, 6.2, 0, Math.PI*2); ctx.stroke();
+        }
         // direction hint
         const vmag = Math.hypot(f.vx,f.vy);
         if (vmag>1e-2){
           const ux=f.vx/vmag, uy=f.vy/vmag; const L=7;
           const a0=Math.abs(f.info[0]||0), a1=Math.abs(f.info[1]||0), a2=Math.abs(f.info[2]||0);
           let kdom=0, ad=a0; if(a1>ad){kdom=1; ad=a1;} if(a2>ad){kdom=2; ad=a2;}
-          const cols=[[230,40,30],[30,150,60],[40,90,220]]; const c=cols[kdom];
+          const c = channelColorRgbForFly(f, kdom);
           ctx.strokeStyle = `rgba(${c[0]},${c[1]},${c[2]},${0.25+0.45*ad})`;
           ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x+ux*L, f.y+uy*L); ctx.stroke();
         }
         // info dots around
         const R=5.6;
         const angs=[-Math.PI/2, -Math.PI/2 + 2*Math.PI/3, -Math.PI/2 + 4*Math.PI/3];
-        const cols=[[230,40,30],[30,150,60],[40,90,220]]; // R,G,B
         for(let k=0;k<3;k++){
           const a=angs[k]; const x=f.x+R*Math.cos(a), y=f.y+R*Math.sin(a);
           const val = Math.abs(f.info[k]||0);
           const s=1.2+2.2*val;
-          const c=cols[k]; ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.25+0.6*val})`;
+          const c = channelColorRgbForFly(f, k);
+          ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.25+0.6*val})`;
           if ((f.info[k]||0) < 0){ ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=0.8; } else { ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=0.5; }
           ctx.beginPath(); ctx.arc(x,y, s, 0, Math.PI*2); ctx.fill();
           ctx.stroke();
         }
+        // health bar above the fly
+        const hp = Math.max(0, Math.min(1, f.h||0));
+        const bw=12, bh=2, bx=f.x-bw/2, by=f.y-9;
+        ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(bx,by,bw,bh);
+        const r=Math.floor(220*(1-hp)), g=Math.floor(180*hp), b=40;
+        ctx.fillStyle=`rgba(${r},${g},${b},0.9)`; ctx.fillRect(bx,by, bw*hp, bh);
       }
     }
 
@@ -439,8 +707,10 @@
       // mean info vector
       let mr=0,mg=0,mb=0; for(const f of state.flies){ mr+=f.info[0]; mg+=f.info[1]; mb+=f.info[2]; }
       const n=state.flies.length||1; mr/=n; mg/=n; mb/=n;
-      const concept = state.tool.emoji;
-      el.innerHTML = `flies=${state.flies.length} • objs=${state.objs.length} • mean q=[${mr.toFixed(2)}, ${mg.toFixed(2)}, ${mb.toFixed(2)}]`+
+      const concept = state.tool.house || 'object';
+      // health summary
+      let mh=0; for(const f of state.flies){ mh += (f.h||0); } mh/=n;
+      el.innerHTML = `flies=${state.flies.length} • objs=${state.objs.length} • mean q=[${mr.toFixed(2)}, ${mg.toFixed(2)}, ${mb.toFixed(2)}] • health=${mh.toFixed(2)} • clashes=${state.conflicts||0}`+
                      `<div class="legend">Click to ${state.tool.mode==='add'?'place':'remove'} ${concept}. Shift-click always removes.</div>`;
     }
 
@@ -489,8 +759,8 @@
     // reset defaults
     document.getElementById('resetSettings').addEventListener('click', ()=>{
       const set=(id,val)=>{ const el=document.getElementById(id); if(!el) return; el.value=String(val); el.dispatchEvent(new Event('input',{bubbles:true})); };
-      const d= { N:220, kFlag:140, commR:110, influence:1.2, speed:42, forget:0.18, social:72, cohesion:36, separation:120, sepDist:28 };
-      set('flies', d.N); set('attr', d.kFlag); set('comm', d.commR); set('info', d.influence); set('forget', d.forget);
+      const d= { N:220, kAttr:140, commR:110, infoRate:1.2, speed:42, forget:0.18, social:72, cohesion:36, separation:120, sepDist:28 };
+      set('flies', d.N); set('attr', d.kAttr); set('comm', d.commR); set('info', d.infoRate); set('forget', d.forget);
       set('social', d.social); set('cohesion', d.cohesion); set('separation', d.separation); set('sepDist', d.sepDist);
       saveSettings();
     });
@@ -522,7 +792,9 @@
     // Persist settings
     function saveSettings(){
       try{
-        const p=state.params; const data={ N:p.N,kFlag:p.kFlag,commR:p.commR,influence:p.influence,speed:p.speed,forget:p.forget,social:p.social,cohesion:p.cohesion,separation:p.separation,sepDist:p.sepDist };
+        const p=state.params;
+        // Store with current canonical keys; include extended params
+        const data={ N:p.N, kAttr:p.kAttr, kRepel:p.kRepel, commR:p.commR, infoRate:p.infoRate, speed:p.speed, forget:p.forget, beta:p.beta, social:p.social, cohesion:p.cohesion, separation:p.separation, sepDist:p.sepDist, hazardAlpha:p.hazardAlpha, gamma:p.gamma, allyAlign:p.allyAlign, enemyAntiAlign:p.enemyAntiAlign, hostility:p.hostility, attackRange:p.attackRange, attackDamage:p.attackDamage, healRate:p.healRate, healBase:p.healBase, hazardDamage:p.hazardDamage, explore:p.explore, noiseTau:p.noiseTau, motor:p.motor, vmin:p.vmin, submissionRate:p.submissionRate, dominanceThresh:p.dominanceThresh, homeR:p.homeR, homeK:p.homeK, homeSwirl:p.homeSwirl, homeStick:p.homeStick, eventPeriod:p.eventPeriod, eventSigma:p.eventSigma, eventBoost:p.eventBoost, eventRmin:p.eventRmin, eventRmax:p.eventRmax, awarenessGain:p.awarenessGain, allegianceThresh:p.allegianceThresh };
         localStorage.setItem('infoflies.settings', JSON.stringify(data));
       }catch(e){}
     }
@@ -530,9 +802,26 @@
       try{
         const raw=localStorage.getItem('infoflies.settings'); if(!raw) return; const d=JSON.parse(raw);
         const set=(id,val)=>{ const el=document.getElementById(id); if(!el) return; el.value=String(val); el.dispatchEvent(new Event('input',{bubbles:true})); };
-        for(const [id,key] of [['flies','N'],['attr','kFlag'],['comm','commR'],['info','influence'],['forget','forget'],['social','social'],['cohesion','cohesion'],['separation','separation'],['sepDist','sepDist']]){
-          if(d[key]!==undefined) set(id,d[key]);
+        // Backward compatibility with older keys (kFlag/influence)
+        const get=(newKey, oldKey)=> (d[newKey]!==undefined? d[newKey] : d[oldKey]);
+        const mappings = [
+          ['flies', 'N', null],
+          ['attr', 'kAttr', 'kFlag'],
+          ['comm', 'commR', null],
+          ['info', 'infoRate', 'influence'],
+          ['forget', 'forget', null],
+          ['social', 'social', null],
+          ['cohesion', 'cohesion', null],
+          ['separation', 'separation', null],
+          ['sepDist', 'sepDist', null],
+        ];
+        for(const [id, nk, ok] of mappings){
+          const v = get(nk, ok);
+          if(v!==undefined) set(id, v);
         }
+        // Directly merge additional params (no UI sliders yet)
+        const keys=['kRepel','beta','hazardAlpha','gamma','allyAlign','enemyAntiAlign','hostility','attackRange','attackDamage','healRate','healBase','hazardDamage','speed','explore','noiseTau','motor','vmin','submissionRate','dominanceThresh','homeR','homeK','homeSwirl','homeStick','eventPeriod','eventSigma','eventBoost','eventRmin','eventRmax','awarenessGain','allegianceThresh'];
+        for(const k of keys){ if (d[k]!==undefined) state.params[k]=d[k]; }
       }catch(e){}
     }
     // attach save to sliders
@@ -559,18 +848,20 @@
     });
     function updateLegend(){
       const el=document.getElementById('legendMini'); if(!el) return;
-      const C={red:{c:0,s:0}, blue:{c:0,s:0}, white:{c:0,s:0}, neutral:0};
+      const S=[{c:0,b:0},{c:0,b:0},{c:0,b:0}]; let neutral=0;
       for(const f of state.flies){
-        if (f.allegiance!=null && f.allegiance>=0 && state.objs[f.allegiance] && state.objs[f.allegiance].type==='flag'){
-          const col=state.objs[f.allegiance].color||'red'; C[col].c++; C[col].s += (f.s||0);
-        } else { C.neutral++; }
+        if (f.allegiance!=null && f.allegiance>=0){
+          const k=f.allegiance|0; S[k].c++; S[k].b += Math.min(1, Math.abs(f.info[k]||0));
+        } else { neutral++; }
       }
-      const avg=(x)=> x.c? (x.s/x.c).toFixed(2) : '0.00';
+      const avg=(x)=> x.c? (x.b/x.c).toFixed(2) : '0.00';
+      const cols=['#b91c1c','#065f46','#3b82f6'];
+      const ems=['🦁','🌿','🐉/🧟'];
       el.innerHTML = `
-        <div class="legend-row"><span class="swatch red"></span> Red: ${C.red.c} • s=${avg(C.red)}</div>
-        <div class="legend-row"><span class="swatch blue"></span> Blue: ${C.blue.c} • s=${avg(C.blue)}</div>
-        <div class="legend-row"><span class="swatch white"></span> White: ${C.white.c} • s=${avg(C.white)}</div>
-        <div class="legend-row">Neutral: ${C.neutral}</div>
+        <div class="legend-row"><span class="swatch" style="background:${cols[0]}"></span> ${ems[0]} ch0: ${S[0].c} • |q|=${avg(S[0])}</div>
+        <div class="legend-row"><span class="swatch" style="background:${cols[1]}"></span> ${ems[1]} ch1: ${S[1].c} • |q|=${avg(S[1])}</div>
+        <div class="legend-row"><span class="swatch" style="background:${cols[2]}"></span> ${ems[2]} ch2: ${S[2].c} • |q|=${avg(S[2])}</div>
+        <div class="legend-row">Neutral: ${neutral}</div>
       `;
     }
 
