@@ -28,6 +28,8 @@
     .tokens { max-width:880px; margin:8px auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; }
     .token { display:inline-block; padding:4px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:#fafafa; }
     .pair { display:inline-block; padding:2px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:#fff; }
+    .headgrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; max-width:880px; margin: 8px auto; }
+    .headbox { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; text-align:center; }
   </style>
   <script>
     (function(){
@@ -196,6 +198,38 @@
         init(); render(); return { render };
       }
 
+      // ---------- Multi-head attention (weights only, per head) ----------
+      function multiHeadDemo(){ const grid=document.getElementById('mhaGrid'); if(!grid) return; let n=6, d=6, h=4, temp=1.0, qi=3; let Q=[],K=[];
+        function rand(){ return Math.random()*2-1; }
+        function init(){ Q=Array.from({length:n},()=> Array.from({length:d}, rand)); K=Array.from({length:n},()=> Array.from({length:d}, rand)); }
+        function splitHeads(M){ const dhead=Math.floor(d/h); const heads=[]; for(let hh=0; hh<h; hh++){ heads.push(M.map(row => row.slice(hh*dhead, (hh+1)*dhead))); } return heads; }
+        function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+        function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp(v-m)); const s=e.reduce((x,y)=>x+y,0); return e.map(v=>v/s); }
+        function render(){ grid.innerHTML=''; const Qh=splitHeads(Q), Kh=splitHeads(K); for(let hh=0;hh<h;hh++){ const box=document.createElement('div'); box.className='headbox'; const title=document.createElement('div'); title.textContent = `head ${hh}`; title.style.marginBottom='6px'; box.appendChild(title); const cnv=document.createElement('canvas'); cnv.width=140; cnv.height=120; box.appendChild(cnv); grid.appendChild(box); const ctx=cnv.getContext('2d'); const scores=[]; for(let j=0;j<n;j++) scores.push(dot(Qh[hh][qi], Kh[hh][j]) / Math.max(1e-6,temp)); const w=softmax(scores); for(let j=0;j<n;j++){ const x=12, y=14+j*16; const val=w[j]; ctx.fillStyle = `rgba(26,137,23,${0.18+0.75*val})`; ctx.fillRect(x,y,110,12); ctx.fillStyle='#111'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(`pos ${j}`, x, y-2); }
+        }
+        document.getElementById('mhaTemp').oninput=(e)=>{ temp=parseFloat(e.target.value); render(); };
+        document.getElementById('mhaQ').oninput=(e)=>{ qi=parseInt(e.target.value); render(); };
+        document.getElementById('mhaH').oninput=(e)=>{ h=parseInt(e.target.value); render(); };
+        init(); render(); return { render };
+      }
+
+      // ---------- FFN block (expand + nonlinearity + project) ----------
+      function ffnDemo(){ const cv=document.getElementById('ffn'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=180; let d=8, df=16; const x=Array.from({length:d}, ()=> Math.random()*2-1);
+        function relu(v){ return Math.max(0,v); }
+        function W(m,n){ return Array.from({length:m}, ()=> Array.from({length:n}, ()=> (Math.random()*2-1)*0.6)); }
+        const W1=W(df,d), W2=W(d,df);
+        function matvec(M,v){ return M.map(row=> row.reduce((s,wij,j)=> s+ wij*v[j], 0)); }
+        function draw(){ ctx.clearRect(0,0,W,H); const offx=30, base=H*0.75, bw=14, gap=6;
+          // input x
+          ctx.fillStyle='#666'; ctx.fillText('x (d_model)', offx, 16); for(let i=0;i<d;i++){ const h=x[i]*24; const X=offx+i*(bw+gap); ctx.fillStyle= h>=0?'#3b82f6':'#b91c1c'; ctx.fillRect(X, base-Math.max(0,h), bw, Math.abs(h)); }
+          // hidden h=ReLU(W1 x)
+          const hvec = matvec(W1,x).map(relu); ctx.fillStyle='#666'; ctx.fillText('ReLU(W1x)', offx+200, 16); for(let i=0;i<Math.min(12,df);i++){ const h=hvec[i]*14; const X=offx+200+i*(bw+gap); ctx.fillStyle= h>=0?'#1a8917':'#b91c1c'; ctx.fillRect(X, base-Math.max(0,h), bw, Math.abs(h)); }
+          // output y=W2 h
+          const yvec = matvec(W2,hvec); ctx.fillStyle='#666'; ctx.fillText('W2h (back to d_model)', offx+400, 16); for(let i=0;i<d;i++){ const h=yvec[i]*24; const X=offx+400+i*(bw+gap); ctx.fillStyle= h>=0?'#1a8917':'#b91c1c'; ctx.fillRect(X, base-Math.max(0,h), bw, Math.abs(h)); }
+        }
+        draw(); return { draw };
+      }
+
       // ---------- Toy BPE stepper ----------
       function bpeDemo(){ const area=document.getElementById('bpeArea'); if(!area) return; const inp=document.getElementById('bpeInput'); const out=document.getElementById('bpeTokens'); const pairsEl=document.getElementById('bpePairs'); const mergesEl=document.getElementById('bpeMerges');
         let tokens=[], merges=[];
@@ -209,7 +243,7 @@
         tokenize(); return { mergeOnce };
       }
 
-      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); gdDemo(); mlpDemo(); bpeDemo(); attnAggDemo(); }
+      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); gdDemo(); mlpDemo(); bpeDemo(); attnAggDemo(); multiHeadDemo(); ffnDemo(); }
       if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
     })();
   </script>
@@ -248,6 +282,8 @@
       <div class="section">
         <h2 id="linear-units">Linear Units & Nonlinearity</h2>
         <p class="note">A single neuron computes a weighted sum and passes it through a nonlinearity: $$y = \phi(\mathbf w\cdot\mathbf x + b).$$ Without $\phi$, stacks of linear layers collapse to one linear map. With $\phi$ (ReLU, GELU, tanh), you can fit bends in the data.</p>
+        <p class="note">Human view: $\mathbf w$ picks a direction in feature space; the bias $b$ shifts where the boundary sits. ReLU is a simple “gate”: pass positive signal, zero out negative. Stack enough gates and you can carve space into many regions—this is why multilayer perceptrons can approximate complicated curves and surfaces.</p>
+        <p class="note">Tips: scaling inputs helps keep activations in a reasonable range; the bias term often matters more than people expect—it recenters decisions. For text and images, you rarely feed raw pixels/bytes; you learn feature vectors first (embeddings, convolutions) and then apply these building blocks.</p>
         <div class="demo">
           <canvas id="linUnit" width="520" height="320"></canvas>
           <div class="controls">
@@ -262,6 +298,8 @@
       <div class="section">
         <h2 id="softmax-crossentropy">Softmax & Cross‑Entropy</h2>
         <p class="note">Softmax turns logits into probabilities: $$p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.$$ For a target class $t$, cross‑entropy is $L=-\log p_t$ (negative log‑likelihood). Lower is better; pushing the correct logit up pulls $p_t$ closer to 1.</p>
+        <p class="note">Human view: logits are raw scores; subtracting the max (we do it implicitly) avoids numerical overflow and doesn’t change probabilities. Cross‑entropy is “surprise”: it’s small if the model already assigns high probability to the truth, big if not. Gradients encourage raising the true logit and lowering the others.</p>
+        <p class="note">In transformers, softmax also appears in attention. There, a temperature or scale (often $1/\sqrt{d}$) keeps dot products in a healthy range so the distribution isn’t too spiky or too flat.</p>
         <div class="demo">
           <div class="controls">
             <label>logit[0] <input id="l0" type="range" min="-3" max="3" step="0.01" value="0.5"/></label>
@@ -280,7 +318,8 @@
 
       <div class="section">
         <h2 id="attention">Dot‑Product Attention</h2>
-        <p class="note">Given queries $Q$ and keys $K$, attention scores are dot products scaled by temperature $T$: $$\text{weights}(q_i, K)=\operatorname{softmax}\big(\tfrac{q_i K^\top}{T}\big).$$ Each query picks a distribution over positions; values (not shown here) are then averaged with these weights.</p>
+        <p class="note">Given queries $Q$ and keys $K$, attention scores are dot products scaled by temperature $T$: $$\text{weights}(q_i, K)=\operatorname{softmax}\big(\tfrac{q_i K^\top}{T}\big).$$ Each query picks a distribution over positions; values are then averaged with these weights to form a context vector.</p>
+        <p class="note">Human view: dot products are similarity. Each token asks, “who is relevant to me?” and softly copies information from those places. Multi‑head attention repeats this in different subspaces, so one head can look for syntax, another for long‑range matches, and so on. Causal (masked) attention just sets future weights to zero.</p>
         <div class="demo">
           <canvas id="attn" width="520" height="220"></canvas>
           <div class="controls">
@@ -294,6 +333,7 @@
       <div class="section">
         <h2 id="positional-encodings">Positional Encodings</h2>
         <p class="note">Transformers add position through sinusoidal features: for position $p$ and channel $i$, $$\text{PE}(p,i)=\begin{cases}\sin\big(p/10000^{2i/d}\big) & i\text{ even}\\ \cos\big(p/10000^{2i/d}\big) & i\text{ odd}\end{cases}.$$ The pattern lets the model infer relative offsets by simple dot products.</p>
+        <p class="note">Human view: without recurrence or convolution, a transformer can’t tell ‘first’ from ‘last’ unless we encode it. Sinusoidal bands give a multi‑scale ruler: slow waves for coarse position, fast waves for fine tweaks. Alternatives (learned, rotary/relative encodings) exist, but the intuition—carry position information in the vectors—remains.</p>
         <div class="demo">
           <canvas id="posenc" width="520" height="160"></canvas>
           <div class="controls">
@@ -307,6 +347,7 @@
       <div class="section">
         <h2 id="layernorm-residuals">Layer Norm & Residuals</h2>
         <p class="note">LayerNorm centers and scales each token’s features: $$\text{LN}(x)=\frac{x-\mu}{\sigma+\epsilon}\cdot\gamma+\beta,$$ stabilizing magnitude across layers. Residuals add the input back: $y = x + f(\text{LN}(x))$, keeping information flowing.</p>
+        <p class="note">Human view: normalization keeps numbers roughly in the same range so later layers don’t see wildly different scales. Residuals preserve a clean identity path; even if $f$ starts off near zero, the network can still pass signals forward and gradients backward. Transformers typically use “pre‑norm” (normalize before the sublayer) for stability.</p>
         <div class="demo">
           <canvas id="ln" width="520" height="150"></canvas>
           <p class="note">Left bars: raw features; right: normalized. Terms: $\mu,\sigma$ are per‑token mean/std; $\gamma,\beta$ are learned scale/shift.</p>
@@ -316,6 +357,7 @@
       <div class="section">
         <h2 id="receptive-fields">Receptive Fields</h2>
         <p class="note">Convolutions see local windows; self‑attention can see the whole sequence (unless masked). The picture below toggles between both views for one position.</p>
+        <p class="note">Human view: conv layers grow the view by stacking (or by using dilation); attention is global but quadratic in sequence length—one reason for recent efficiency work (sparsity, low‑rank, kernels). Causal masks (for generation) cut off future positions, letting each token use only the past.</p>
         <div class="demo">
           <canvas id="rf" width="520" height="140"></canvas>
           <div class="controls">
@@ -330,6 +372,7 @@
       <div class="section">
         <h2 id="gradient-descent">Gradient Descent (2D Bowl)</h2>
         <p class="note">A simple quadratic energy $$f(x,y)=ax^2+bxy+cy^2$$ with $a,b,c>0$. The update $\theta\leftarrow \theta-\eta\,\nabla f$ walks downhill by learning rate $\eta$. Too small, it crawls; too big, it may overshoot.</p>
+        <p class="note">Human view: bowls are friendly (convex). Real networks are bumpy, but locally they often look like bowls. Momentum smooths the path; Adam adapts step sizes per‑coordinate. Normalization and reasonable initialization help keep you on the gentle slopes instead of cliffs.</p>
         <div class="demo">
           <canvas id="gd" width="520" height="320"></canvas>
           <div class="controls">
@@ -345,6 +388,7 @@
       <div class="section">
         <h2 id="tiny-mlp">A Tiny MLP (Two ReLUs)</h2>
         <p class="note">Even two ReLU bumps can sketch a curve. The output is $$y = v_1\,\mathrm{ReLU}(w_1 x + b_1) + v_2\,\mathrm{ReLU}(w_2 x + b_2) + b.$$ Play with weights/biases and compare to a smooth target (gray).</p>
+        <p class="note">Human view: ReLU networks are piecewise linear; each hidden unit adds a kink. Depth layers kinks; width adds more of them in parallel. Backprop here is just careful application of the chain rule with on/off gates from ReLU. The backprop panel shows the partials for a single point—what learning nudges if you take a small step.</p>
         <div class="demo">
           <canvas id="mlp" width="520" height="220"></canvas>
           <div class="controls">
@@ -367,6 +411,7 @@
       <div class="section">
         <h2 id="toy-bpe">A Toy Tokenizer (BPE)</h2>
         <p class="note">Byte‑Pair Encoding merges the most frequent adjacent pair into a new token, repeatedly. Below, step through merges and watch the token list change.</p>
+        <p class="note">Human view: the merge list becomes a tiny dictionary of common chunks. Real tokenizers add an underscore/▁ to mark new words, handle Unicode, and store thousands of merges. No tokenizer is perfect—splits can be awkward—but BPE keeps the vocabulary moderate while covering most text.</p>
         <div class="demo" id="bpeArea">
           <div class="controls">
             <label>Input text <input id="bpeInput" type="text" value="the other brother"/></label>
@@ -384,6 +429,7 @@
       <div class="section">
         <h2 id="attention-aggregation">Attention: Values Aggregation</h2>
         <p class="note">The attention weights are used to average value vectors $V$. This shows $V$ per position (signed bars by feature) and the weighted result for one query.</p>
+        <p class="note">Human view: think of $K$ as an address book, $Q$ as a search, and $V$ as the content you copy. One head forms a single “view” of context; multiple heads let the model keep several views at once. The output then flows through feed‑forward layers (nonlinear units again) before the next attention block.</p>
         <div class="demo">
           <canvas id="attnAgg" width="520" height="220"></canvas>
           <div class="controls">
@@ -391,6 +437,29 @@
             <label>temperature <input id="aggTemp" type="range" min="0.2" max="3.0" step="0.01" value="1.0"/></label>
           </div>
           <p class="note">Terms: $Q,K,V\in\mathbb R^{n\times d}$. The weight vector for $q_i$ multiplies rows of $V$ and sums them to one result vector.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 id="multi-head">Multi‑Head Attention (Weights)</h2>
+        <p class="note">Multiple heads let the model look for different patterns at once—each head has its own $Q,K,V$ projections and produces its own weight pattern. Below, we show each head’s weights for a chosen query (no values here—see the previous section).</p>
+        <div class="demo">
+          <div class="controls">
+            <label>heads <input id="mhaH" type="range" min="2" max="6" step="1" value="4"/></label>
+            <label>query index <input id="mhaQ" type="range" min="0" max="5" step="1" value="3"/></label>
+            <label>temperature <input id="mhaTemp" type="range" min="0.2" max="3.0" step="0.01" value="1.0"/></label>
+          </div>
+          <div id="mhaGrid" class="headgrid"></div>
+          <p class="note">Terms: splitting $d_\text{model}$ features into $h$ heads yields $d_\text{head}=d_\text{model}/h$ per head. Each head gets its own $W^Q,W^K,W^V$; outputs are concatenated and projected.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 id="ffn-block">Position‑wise Feed‑Forward (FFN)</h2>
+        <p class="note">After attention, a transformer applies the same 2‑layer MLP to each position: expand ($d_\text{model}\to d_\text{ff}$), apply nonlinearity (GELU/ReLU), project back. This gives per‑token mixing that doesn’t depend on position.</p>
+        <div class="demo">
+          <canvas id="ffn" width="520" height="180"></canvas>
+          <p class="note">Human view: attention handles “who to look at”; the FFN lets each token transform its features nonlinearly. The two together act like message passing + local computation.</p>
         </div>
       </div>
 
