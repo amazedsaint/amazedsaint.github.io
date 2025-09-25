@@ -57,9 +57,21 @@
 
       // ---------- Softmax & cross-entropy ----------
       function softmaxDemo(){
-        const logits=[0.5, -0.2, 1.0]; let target=2; const bars=document.querySelectorAll('[data-soft]'); const lossEl=document.getElementById('xent');
+        const logits=[0.5, -0.2, 1.0]; let target=2;
+        const bars=document.querySelectorAll('[data-soft]');
+        const valEls=document.querySelectorAll('.value');
+        const lossEl=document.getElementById('xent');
         function softmax(z){ const m=Math.max(...z); const e=z.map(v=>Math.exp(v-m)); const s=e.reduce((a,b)=>a+b,0); return e.map(v=>v/s); }
-        function render(){ const p=softmax(logits); bars.forEach((el,i)=>{ const v=Math.max(0,Math.min(1,p[i])); el.style.width=(v*100)+'%'; el.parentElement.querySelector('span.value').textContent=v.toFixed(3); }); const loss=-Math.log(Math.max(1e-9, p[target])); lossEl.textContent = loss.toFixed(3); }
+        function render(){
+          const p=softmax(logits);
+          bars.forEach((el,i)=>{
+            const v=Math.max(0,Math.min(1,p[i]||0));
+            el.style.width=(v*100)+'%';
+            if (valEls[i]) valEls[i].textContent=v.toFixed(3);
+          });
+          const loss=-Math.log(Math.max(1e-9, p[target]||1e-9));
+          if (lossEl) lossEl.textContent = loss.toFixed(3);
+        }
         ['l0','l1','l2'].forEach((id,i)=>{ document.getElementById(id).oninput=(e)=>{ logits[i]=parseFloat(e.target.value); render(); }; });
         document.getElementById('tgt').onchange=(e)=>{ target=parseInt(e.target.value); render(); };
         render(); return { render };
@@ -122,7 +134,9 @@
         function f(x,y){ return a*x*x + b*x*y + c*y*y; }
         function grad(x,y){ return { gx: 2*a*x + b*y, gy: b*x + 2*c*y }; }
         function draw(){ ctx.clearRect(0,0,W,H); // heatmap
-          const offx=40, offy=H-40, S=60; for(let i=-8;i<=8;i++){ for(let j=-8;j<=8;j++){ const xx=i/4, yy=j/4; const val=f(xx,yy); const col = Math.max(0, Math.min(1, (val-0)/(6))); ctx.fillStyle = `rgba(26,137,23,${0.05+0.35*col})`; const X=offx+xx*S, Y=offy-yy*S; ctx.fillRect(X-10,Y-10,20,20); } }
+          const offx=40, offy=H-40, S=60; for(let i=-8;i<=8;i++){ for(let j=-8;j<=8;j++){ const xx=i/4, yy=j/4; const val=f(xx,yy); const col = Math.max(0, Math.min(1, (val-0)/(6))); ctx.fillStyle = `rgba(26,137,23,${0.04+0.26*col})`; const X=offx+xx*S, Y=offy-yy*S; ctx.fillRect(X-10,Y-10,20,20); } }
+          // contours (dotted)
+          const levels=[0.2,0.5,1,2,3,4,5]; ctx.fillStyle='rgba(17,17,17,0.3)'; for(const L of levels){ for(let i=-24;i<=24;i++){ for(let j=-24;j<=24;j++){ const xx=i/8, yy=j/8; const val=f(xx,yy); if(Math.abs(val-L)<0.03){ const X=offx+xx*S, Y=offy-yy*S; ctx.fillRect(X-1,Y-1,2,2); } } } }
           // axes
           ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.moveTo(offx-20, offy); ctx.lineTo(W-20, offy); ctx.stroke(); ctx.beginPath(); ctx.moveTo(offx, 20); ctx.lineTo(offx, H-20); ctx.stroke();
           // point and gradient arrow
@@ -133,6 +147,8 @@
         function setLR(v){ lr=parseFloat(v); }
         function reset(){ x=1.2; y=-0.8; draw(); }
         document.getElementById('gdStep').onclick=step; document.getElementById('gdReset').onclick=reset; document.getElementById('gdLR').oninput=(e)=> setLR(e.target.value);
+        document.getElementById('gdRun').onclick=()=>{ running=!running; document.getElementById('gdRun').textContent = running? 'Pause':'Run'; if(running) loop(); };
+        function loop(){ if(!running) return; step(); raf=requestAnimationFrame(loop); }
         draw(); return { step, reset };
       }
 
@@ -153,7 +169,31 @@
         const bind=(id, fn)=> document.getElementById(id).oninput=(e)=>{ fn(parseFloat(e.target.value)); draw(); };
         bind('w1a', v=> w1a=v); bind('b1a', v=> b1a=v); bind('v1a', v=> v1a=v);
         bind('w1b', v=> w1b=v); bind('b1b', v=> b1b=v); bind('v1b', v=> v1b=v); bind('b2', v=> b2=v);
+        // backprop view
+        document.getElementById('x0').oninput=(e)=>{ const x0=parseFloat(e.target.value); const t=target(x0); const z1a=w1a*x0+b1a, z1b=w1b*x0+b1b; const r1a=relu(z1a), r1b=relu(z1b); const y=yhat(x0); const dLdy=y-t; const dz1a = z1a>0?1:0, dz1b = z1b>0?1:0; const grads={ dv1a: dLdy*r1a, dv1b: dLdy*r1b, db2: dLdy, dw1a: dLdy*v1a*dz1a*x0, db1a: dLdy*v1a*dz1a, dw1b: dLdy*v1b*dz1b*x0, db1b: dLdy*v1b*dz1b };
+          const panel=document.getElementById('grads'); panel.innerHTML = `∂L/∂v1a=${grads.dv1a.toFixed(3)}, ∂L/∂v1b=${grads.dv1b.toFixed(3)}, ∂L/∂b=${grads.db2.toFixed(3)} | ∂L/∂w1a=${grads.dw1a.toFixed(3)}, ∂L/∂b1a=${grads.db1a.toFixed(3)}, ∂L/∂w1b=${grads.dw1b.toFixed(3)}, ∂L/∂b1b=${grads.db1b.toFixed(3)}`; };
         draw(); return { draw };
+      }
+
+      // ---------- Attention values aggregation (V) ----------
+      function attnAggDemo(){ const cv=document.getElementById('attnAgg'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=220; let n=5, d=3, temp=1.0, qi=2; let Q=[],K=[],V=[];
+        function rand(){ return Math.random()*2-1; }
+        function init(){ Q=Array.from({length:n},()=> Array.from({length:d}, rand)); K=Array.from({length:n},()=> Array.from({length:d}, rand)); V=Array.from({length:n},()=> Array.from({length:d}, rand)); }
+        function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+        function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp(v-m)); const s=e.reduce((x,y)=>x+y,0); return e.map(v=>v/s); }
+        function render(){ ctx.clearRect(0,0,W,H); const offx=30, offy=40, cell=20; // weights
+          const scores=[]; for(let j=0;j<n;j++) scores.push(dot(Q[qi],K[j]) / Math.max(1e-6,temp)); const w=softmax(scores);
+          // draw V vectors and weights
+          for(let j=0;j<n;j++){ const x=offx, y=offy + j*(cell+8); ctx.fillStyle='#666'; ctx.fillText(`pos ${j}`, x, y-6); for(let k=0;k<d;k++){ const val=V[j][k]; const len= val*30; ctx.fillStyle= val>=0? '#3b82f6':'#b91c1c'; ctx.fillRect(x+50 + k*60, y, len, 6); } // weight bar
+            ctx.fillStyle='#1a8917'; ctx.fillRect(W-140, y, w[j]*100, 6);
+          }
+          // aggregated result
+          const agg = Array.from({length:d}, (_,k)=> V.reduce((s,vec,idx)=> s + w[idx]*vec[k], 0)); ctx.fillStyle='#666'; ctx.fillText('result', offx, offy + n*(cell+8)+14);
+          for(let k=0;k<d;k++){ const val=agg[k]; const len=val*40; ctx.fillStyle= val>=0? '#1a8917':'#b91c1c'; ctx.fillRect(offx+50 + k*60, offy + n*(cell+8)+8, len, 8); }
+        }
+        document.getElementById('aggTemp').oninput=(e)=>{ temp=parseFloat(e.target.value); render(); };
+        document.getElementById('aggQ').oninput=(e)=>{ qi=parseInt(e.target.value); render(); };
+        init(); render(); return { render };
       }
 
       // ---------- Toy BPE stepper ----------
@@ -169,7 +209,7 @@
         tokenize(); return { mergeOnce };
       }
 
-      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); gdDemo(); mlpDemo(); bpeDemo(); }
+      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); gdDemo(); mlpDemo(); bpeDemo(); attnAggDemo(); }
       if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
     })();
   </script>
@@ -295,6 +335,7 @@
           <div class="controls">
             <label>learning rate η <input id="gdLR" type="range" min="0.02" max="0.6" step="0.01" value="0.20"/></label>
             <button id="gdStep">Step</button>
+            <button id="gdRun">Run</button>
             <button id="gdReset">Reset</button>
           </div>
           <p class="note"><span id="gdxy">—</span>. Terms: $\nabla f=(2ax+by,\,bx+2cy)$; $\eta$ scales the step.</p>
@@ -316,6 +357,10 @@
             <label>b2 <input id="b2" type="range" min="-1" max="1" step="0.01" value="0.0"/></label>
           </div>
           <p class="note">Equation: <span id="mlpeq">—</span>. Terms: $w,b$ shape each bump; $v$ scales it; $b$ shifts the whole curve.</p>
+          <div class="controls">
+            <label>x₀ (for backprop) <input id="x0" type="range" min="-1" max="1" step="0.01" value="0.0"/></label>
+          </div>
+          <p class="note">Gradients at x₀: <span id="grads">—</span></p>
         </div>
       </div>
 
@@ -333,6 +378,19 @@
           <div class="note">Top pairs</div>
           <div class="tokens" id="bpePairs"></div>
           <div class="note">Merges so far: <span id="bpeMerges">—</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 id="attention-aggregation">Attention: Values Aggregation</h2>
+        <p class="note">The attention weights are used to average value vectors $V$. This shows $V$ per position (signed bars by feature) and the weighted result for one query.</p>
+        <div class="demo">
+          <canvas id="attnAgg" width="520" height="220"></canvas>
+          <div class="controls">
+            <label>query index <input id="aggQ" type="range" min="0" max="4" step="1" value="2"/></label>
+            <label>temperature <input id="aggTemp" type="range" min="0.2" max="3.0" step="0.01" value="1.0"/></label>
+          </div>
+          <p class="note">Terms: $Q,K,V\in\mathbb R^{n\times d}$. The weight vector for $q_i$ multiplies rows of $V$ and sums them to one result vector.</p>
         </div>
       </div>
 
