@@ -25,6 +25,9 @@
     .table table{ width:100%; border-collapse:collapse; }
     .table th, .table td{ border-bottom:1px solid var(--border); padding:6px 8px; text-align:left; }
     .state-accept{ fill: rgba(26,137,23,0.08); stroke:#1a8917; }
+    .split { display:flex; gap:12px; align-items:flex-start; justify-content:center; flex-wrap:wrap; }
+    .stack-box{ min-width:160px; border:1px solid var(--border); border-radius:8px; padding:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:12px; color:var(--text); }
+    .stack-item{ display:block; border:1px solid var(--border); border-radius:4px; padding:2px 6px; margin:2px 0; text-align:center; background:#fafafa; }
   </style>
   <script>
     (function(){
@@ -66,7 +69,63 @@
         document.getElementById('tmStep').onclick=step; document.getElementById('tmReset').onclick=reset; render(); return { step, reset };
       }
 
-      function start(){ dfaDemo(); tmDemo(); }
+      // ===== DFA Builder =====
+      function dfaBuilder(){
+        const cv=document.getElementById('dfaBuild'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width, H=cv.height; let nodes=[], trans={}, start=null; let placing=false; let cur=null, head=0, input="";
+        const ui={ start:document.getElementById('dfabStart'), toggle:document.getElementById('dfabToggle'), src:document.getElementById('dfabSrc'), dst:document.getElementById('dfabDst'), sym:document.getElementById('dfabSym'), status:document.getElementById('dfabStatus'), input:document.getElementById('dfabInput') };
+        function addNode(x,y){ const id = uniqId(); nodes.push({id,x,y,accept:false}); trans[id]=trans[id]||{}; if(start==null) start=id; updateUI(); draw(); }
+        function uniqId(){ let i=nodes.length; while(nodes.find(n=>n.id===`q${i}`)) i++; return `q${i}`; }
+        function updateUI(){ const opts=nodes.map(n=>`<option value="${n.id}">${n.id}</option>`).join(''); ['start','toggle','src','dst'].forEach(k=> ui[k].innerHTML=opts); }
+        function nodeAt(x,y){ return nodes.find(n=> Math.hypot(n.x-x,n.y-y)<=22 ); }
+        function draw(){ ctx.clearRect(0,0,W,H); // transitions
+          for(const s of nodes){ for(const sym in (trans[s.id]||{})){ const tId=trans[s.id][sym]; const t=nodes.find(n=>n.id===tId); if(!t) continue; arrow(s.x,s.y,t.x,t.y,sym); if(s.id===t.id) selfLoop(s,sym); } }
+          for(const n of nodes) stateCircle(n, n.id===cur);
+        }
+        function stateCircle(n,active){ ctx.save(); ctx.lineWidth=2; ctx.strokeStyle=active?'#1a8917':'#555'; ctx.fillStyle=n.accept? 'rgba(26,137,23,0.06)':'#fff'; ctx.beginPath(); ctx.arc(n.x,n.y,20,0,Math.PI*2); ctx.fill(); ctx.stroke(); if(n.accept){ ctx.beginPath(); ctx.arc(n.x,n.y,16,0,Math.PI*2); ctx.strokeStyle='#1a8917'; ctx.stroke(); } if(start===n.id){ ctx.fillStyle='#1a8917'; ctx.beginPath(); ctx.moveTo(n.x-34,n.y); ctx.lineTo(n.x-24,n.y-6); ctx.lineTo(n.x-24,n.y+6); ctx.closePath(); ctx.fill(); } ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(n.id, n.x, n.y); ctx.restore(); }
+        function arrow(x1,y1,x2,y2,label){ if(x1===x2 && y1===y2) return; const a=Math.atan2(y2-y1,x2-x1); const r=20; const sx=x1+Math.cos(a)*r, sy=y1+Math.sin(a)*r; const ex=x2-Math.cos(a)*r, ey=y2-Math.sin(a)*r; ctx.strokeStyle='#888'; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke(); const ah=9; ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex-ah*Math.cos(a-0.3), ey-ah*Math.sin(a-0.3)); ctx.lineTo(ex-ah*Math.cos(a+0.3), ey-ah*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle='#888'; ctx.fill(); if(label){ ctx.fillStyle='#666'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(label, (sx+ex)/2, (sy+ey)/2 - 6); } }
+        function selfLoop(n,label){ ctx.strokeStyle='#888'; ctx.beginPath(); ctx.arc(n.x, n.y-30, 14, Math.PI*0.2, Math.PI*2.8); ctx.stroke(); ctx.fillStyle='#666'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(label, n.x+20, n.y-40); }
+        // UI bindings
+        document.getElementById('dfabAdd').onclick=()=>{ placing=!placing; };
+        cv.addEventListener('click', (e)=>{ if(!placing) return; const r=cv.getBoundingClientRect(); addNode(e.clientX-r.left, e.clientY-r.top); placing=false; });
+        document.getElementById('dfabAddTrans').onclick=()=>{ const s=ui.src.value, d=ui.dst.value, sym=(ui.sym.value||'').trim(); if(!s||!d||!sym) return; trans[s]=trans[s]||{}; trans[s][sym]=d; draw(); };
+        ui.start.onchange=()=>{ start=ui.start.value; draw(); };
+        ui.toggle.onchange=()=>{ const n=nodes.find(x=>x.id===ui.toggle.value); if(n){ n.accept=!n.accept; draw(); } };
+        document.getElementById('dfabReset').onclick=()=>{ input=(ui.input.value||''); cur=start; head=0; renderStatus(); draw(); };
+        document.getElementById('dfabStep').onclick=()=>{ if(cur==null){ ui.status.textContent='No start state.'; return; } if(head>=(input||'').length){ renderStatus(); return; } const sym=input[head]; const nxt=(trans[cur]||{})[sym]; if(!nxt){ head=input.length; renderStatus(); return; } cur=nxt; head++; renderStatus(); draw(); };
+        ui.input.oninput=()=>{ input=ui.input.value||''; head=0; cur=start; renderStatus(); };
+        function renderStatus(){ const n=nodes.find(x=>x.id===cur); const acc=(head>=(input||'').length) && n && n.accept; ui.status.textContent = `state=${cur??'—'} pos=${head}/${(input||'').length} ${ (head>=(input||'').length? (acc? '• accepted':'• rejected') : '') }`; }
+        // init
+        addNode(W*0.35,H*0.5); addNode(W*0.65,H*0.5); nodes[1].accept=true; trans[nodes[0].id]={'a':nodes[1].id}; trans[nodes[1].id]={'a':nodes[0].id}; updateUI(); draw();
+      }
+
+      // ===== PDA balanced parentheses =====
+      function pdaDemo(){ const cv=document.getElementById('pda'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height; let input=(document.getElementById('pdaInput').value||''); let i=0; const stack=['$']; const stackEl=document.getElementById('pdaStack'); const status=document.getElementById('pdaStatus');
+        function draw(){ ctx.clearRect(0,0,W,H); // input tape
+          const bx=20, by=40, cell=26; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillStyle='#111'; ctx.strokeStyle='#ddd'; for(let k=0;k<Math.max(16,input.length+2);k++){ const x=bx+k*cell; ctx.strokeRect(x,by,cell,cell); const ch=input[k]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+17); if(k===i){ ctx.fillStyle='#1a8917'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#111'; } }
+          // state bubble
+          ctx.strokeStyle='#555'; ctx.beginPath(); ctx.arc(W-90, H-70, 22, 0, Math.PI*2); ctx.stroke(); ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('q', W-90, H-70);
+        }
+        function renderStack(){ stackEl.innerHTML=''; for(let k=stack.length-1;k>=0;k--){ const el=document.createElement('div'); el.className='stack-item'; el.textContent=stack[k]; stackEl.appendChild(el); } }
+        function step(){ if(i>=input.length){ const acc=(stack.length===1 && stack[0]==='$'); status.textContent = acc? 'accepted (stack empty)':'rejected (stack not empty)'; return; }
+          const ch=input[i]; if(ch==='('){ stack.push('('); i++; } else if(ch===')'){ if(stack[stack.length-1]==='(') { stack.pop(); i++; } else { status.textContent='rejected (pop underflow)'; i=input.length; } } else { i++; }
+          draw(); renderStack(); updateStatus(); }
+        function reset(){ input=(document.getElementById('pdaInput').value||''); i=0; stack.splice(0,stack.length,'$'); draw(); renderStack(); updateStatus(); }
+        function updateStatus(){ status.textContent = `pos=${i}/${input.length} • top=${stack[stack.length-1]}`; }
+        document.getElementById('pdaStep').onclick=step; document.getElementById('pdaReset').onclick=reset; draw(); renderStack(); updateStatus();
+      }
+
+      // ===== TM editor =====
+      function tmEditor(){ const tapeEl=document.getElementById('tm2Tape'); if(!tapeEl) return; let rules={}; let tape=['1','1','_']; let head=0, state='q0', halt=false; const status=document.getElementById('tm2Status');
+        function parseRules(){ rules={}; const txt=(document.getElementById('tm2Rules').value||''); const lines=txt.split(/\n+/); for(const line of lines){ const s=line.trim(); if(!s||s.startsWith('#')) continue; const m=s.match(/^([^,\s]+)\s*,\s*([^\s]+)\s*->\s*([^,\s]+)\s*,\s*([LRS])\s*,\s*([^\s]+)$/); if(!m) continue; const [_,q,read,write,move,next]=m; rules[`${q},${read}`]=[write,move,next]; } }
+        function render(){ tapeEl.innerHTML=''; for(let i=0;i<tape.length;i++){ const cell=document.createElement('div'); cell.style.cssText='display:inline-block; width:26px; height:26px; border:1px solid var(--border); margin:2px; text-align:center; line-height:26px; border-radius:6px; position:relative;'; cell.textContent=tape[i]==='_'?'':tape[i]; if(i===head){ const caret=document.createElement('div'); caret.style.cssText='position:absolute; left:50%; transform:translateX(-50%); top:-10px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:8px solid #1a8917;'; cell.appendChild(caret); cell.style.outline='2px solid #1a8917'; } tapeEl.appendChild(cell);} status.textContent = halt? `halted in ${state}` : `state=${state}`; }
+        function ensureBounds(){ if(head<0){ tape.unshift('_'); head=0; } if(head>=tape.length){ tape.push('_'); } }
+        function step(){ if(halt) return; ensureBounds(); const sym=tape[head]; const key=`${state},${sym}`; const rule=rules[key]; if(!rule){ halt=true; render(); return; } const [write, move, next]=rule; tape[head]=write; if(move==='L') head--; else if(move==='R') head++; state=next; if(/^q(h|acc|rej)/.test(state)) halt=true; render(); }
+        function reset(){ parseRules(); const inp=(document.getElementById('tm2Input').value||'').replace(/[^01_]/g,''); const clean=inp.length? inp : '11'; tape=clean.split(''); tape.push('_'); head=0; state='q0'; halt=false; render(); }
+        document.getElementById('tm2Load').onclick=reset; document.getElementById('tm2Step').onclick=step; document.getElementById('tm2Reset').onclick=reset; parseRules(); render();
+      }
+
+      function start(){ dfaDemo(); tmDemo(); dfaBuilder(); pdaDemo(); tmEditor(); }
       if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
     })();
   </script>
@@ -133,6 +192,82 @@
         <p class="note">Context: Turing’s 1936 paper used these machines to pin down “effective procedure”. The surprising part is how little you need to get general computation: a finite control and a long enough tape.</p>
       </div>
 
+      <div class="section">
+        <h2>What Languages These Machines Recognize</h2>
+        <p class="note">Automata sit in a simple ladder. A DFA recognizes exactly the <em>regular</em> languages (think: patterns with no unbounded counting). Add a stack and you get a <em>pushdown automaton</em> (PDA) for <em>context‑free</em> languages such as balanced parentheses. Give a machine a full read/write tape and you get Turing machines that can simulate any algorithm we know how to write.</p>
+        <p class="note">Two helpful intuitions: (1) Regular languages have finitely many “situations that matter” (Myhill–Nerode equivalence classes). (2) A single unbounded counter (a stack) lets you match opens with closes, but not two counts at once (you need more memory for $a^n b^n c^n$). These pictures are the memory you’re allowed to carry.</p>
+      </div>
+
+      <div class="section">
+        <h2>Build a DFA</h2>
+        <p class="note">Click “Add state” and place a few nodes. Choose a start, toggle accepting states, and add transitions with symbols from your alphabet. Enter an input and step through. The highlight shows the current state; acceptance requires halting in an accepting state with all input consumed.</p>
+        <div class="demo">
+          <canvas id="dfaBuild" width="720" height="340"></canvas>
+          <div class="controls" style="gap:6px;">
+            <button id="dfabAdd">Add state (click canvas)</button>
+            <label>Start <select id="dfabStart"></select></label>
+            <label>Toggle accept <select id="dfabToggle"></select></label>
+            <label>Src <select id="dfabSrc"></select></label>
+            <label>Sym <input id="dfabSym" type="text" value="0" style="width:48px;" /></label>
+            <label>Dst <select id="dfabDst"></select></label>
+            <button id="dfabAddTrans">Add transition</button>
+          </div>
+          <div class="controls">
+            <label>Input <input id="dfabInput" type="text" value="" /></label>
+            <button id="dfabStep">Step</button>
+            <button id="dfabReset">Reset</button>
+          </div>
+          <p class="note" id="dfabStatus">—</p>
+          <p class="note">Parts: $Q$ = your states; $\Sigma$ = symbols you use in transitions; $\delta$ = your arrows; $q_0$ = start; $F$ = states you toggled to accept.</p>
+        </div>
+        <p class="note">Tip: Try to build a DFA for strings over {0,1} that end with 01. How many states do you need? Where does the machine store “I just saw a 0”?</p>
+      </div>
+
+      <div class="section">
+        <h2>Pushdown Automaton (Balanced Parentheses)</h2>
+        <p class="note">A PDA is a finite control plus a stack. Here we check balanced parentheses. Read '(' and push; read ')' and pop; reject on underflow; accept if the stack is empty at the end. The stack is the one unbounded memory you carry.</p>
+        <div class="demo">
+          <div class="split">
+            <canvas id="pda" width="520" height="220"></canvas>
+            <div class="stack-box">
+              <div><strong>Stack</strong></div>
+              <div id="pdaStack"></div>
+            </div>
+          </div>
+          <div class="controls">
+            <label>Input () <input id="pdaInput" type="text" value="(()())" /></label>
+            <button id="pdaStep">Step</button>
+            <button id="pdaReset">Reset</button>
+          </div>
+          <p class="note" id="pdaStatus">—</p>
+          <p class="note">Parts: states $Q=\{q\}$ (one is enough here), stack alphabet $\Gamma=\{\$, (\}$ with base symbol $\$$; transition pushes on '(' and pops on ')' if possible; acceptance when input ends and top is $\$$.</p>
+        </div>
+        <p class="note">Try adding a stray ')' mid‑string and step: the pop fails and the PDA rejects immediately. That’s the stack telling you “too many closes”.</p>
+      </div>
+
+      <div class="section">
+        <h2>Edit a Turing Program</h2>
+        <p class="note">Write rules as lines like <code>q0,1 -> 1,R,q0</code> and <code>q0,_ -> 1,S,qh</code>. The machine reads the current symbol, writes, moves L/R/S (stay), and changes state. Halt when no rule matches or you reach a designated halt state like <code>qh</code>.</p>
+        <div class="demo">
+          <div class="controls" style="flex-direction:column; align-items:stretch; max-width:880px;">
+            <label>Rules (one per line)</label>
+            <textarea id="tm2Rules" style="width:100%; min-height:100px; border:1px solid var(--border); border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; padding:8px;">
+q0,1 -> 1,R,q0
+q0,_ -> 1,S,qh
+            </textarea>
+          </div>
+          <div class="controls">
+            <label>Unary input (1s): <input id="tm2Input" type="text" value="11" /></label>
+            <button id="tm2Load">Load</button>
+            <button id="tm2Step">Step</button>
+            <button id="tm2Reset">Reset</button>
+          </div>
+          <div id="tm2Tape" style="text-align:center; margin-top:8px;"></div>
+          <p class="note" id="tm2Status">—</p>
+          <p class="note">Terms: each line is $\delta(q,\sigma)=(\sigma',\text{move},q')$. Use '_' for blank. You can add states freely; halting occurs when no rule applies or you reach a halt state you designate (e.g., qh).</p>
+        </div>
+      </div>
+
       <div class="related-links">
         <strong>Related:</strong>
         <a href="physics-math-primer.html">Primer</a> •
@@ -149,4 +284,3 @@
   </div>
 </body>
 </html>
-
