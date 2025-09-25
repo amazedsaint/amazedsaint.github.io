@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Neural Networks & Transformers — Visual Foundations</title>
+  <title>Neural Networks & Transformers: A Visual Introduction</title>
   <meta name="description" content="First‑principles, interactive visuals for the core ideas behind neural networks and transformers: linear units, nonlinearity, loss & gradient descent, softmax & cross‑entropy, dot‑product attention, positional encodings, layer norm & residuals, and receptive fields." />
   <link rel="stylesheet" href="../style.css" />
   <script>
@@ -15,6 +15,7 @@
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script defer src="../js/notes.js"></script>
   <script defer src="../js/connections.js"></script>
+  <script defer src="../js/nn-transformers.js"></script>
   <style>
     .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
@@ -31,222 +32,6 @@
     .headgrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; max-width:880px; margin: 8px auto; }
     .headbox { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; text-align:center; }
   </style>
-  <script>
-    (function(){
-      // ---------- Linear unit & decision line (2D) ----------
-      function linearUnit(){
-        const cv=document.getElementById('linUnit'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=320;
-        // Synthetic data
-        const pts=[]; for(let i=0;i<50;i++){ const x=(Math.random()*2-1), y=(Math.random()*2-1); const label = x*0.7 - y*0.4 + 0.1 + (Math.random()*0.4-0.2) > 0 ? 1:0; pts.push({x,y,label}); }
-        let w0=1.0, w1=-1.0, b=0.0;
-        function toPix(x,y){ return {x: W*0.5 + x*120, y: H*0.5 - y*120}; }
-        function draw(){ ctx.clearRect(0,0,W,H); // axes
-          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,H*0.5); ctx.lineTo(W-20,H*0.5); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W*0.5,20); ctx.lineTo(W*0.5,H-20); ctx.stroke();
-          // points
-          for(const p of pts){ const P=toPix(p.x,p.y); ctx.fillStyle=p.label? '#1a8917':'#b91c1c'; ctx.beginPath(); ctx.arc(P.x,P.y,3,0,Math.PI*2); ctx.fill(); }
-          // decision line w0 x + w1 y + b = 0 → y = -(w0/w1) x - b/w1
-          if(Math.abs(w1)>1e-6){ const x1=-1.2, x2=1.2; const y1=-(w0/w1)*x1 - b/w1, y2=-(w0/w1)*x2 - b/w1; const P1=toPix(x1,y1), P2=toPix(x2,y2); ctx.strokeStyle='#111'; ctx.beginPath(); ctx.moveTo(P1.x,P1.y); ctx.lineTo(P2.x,P2.y); ctx.stroke(); }
-          document.getElementById('linEq').textContent = `y = ${(-w0/w1).toFixed(2)} x ${(-b/w1>=0?'+':'-')} ${Math.abs(b/w1).toFixed(2)}`;
-        }
-        function setW0(v){ w0=parseFloat(v); draw(); }
-        function setW1(v){ w1=parseFloat(v); draw(); }
-        function setB(v){ b=parseFloat(v); draw(); }
-        document.getElementById('w0').oninput=(e)=> setW0(e.target.value);
-        document.getElementById('w1').oninput=(e)=> setW1(e.target.value);
-        document.getElementById('b').oninput=(e)=> setB(e.target.value);
-        draw(); return { setW0, setW1, setB };
-      }
-
-      // ---------- Softmax & cross-entropy ----------
-      function softmaxDemo(){
-        const logits=[0.5, -0.2, 1.0]; let target=2;
-        const bars=document.querySelectorAll('[data-soft]');
-        const valEls=document.querySelectorAll('.value');
-        const lossEl=document.getElementById('xent');
-        function softmax(z){ const m=Math.max(...z); const e=z.map(v=>Math.exp(v-m)); const s=e.reduce((a,b)=>a+b,0); return e.map(v=>v/s); }
-        function render(){
-          const p=softmax(logits);
-          bars.forEach((el,i)=>{
-            const v=Math.max(0,Math.min(1,p[i]||0));
-            el.style.width=(v*100)+'%';
-            if (valEls[i]) valEls[i].textContent=v.toFixed(3);
-          });
-          const loss=-Math.log(Math.max(1e-9, p[target]||1e-9));
-          if (lossEl) lossEl.textContent = loss.toFixed(3);
-        }
-        ['l0','l1','l2'].forEach((id,i)=>{ document.getElementById(id).oninput=(e)=>{ logits[i]=parseFloat(e.target.value); render(); }; });
-        document.getElementById('tgt').onchange=(e)=>{ target=parseInt(e.target.value); render(); };
-        render(); return { render };
-      }
-
-      // ---------- Dot-product attention (single head) ----------
-      function attentionDemo(){
-        const cv=document.getElementById('attn'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=220;
-        let n=5, d=3, temp=1.0, qi=2; let Q=[],K=[];
-        function rand(){ return Math.random()*2-1; }
-        function init(){ Q=Array.from({length:n},()=> Array.from({length:d}, rand)); K=Array.from({length:n},()=> Array.from({length:d}, rand)); }
-        function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
-        function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp(v-m)); const s=e.reduce((x,y)=>x+ y,0); return e.map(v=>v/s); }
-        function render(){ ctx.clearRect(0,0,W,H); const cell=26, offx=30, offy=30; // heatmap for weights of qi
-          const scores=[]; for(let j=0;j<n;j++) scores.push(dot(Q[qi],K[j]) / Math.max(1e-6,temp)); const w=softmax(scores);
-          for(let j=0;j<n;j++){ const x=offx + j*cell; const y=offy; const val=w[j]; ctx.fillStyle=`rgba(26,137,23,${0.15+0.75*val})`; ctx.fillRect(x,y,cell,cell); ctx.strokeStyle='#ccc'; ctx.strokeRect(x,y,cell,cell); ctx.fillStyle='#111'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(j.toString(), x+8, y-6); }
-          ctx.fillStyle='#666'; ctx.fillText('weights for query q['+qi+']', offx, offy+cell+16);
-        }
-        document.getElementById('temp').oninput=(e)=>{ temp=parseFloat(e.target.value); render(); };
-        document.getElementById('qpick').oninput=(e)=>{ qi=parseInt(e.target.value); render(); };
-        init(); render(); return { render };
-      }
-
-      // ---------- Positional encodings (sinusoidal) ----------
-      function posencDemo(){ const cv=document.getElementById('posenc'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=160; let L=32, d=8;
-        function enc(pos, i){ const div = Math.pow(10000, (2*Math.floor(i/2))/d); return (i%2===0)? Math.sin(pos/div): Math.cos(pos/div); }
-        function render(){ ctx.clearRect(0,0,W,H); const offx=30, offy=H*0.5; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,offy); ctx.lineTo(W-20,offy); ctx.stroke(); const scaleX=(W-60)/L, scaleY=28; for(let c=0;c<Math.min(6,d);c++){ ctx.strokeStyle=`hsl(${(c*60)%360},60%,40%)`; ctx.beginPath(); for(let x=0;x<=L;x++){ const y=enc(x,c); const X=offx + x*scaleX; const Y=offy - y*scaleY - c*2; if(x===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);} ctx.stroke(); }
-        }
-        document.getElementById('L').oninput=(e)=>{ L=parseInt(e.target.value); render(); };
-        document.getElementById('D').oninput=(e)=>{ d=parseInt(e.target.value); render(); };
-        render(); return { render };
-      }
-
-      // ---------- Layer norm (vector) ----------
-      function layerNormDemo(){ const cv=document.getElementById('ln'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=150; let vec=[1.2,-0.6, 0.4, 2.0, -1.0];
-        function norm(v){ const m=v.reduce((a,b)=>a+b,0)/v.length; const s=Math.sqrt(v.reduce((a,b)=>a+(b-m)*(b-m),0)/v.length+1e-6); return v.map(x=>(x-m)/s); }
-        function render(){ ctx.clearRect(0,0,W,H); const offx=30, base=H*0.75, scale=20, bw=20; // original
-          ctx.fillStyle='#666'; ctx.fillText('values', offx, 18); for(let i=0;i<vec.length;i++){ const h=vec[i]*scale; const x=offx+i*(bw+8); ctx.fillStyle='#3b82f6'; ctx.fillRect(x, base - Math.max(0,h), bw, Math.abs(h)); }
-          const nv=norm(vec); ctx.fillStyle='#666'; ctx.fillText('layer‑norm', offx+200, 18); for(let i=0;i<nv.length;i++){ const h=nv[i]*scale; const x=offx+200+i*(bw+8); ctx.fillStyle='#1a8917'; ctx.fillRect(x, base - Math.max(0,h), bw, Math.abs(h)); }
-        }
-        render(); return { render };
-      }
-
-      // ---------- Receptive field: conv vs attention ----------
-      function receptiveDemo(){ const cv=document.getElementById('rf'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=140; let N=12, k=3, center=6, mode='attn';
-        function render(){ ctx.clearRect(0,0,W,H); const offx=20, y=H*0.5, cell=(W-40)/N; for(let i=0;i<N;i++){ const x=offx+i*cell; let highlight=false; if(mode==='attn') highlight=true; else { const half=Math.floor(k/2); highlight = (i>=center-half && i<=center+half); }
-            ctx.fillStyle = highlight? (i===center? '#1a8917':'rgba(26,137,23,0.3)') : '#eee'; ctx.fillRect(x,y-14,cell-4,28); ctx.strokeStyle='#ccc'; ctx.strokeRect(x,y-14,cell-4,28); if(i===center){ ctx.fillStyle='#111'; ctx.fillText('•', x+cell*0.35, y+4); } }
-          ctx.fillStyle='#666'; ctx.fillText(mode==='attn'? 'Self‑attention sees all positions' : `Conv kernel size ${k} sees local window`, offx, y+36);
-        }
-        document.getElementById('mode').onchange=(e)=>{ mode=e.target.value; render(); };
-        document.getElementById('kern').oninput=(e)=>{ k=parseInt(e.target.value); render(); };
-        document.getElementById('center').oninput=(e)=>{ center=parseInt(e.target.value); render(); };
-        render(); return { render };
-      }
-
-      // ---------- Gradient descent on a quadratic ----------
-      function gdDemo(){ const cv=document.getElementById('gd'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=320;
-        // f(x,y) = ax^2 + bxy + cy^2
-        const a=1.0, b=0.6, c=0.8; let x=1.2, y=-0.8, lr=0.2; let running=false, raf=0;
-        function f(x,y){ return a*x*x + b*x*y + c*y*y; }
-        function grad(x,y){ return { gx: 2*a*x + b*y, gy: b*x + 2*c*y }; }
-        function draw(){ ctx.clearRect(0,0,W,H); // heatmap
-          const offx=40, offy=H-40, S=60; for(let i=-8;i<=8;i++){ for(let j=-8;j<=8;j++){ const xx=i/4, yy=j/4; const val=f(xx,yy); const col = Math.max(0, Math.min(1, (val-0)/(6))); ctx.fillStyle = `rgba(26,137,23,${0.04+0.26*col})`; const X=offx+xx*S, Y=offy-yy*S; ctx.fillRect(X-10,Y-10,20,20); } }
-          // contours (dotted)
-          const levels=[0.2,0.5,1,2,3,4,5]; ctx.fillStyle='rgba(17,17,17,0.3)'; for(const L of levels){ for(let i=-24;i<=24;i++){ for(let j=-24;j<=24;j++){ const xx=i/8, yy=j/8; const val=f(xx,yy); if(Math.abs(val-L)<0.03){ const X=offx+xx*S, Y=offy-yy*S; ctx.fillRect(X-1,Y-1,2,2); } } } }
-          // axes
-          ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.moveTo(offx-20, offy); ctx.lineTo(W-20, offy); ctx.stroke(); ctx.beginPath(); ctx.moveTo(offx, 20); ctx.lineTo(offx, H-20); ctx.stroke();
-          // point and gradient arrow
-          const X=offx+x*S, Y=offy-y*S; const g=grad(x,y); const gscale=20; ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(X,Y,4,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#b91c1c'; ctx.beginPath(); ctx.moveTo(X,Y); ctx.lineTo(X - g.gx*gscale, Y + g.gy*gscale); ctx.stroke();
-          document.getElementById('gdxy').textContent = `x=${x.toFixed(2)}, y=${y.toFixed(2)}, f=${f(x,y).toFixed(3)}`;
-        }
-        function step(){ const g=grad(x,y); x = x - lr*g.gx; y = y - lr*g.gy; draw(); }
-        function setLR(v){ lr=parseFloat(v); }
-        function reset(){ x=1.2; y=-0.8; draw(); }
-        document.getElementById('gdStep').onclick=step; document.getElementById('gdReset').onclick=reset; document.getElementById('gdLR').oninput=(e)=> setLR(e.target.value);
-        document.getElementById('gdRun').onclick=()=>{ running=!running; document.getElementById('gdRun').textContent = running? 'Pause':'Run'; if(running) loop(); };
-        function loop(){ if(!running) return; step(); raf=requestAnimationFrame(loop); }
-        draw(); return { step, reset };
-      }
-
-      // ---------- Tiny 1D MLP forward pass (2 ReLU units) ----------
-      function mlpDemo(){ const cv=document.getElementById('mlp'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=220;
-        let w1a=3.0, b1a=0.0, v1a=1.0; let w1b=-2.0, b1b=0.5, v1b=1.0; let b2=0.0; const target=(x)=> Math.sin(Math.PI*x)*0.8;
-        function relu(z){ return Math.max(0,z); }
-        function yhat(x){ return v1a*relu(w1a*x + b1a) + v1b*relu(w1b*x + b1b) + b2; }
-        function draw(){ ctx.clearRect(0,0,W,H); const offx=30, offy=H*0.5, scaleX=(W-60)/2, scaleY=60;
-          // axes
-          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(offx, offy); ctx.lineTo(W-30, offy); ctx.stroke();
-          // target
-          ctx.strokeStyle='#bbb'; ctx.beginPath(); for(let i=0;i<=200;i++){ const x=-1 + 2*i/200; const y=target(x); const X=offx + (x+1)*scaleX; const Y=offy - y*scaleY; if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);} ctx.stroke();
-          // prediction
-          ctx.strokeStyle='#1a8917'; ctx.beginPath(); for(let i=0;i<=200;i++){ const x=-1 + 2*i/200; const y=yhat(x); const X=offx + (x+1)*scaleX; const Y=offy - y*scaleY; if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);} ctx.stroke();
-          document.getElementById('mlpeq').textContent = `y = ${v1a.toFixed(2)}·ReLU(${w1a.toFixed(2)}x+${b1a.toFixed(2)}) + ${v1b.toFixed(2)}·ReLU(${w1b.toFixed(2)}x+${b1b.toFixed(2)}) + ${b2.toFixed(2)}`;
-        }
-        const bind=(id, fn)=> document.getElementById(id).oninput=(e)=>{ fn(parseFloat(e.target.value)); draw(); };
-        bind('w1a', v=> w1a=v); bind('b1a', v=> b1a=v); bind('v1a', v=> v1a=v);
-        bind('w1b', v=> w1b=v); bind('b1b', v=> b1b=v); bind('v1b', v=> v1b=v); bind('b2', v=> b2=v);
-        // backprop view
-        document.getElementById('x0').oninput=(e)=>{ const x0=parseFloat(e.target.value); const t=target(x0); const z1a=w1a*x0+b1a, z1b=w1b*x0+b1b; const r1a=relu(z1a), r1b=relu(z1b); const y=yhat(x0); const dLdy=y-t; const dz1a = z1a>0?1:0, dz1b = z1b>0?1:0; const grads={ dv1a: dLdy*r1a, dv1b: dLdy*r1b, db2: dLdy, dw1a: dLdy*v1a*dz1a*x0, db1a: dLdy*v1a*dz1a, dw1b: dLdy*v1b*dz1b*x0, db1b: dLdy*v1b*dz1b };
-          const panel=document.getElementById('grads'); panel.innerHTML = `∂L/∂v1a=${grads.dv1a.toFixed(3)}, ∂L/∂v1b=${grads.dv1b.toFixed(3)}, ∂L/∂b=${grads.db2.toFixed(3)} | ∂L/∂w1a=${grads.dw1a.toFixed(3)}, ∂L/∂b1a=${grads.db1a.toFixed(3)}, ∂L/∂w1b=${grads.dw1b.toFixed(3)}, ∂L/∂b1b=${grads.db1b.toFixed(3)}`; };
-        draw(); return { draw };
-      }
-
-      // ---------- Attention values aggregation (V) ----------
-      function attnAggDemo(){ const cv=document.getElementById('attnAgg'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=220; let n=5, d=3, temp=1.0, qi=2; let Q=[],K=[],V=[];
-        function rand(){ return Math.random()*2-1; }
-        function init(){ Q=Array.from({length:n},()=> Array.from({length:d}, rand)); K=Array.from({length:n},()=> Array.from({length:d}, rand)); V=Array.from({length:n},()=> Array.from({length:d}, rand)); }
-        function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
-        function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp(v-m)); const s=e.reduce((x,y)=>x+y,0); return e.map(v=>v/s); }
-        function render(){ ctx.clearRect(0,0,W,H); const offx=30, offy=40, cell=20; // weights
-          const scores=[]; for(let j=0;j<n;j++) scores.push(dot(Q[qi],K[j]) / Math.max(1e-6,temp)); const w=softmax(scores);
-          // draw V vectors and weights
-          for(let j=0;j<n;j++){ const x=offx, y=offy + j*(cell+8); ctx.fillStyle='#666'; ctx.fillText(`pos ${j}`, x, y-6); for(let k=0;k<d;k++){ const val=V[j][k]; const len= val*30; ctx.fillStyle= val>=0? '#3b82f6':'#b91c1c'; ctx.fillRect(x+50 + k*60, y, len, 6); } // weight bar
-            ctx.fillStyle='#1a8917'; ctx.fillRect(W-140, y, w[j]*100, 6);
-          }
-          // aggregated result
-          const agg = Array.from({length:d}, (_,k)=> V.reduce((s,vec,idx)=> s + w[idx]*vec[k], 0)); ctx.fillStyle='#666'; ctx.fillText('result', offx, offy + n*(cell+8)+14);
-          for(let k=0;k<d;k++){ const val=agg[k]; const len=val*40; ctx.fillStyle= val>=0? '#1a8917':'#b91c1c'; ctx.fillRect(offx+50 + k*60, offy + n*(cell+8)+8, len, 8); }
-        }
-        document.getElementById('aggTemp').oninput=(e)=>{ temp=parseFloat(e.target.value); render(); };
-        document.getElementById('aggQ').oninput=(e)=>{ qi=parseInt(e.target.value); render(); };
-        init(); render(); return { render };
-      }
-
-      // ---------- Multi-head attention (weights only, per head) ----------
-      function multiHeadDemo(){ const grid=document.getElementById('mhaGrid'); if(!grid) return; let n=6, d=6, h=4, temp=1.0, qi=3; let Q=[],K=[];
-        function rand(){ return Math.random()*2-1; }
-        function init(){ Q=Array.from({length:n},()=> Array.from({length:d}, rand)); K=Array.from({length:n},()=> Array.from({length:d}, rand)); }
-        function splitHeads(M){ const dhead=Math.floor(d/h); const heads=[]; for(let hh=0; hh<h; hh++){ heads.push(M.map(row => row.slice(hh*dhead, (hh+1)*dhead))); } return heads; }
-        function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
-        function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp(v-m)); const s=e.reduce((x,y)=>x+y,0); return e.map(v=>v/s); }
-        function render(){ grid.innerHTML=''; const Qh=splitHeads(Q), Kh=splitHeads(K); for(let hh=0;hh<h;hh++){ const box=document.createElement('div'); box.className='headbox'; const title=document.createElement('div'); title.textContent = `head ${hh}`; title.style.marginBottom='6px'; box.appendChild(title); const cnv=document.createElement('canvas'); cnv.width=140; cnv.height=120; box.appendChild(cnv); grid.appendChild(box); const ctx=cnv.getContext('2d'); const scores=[]; for(let j=0;j<n;j++) scores.push(dot(Qh[hh][qi], Kh[hh][j]) / Math.max(1e-6,temp)); const w=softmax(scores); for(let j=0;j<n;j++){ const x=12, y=14+j*16; const val=w[j]; ctx.fillStyle = `rgba(26,137,23,${0.18+0.75*val})`; ctx.fillRect(x,y,110,12); ctx.fillStyle='#111'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(`pos ${j}`, x, y-2); }
-        }
-        document.getElementById('mhaTemp').oninput=(e)=>{ temp=parseFloat(e.target.value); render(); };
-        document.getElementById('mhaQ').oninput=(e)=>{ qi=parseInt(e.target.value); render(); };
-        document.getElementById('mhaH').oninput=(e)=>{ h=parseInt(e.target.value); render(); };
-        init(); render(); return { render };
-      }
-
-      // ---------- FFN block (expand + nonlinearity + project) ----------
-      function ffnDemo(){ const cv=document.getElementById('ffn'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=180; let d=8, df=16; const x=Array.from({length:d}, ()=> Math.random()*2-1);
-        function relu(v){ return Math.max(0,v); }
-        function W(m,n){ return Array.from({length:m}, ()=> Array.from({length:n}, ()=> (Math.random()*2-1)*0.6)); }
-        const W1=W(df,d), W2=W(d,df);
-        function matvec(M,v){ return M.map(row=> row.reduce((s,wij,j)=> s+ wij*v[j], 0)); }
-        function draw(){ ctx.clearRect(0,0,W,H); const offx=30, base=H*0.75, bw=14, gap=6;
-          // input x
-          ctx.fillStyle='#666'; ctx.fillText('x (d_model)', offx, 16); for(let i=0;i<d;i++){ const h=x[i]*24; const X=offx+i*(bw+gap); ctx.fillStyle= h>=0?'#3b82f6':'#b91c1c'; ctx.fillRect(X, base-Math.max(0,h), bw, Math.abs(h)); }
-          // hidden h=ReLU(W1 x)
-          const hvec = matvec(W1,x).map(relu); ctx.fillStyle='#666'; ctx.fillText('ReLU(W1x)', offx+200, 16); for(let i=0;i<Math.min(12,df);i++){ const h=hvec[i]*14; const X=offx+200+i*(bw+gap); ctx.fillStyle= h>=0?'#1a8917':'#b91c1c'; ctx.fillRect(X, base-Math.max(0,h), bw, Math.abs(h)); }
-          // output y=W2 h
-          const yvec = matvec(W2,hvec); ctx.fillStyle='#666'; ctx.fillText('W2h (back to d_model)', offx+400, 16); for(let i=0;i<d;i++){ const h=yvec[i]*24; const X=offx+400+i*(bw+gap); ctx.fillStyle= h>=0?'#1a8917':'#b91c1c'; ctx.fillRect(X, base-Math.max(0,h), bw, Math.abs(h)); }
-        }
-        draw(); return { draw };
-      }
-
-      // ---------- Toy BPE stepper ----------
-      function bpeDemo(){ const area=document.getElementById('bpeArea'); if(!area) return; const inp=document.getElementById('bpeInput'); const out=document.getElementById('bpeTokens'); const pairsEl=document.getElementById('bpePairs'); const mergesEl=document.getElementById('bpeMerges');
-        let tokens=[], merges=[];
-        function tokenize(){ const s=(inp.value||'the other brother'); tokens = s.trim().split(/\s+/).join('▁').split(''); render(); }
-        function countPairs(){ const counts=new Map(); for(let i=0;i<tokens.length-1;i++){ const pair = tokens[i]+' '+tokens[i+1]; counts.set(pair, (counts.get(pair)||0)+1); } return counts; }
-        function topPair(){ const c=countPairs(); let best=null, bestc=0; c.forEach((v,k)=>{ if(v>bestc){ bestc=v; best=k; } }); return {pair:best, count:bestc}; }
-        function mergeOnce(){ const t=topPair(); if(!t.pair) return; merges.push(t.pair.replace(' ','▁')); const [a,b]=t.pair.split(' '); const res=[]; let i=0; while(i<tokens.length){ if(i<tokens.length-1 && tokens[i]===a && tokens[i+1]===b){ res.push(a+b); i+=2; } else { res.push(tokens[i]); i++; } } tokens=res; render(); }
-        function render(){ out.innerHTML=''; tokens.forEach(tok=>{ const span=document.createElement('span'); span.className='token'; span.textContent=tok; out.appendChild(span); }); const c=countPairs(); pairsEl.innerHTML=''; Array.from(c.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8).forEach(([k,v])=>{ const p=document.createElement('span'); p.className='pair'; p.textContent=`${k} × ${v}`; pairsEl.appendChild(p); }); mergesEl.textContent = merges.join(', ');
-        }
-        document.getElementById('bpeStep').onclick=mergeOnce; document.getElementById('bpeReset').onclick=()=>{ merges=[]; tokenize(); };
-        tokenize(); return { mergeOnce };
-      }
-
-      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); gdDemo(); mlpDemo(); bpeDemo(); attnAggDemo(); multiHeadDemo(); ffnDemo(); }
-      if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
-    })();
-  </script>
 </head>
 <body>
   <div class="container">
@@ -262,7 +47,7 @@
     <article class="article-content">
       <div class="article-header">
         <span class="tile-category">AI</span>
-        <h1 class="article-title">Neural Networks & Transformers — Visual Foundations</h1>
+        <h1 class="article-title">Neural Networks & Transformers: A Visual Introduction</h1>
         <div class="article-meta">September 24, 2025 • AI • Interactive</div>
         <p class="article-description">The core building blocks: linear units, nonlinearity, loss & gradient descent, softmax & cross‑entropy, dot‑product attention, positional encodings, layer norm & residuals, and receptive fields. Each section has an explainer, a formula, and a small visual.</p>
         <p class="note">Hover <span class="idea" data-note="Toolkit: dot product, linear maps, rotations. Primer: small oscillations intuition carries over to optimization landscapes.">here</span> for how this connects to earlier pieces.</p>
@@ -282,8 +67,6 @@
       <div class="section">
         <h2 id="linear-units">Linear Units & Nonlinearity</h2>
         <p class="note">A single neuron computes a weighted sum and passes it through a nonlinearity: $$y = \phi(\mathbf w\cdot\mathbf x + b).$$ Without $\phi$, stacks of linear layers collapse to one linear map. With $\phi$ (ReLU, GELU, tanh), you can fit bends in the data.</p>
-        <p class="note">Here, $\mathbf w$ picks a direction in feature space and the bias $b$ shifts where the boundary sits. ReLU works like a gate: pass positive signal, zero out negative. Stack enough gates and the network carves space into many regions—one reason multilayer perceptrons can approximate complicated curves and surfaces.</p>
-        <p class="note">Tips: scaling inputs helps keep activations in a reasonable range; the bias term often matters more than people expect—it recenters decisions. For text and images, you rarely feed raw pixels/bytes; you learn feature vectors first (embeddings, convolutions) and then apply these building blocks.</p>
         <div class="demo">
           <canvas id="linUnit" width="520" height="320"></canvas>
           <div class="controls">
@@ -291,15 +74,13 @@
             <label>w1 <input id="w1" type="range" min="-2" max="2" step="0.01" value="-1.0"/></label>
             <label>b <input id="b" type="range" min="-1" max="1" step="0.01" value="0.0"/></label>
           </div>
-          <p class="note">Decision line: <span id="linEq">—</span>. Terms: $\mathbf w=(w_0,w_1)$ are weights; $b$ is bias; $\phi$ shapes the output. The data here is linearly separable up to noise—nonlinearity lets you stack layers for curved boundaries.</p>
+          <p class="note">Decision line: <span id="linEq">…</span>.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="softmax-crossentropy">Softmax & Cross‑Entropy</h2>
-        <p class="note">Softmax turns logits into probabilities: $$p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.$$ For a target class $t$, cross‑entropy is $L=-\log p_t$ (negative log‑likelihood). Lower is better; pushing the correct logit up pulls $p_t$ closer to 1.</p>
-        <p class="note">Logits are raw scores; subtracting the max (done implicitly here) avoids numerical overflow and doesn’t change probabilities. Cross‑entropy tracks “surprise”: small when the model gives the truth high probability, large when it doesn’t. Gradients raise the true logit and nudge the others down.</p>
-        <p class="note">In transformers, softmax also appears in attention. There, a temperature or scale (often $1/\sqrt{d}$) keeps dot products in a healthy range so the distribution isn’t too spiky or too flat.</p>
+        <p class="note">Softmax turns logits into probabilities: $$p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.$$ For a target class $t$, cross‑entropy is $L=-\log p_t$.</p>
         <div class="demo">
           <div class="controls">
             <label>logit[0] <input id="l0" type="range" min="-3" max="3" step="0.01" value="0.5"/></label>
@@ -311,53 +92,43 @@
           <div class="bar"><span data-soft></span></div>
           <div class="bar"><span data-soft></span></div>
           <div class="bar"><span data-soft></span></div>
-          <div class="note">values: <span class="value">—</span>, <span class="value">—</span>, <span class="value">—</span></div>
-          <p class="note">Cross‑entropy: <strong id="xent">—</strong>. “Terms”: $z$ are logits; $p$ are normalized probabilities; the target index controls which $p_t$ we log.</p>
+          <div class="note">values: <span class="value">…</span>, <span class="value">…</span>, <span class="value">…</span> • Cross‑entropy: <strong id="xent">…</strong></div>
         </div>
       </div>
 
       <div class="section">
         <h2 id="attention">Dot‑Product Attention</h2>
-        <p class="note">Given queries $Q$ and keys $K$, attention scores are dot products scaled by temperature $T$: $$\text{weights}(q_i, K)=\operatorname{softmax}\big(\tfrac{q_i K^\top}{T}\big).$$ Each query picks a distribution over positions; values are then averaged with these weights to form a context vector.</p>
-        <p class="note">Dot products measure similarity. Each token asks, “who is relevant to me?” and softly copies information from those places. Multi‑head attention repeats this in different subspaces, so one head can look for syntax, another for long‑range matches, and so on. A causal mask simply zeroes out future weights.</p>
+        <p class="note">Weights for one query $q_i$ over keys $K$: softmax of scaled dot products.</p>
         <div class="demo">
           <canvas id="attn" width="520" height="220"></canvas>
           <div class="controls">
             <label>query index <input id="qpick" type="range" min="0" max="4" step="1" value="2"/></label>
             <label>temperature <input id="temp" type="range" min="0.2" max="3.0" step="0.01" value="1.0"/></label>
           </div>
-          <p class="note">Lower temperature sharpens focus; higher temperature spreads it. Terms: $Q,K\in\mathbb R^{n\times d}$; dot products measure similarity; softmax normalizes.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="positional-encodings">Positional Encodings</h2>
-        <p class="note">Transformers add position through sinusoidal features: for position $p$ and channel $i$, $$\text{PE}(p,i)=\begin{cases}\sin\big(p/10000^{2i/d}\big) & i\text{ even}\\ \cos\big(p/10000^{2i/d}\big) & i\text{ odd}\end{cases}.$$ The pattern lets the model infer relative offsets by simple dot products.</p>
-        <p class="note">Without recurrence or convolution, a transformer can’t tell ‘first’ from ‘last’ unless we encode it. Sinusoidal bands act like a multi‑scale ruler: slow waves for coarse position, fast waves for fine tweaks. Alternatives (learned, rotary/relative encodings) exist, but the core idea is the same—carry position information in the vectors.</p>
+        <p class="note">Sinusoidal bands encode position at multiple scales.</p>
         <div class="demo">
           <canvas id="posenc" width="520" height="160"></canvas>
           <div class="controls">
             <label>length <input id="L" type="range" min="8" max="128" step="1" value="32"/></label>
             <label>channels <input id="D" type="range" min="4" max="64" step="1" value="8"/></label>
           </div>
-          <p class="note">Notice how low‑frequency channels vary smoothly while higher ones oscillate quickly—together they describe position at multiple scales.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="layernorm-residuals">Layer Norm & Residuals</h2>
-        <p class="note">LayerNorm centers and scales each token’s features: $$\text{LN}(x)=\frac{x-\mu}{\sigma+\epsilon}\cdot\gamma+\beta,$$ stabilizing magnitude across layers. Residuals add the input back: $y = x + f(\text{LN}(x))$, keeping information flowing.</p>
-        <p class="note">Normalization keeps numbers in a steady range so later layers don’t see wildly different scales. Residuals preserve a clean identity path; even if $f$ starts near zero, the network still passes signals forward and gradients backward. Transformers usually use “pre‑norm” (normalize before the sublayer) for stability.</p>
         <div class="demo">
           <canvas id="ln" width="520" height="150"></canvas>
-          <p class="note">Left bars: raw features; right: normalized. Terms: $\mu,\sigma$ are per‑token mean/std; $\gamma,\beta$ are learned scale/shift.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="receptive-fields">Receptive Fields</h2>
-        <p class="note">Convolutions see local windows; self‑attention can see the whole sequence (unless masked). The picture below toggles between both views for one position.</p>
-        <p class="note">Convolutions grow the view by stacking (or by using dilation); attention is global but quadratic in sequence length—one reason for recent efficiency work (sparsity, low‑rank, kernels). Causal masks (for generation) cut off future positions, letting each token use only the past.</p>
         <div class="demo">
           <canvas id="rf" width="520" height="140"></canvas>
           <div class="controls">
@@ -365,14 +136,11 @@
             <label>kernel <input id="kern" type="range" min="1" max="9" step="2" value="3"/></label>
             <label>center <input id="center" type="range" min="0" max="11" step="1" value="6"/></label>
           </div>
-          <p class="note">Notice how attention can connect distant tokens in one step; convolution stacks multiple layers to widen its view.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="gradient-descent">Gradient Descent (2D Bowl)</h2>
-        <p class="note">A simple quadratic energy $$f(x,y)=ax^2+bxy+cy^2$$ with $a,b,c>0$. The update $\theta\leftarrow \theta-\eta\,\nabla f$ walks downhill by learning rate $\eta$. Too small, it crawls; too big, it may overshoot.</p>
-        <p class="note">Convex bowls are friendly; real networks are bumpy, but locally they often look bowl‑like. Momentum smooths the path; Adam adapts step sizes per coordinate. Normalization and reasonable initialization help keep you on gentle slopes instead of cliffs.</p>
         <div class="demo">
           <canvas id="gd" width="520" height="320"></canvas>
           <div class="controls">
@@ -381,14 +149,12 @@
             <button id="gdRun">Run</button>
             <button id="gdReset">Reset</button>
           </div>
-          <p class="note"><span id="gdxy">—</span>. Terms: $\nabla f=(2ax+by,\,bx+2cy)$; $\eta$ scales the step.</p>
+          <p class="note"><span id="gdxy">…</span></p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="tiny-mlp">A Tiny MLP (Two ReLUs)</h2>
-        <p class="note">Even two ReLU bumps can sketch a curve. The output is $$y = v_1\,\mathrm{ReLU}(w_1 x + b_1) + v_2\,\mathrm{ReLU}(w_2 x + b_2) + b.$$ Play with weights/biases and compare to a smooth target (gray).</p>
-        <p class="note">ReLU networks are piecewise linear; each hidden unit adds a kink. Depth layers kinks; width adds more of them in parallel. Backprop here is the chain rule with on/off gates from ReLU. The backprop panel shows the partials for a single point—what learning would nudge if you take a small step.</p>
         <div class="demo">
           <canvas id="mlp" width="520" height="220"></canvas>
           <div class="controls">
@@ -400,18 +166,16 @@
             <label>v1b <input id="v1b" type="range" min="-3" max="3" step="0.05" value="1.0"/></label>
             <label>b2 <input id="b2" type="range" min="-1" max="1" step="0.01" value="0.0"/></label>
           </div>
-          <p class="note">Equation: <span id="mlpeq">—</span>. Terms: $w,b$ shape each bump; $v$ scales it; $b$ shifts the whole curve.</p>
+          <p class="note">Equation: <span id="mlpeq">…</span></p>
           <div class="controls">
             <label>x₀ (for backprop) <input id="x0" type="range" min="-1" max="1" step="0.01" value="0.0"/></label>
           </div>
-          <p class="note">Gradients at x₀: <span id="grads">—</span></p>
+          <p class="note">Gradients at x₀: <span id="grads">…</span></p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="toy-bpe">A Toy Tokenizer (BPE)</h2>
-        <p class="note">Byte‑Pair Encoding merges the most frequent adjacent pair into a new token, repeatedly. Below, step through merges and watch the token list change.</p>
-        <p class="note">The merge list becomes a tiny dictionary of common chunks. Real tokenizers add an underscore/▁ to mark new words, handle Unicode, and store thousands of merges. No tokenizer is perfect—splits can be awkward—but BPE keeps the vocabulary moderate while covering most text.</p>
         <div class="demo" id="bpeArea">
           <div class="controls">
             <label>Input text <input id="bpeInput" type="text" value="the other brother"/></label>
@@ -422,27 +186,23 @@
           <div class="tokens" id="bpeTokens"></div>
           <div class="note">Top pairs</div>
           <div class="tokens" id="bpePairs"></div>
-          <div class="note">Merges so far: <span id="bpeMerges">—</span></div>
+          <div class="note">Merges so far: <span id="bpeMerges">…</span></div>
         </div>
       </div>
 
       <div class="section">
         <h2 id="attention-aggregation">Attention: Values Aggregation</h2>
-        <p class="note">The attention weights are used to average value vectors $V$. This shows $V$ per position (signed bars by feature) and the weighted result for one query.</p>
-        <p class="note">Think of $K$ as an address book, $Q$ as a search, and $V$ as the content you copy. One head forms a single “view” of context; multiple heads let the model keep several views at once. The output then flows through feed‑forward layers (nonlinear units again) before the next attention block.</p>
         <div class="demo">
           <canvas id="attnAgg" width="520" height="220"></canvas>
           <div class="controls">
             <label>query index <input id="aggQ" type="range" min="0" max="4" step="1" value="2"/></label>
             <label>temperature <input id="aggTemp" type="range" min="0.2" max="3.0" step="0.01" value="1.0"/></label>
           </div>
-          <p class="note">Terms: $Q,K,V\in\mathbb R^{n\times d}$. The weight vector for $q_i$ multiplies rows of $V$ and sums them to one result vector.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="multi-head">Multi‑Head Attention (Weights)</h2>
-        <p class="note">Multiple heads let the model look for different patterns at once—each head has its own $Q,K,V$ projections and produces its own weight pattern. Below, we show each head’s weights for a chosen query (no values here—see the previous section).</p>
         <div class="demo">
           <div class="controls">
             <label>heads <input id="mhaH" type="range" min="2" max="6" step="1" value="4"/></label>
@@ -450,59 +210,24 @@
             <label>temperature <input id="mhaTemp" type="range" min="0.2" max="3.0" step="0.01" value="1.0"/></label>
           </div>
           <div id="mhaGrid" class="headgrid"></div>
-          <p class="note">Terms: splitting $d_\text{model}$ features into $h$ heads yields $d_\text{head}=d_\text{model}/h$ per head. Each head gets its own $W^Q,W^K,W^V$; outputs are concatenated and projected.</p>
         </div>
       </div>
 
       <div class="section">
         <h2 id="ffn-block">Position‑wise Feed‑Forward (FFN)</h2>
-        <p class="note">After attention, a transformer applies the same 2‑layer MLP to each position: expand ($d_\text{model}\to d_\text{ff}$), apply nonlinearity (GELU/ReLU), project back. This gives per‑token mixing that doesn’t depend on position.</p>
         <div class="demo">
           <canvas id="ffn" width="520" height="180"></canvas>
-          <p class="note">Attention handles “who to look at”; the FFN lets each token transform its features nonlinearly. The two together act like message passing plus local computation.</p>
         </div>
       </div>
 
-      <script>
-        (function(){
-          function transformerDemo(){ const cv=document.getElementById('tf'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=220; const d=8, n=6; let X=randomX(); const Wq=randMat(d,d), Wk=randMat(d,d), Wv=randMat(d,d); const W1=randMat(16,d), W2=randMat(d,16); let stage=0;
-            function rand(){ return (Math.random()*2-1)*0.7; }
-            function randomX(){ return Array.from({length:n}, ()=> Array.from({length:d}, rand)); }
-            function randMat(m,n){ return Array.from({length:m}, ()=> Array.from({length:n}, rand)); }
-            function matvec(M,v){ return M.map(row=> row.reduce((s,wij,j)=> s+wij*v[j],0)); }
-            function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp(v-m)); const s=e.reduce((x,y)=>x+y,0); return e.map(v=>v/s); }
-            function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
-            function ln(v){ const m=v.reduce((a,b)=>a+b,0)/v.length; const s=Math.sqrt(v.reduce((a,b)=>a+(b-m)*(b-m),0)/v.length+1e-6); return v.map(x=>(x-m)/s); }
-            function relu(x){ return Math.max(0,x); }
-            function attnBlock(X){ // pre-norm self-attn + residual
-              const Xin = X.map(ln);
-              const Q = Xin.map(v=> matvec(Wq,v)), K=Xin.map(v=> matvec(Wk,v)), V=Xin.map(v=> matvec(Wv,v));
-              const Y = [];
-              for(let i=0;i<n;i++){ const scores=[]; for(let j=0;j<n;j++){ scores.push(dot(Q[i],K[j]) / Math.sqrt(d)); } const w=softmax(scores); const yi=Array(d).fill(0); for(let j=0;j<n;j++){ for(let k=0;k<d;k++){ yi[k]+= w[j]*V[j][k]; } } Y.push(yi); }
-              return X.map((v,i)=> v.map((xk,k)=> xk + Y[i][k]));
-            }
-            function ffnBlock(X){ const Xin = X.map(ln); const Hh = Xin.map(v=> matvec(W1,v).map(relu)); const Y = Hh.map(h=> matvec(W2,h)); return X.map((v,i)=> v.map((xk,k)=> xk + Y[i][k])); }
-            function draw(){ ctx.clearRect(0,0,W,H); const offx=20, base=H*0.75, bw=10, gap=4; ctx.fillStyle='#666'; ctx.fillText(['Input','Self‑Attn','Add&Norm','FFN','Add&Norm'][stage]||'Add&Norm', offx, 16);
-              for(let i=0;i<n;i++){ for(let k=0;k<d;k++){ const val=X[i][k]; const h=val*16; const x=offx + k*(bw+gap) + i*(d*(bw+gap)+12); ctx.fillStyle= h>=0?'#3b82f6':'#b91c1c'; ctx.fillRect(x, base-Math.max(0,h), bw, Math.abs(h)); } }
-            }
-            function step(){ if(stage===0){ X = attnBlock(X); stage=1; } else if(stage===1){ stage=2; } else if(stage===2){ X = ffnBlock(X); stage=3; } else { stage=4; } draw(); }
-            function reset(){ X=randomX(); stage=0; draw(); }
-            document.getElementById('tfStep').onclick=step; document.getElementById('tfReset').onclick=reset; draw(); return { step, reset };
-          }
-          if (document.readyState==='complete' || document.readyState==='interactive') transformerDemo(); else document.addEventListener('DOMContentLoaded', transformerDemo);
-        })();
-      </script>
-
       <div class="section">
         <h2 id="putting-it-together">Putting It Together: A Transformer Block</h2>
-        <p class="note">A single encoder block has two parts: (1) self‑attention (with pre‑normalization) and a residual add, and (2) a position‑wise feed‑forward network and another residual add. Step through to see token vectors change across the block.</p>
         <div class="demo">
           <canvas id="tf" width="520" height="220"></canvas>
           <div class="controls">
             <button id="tfStep">Step</button>
             <button id="tfReset">Reset</button>
           </div>
-          <p class="note">Sequence of operations per block: LN → Self‑Attention → Add, LN → FFN → Add. Residual paths preserve information; norm keeps numbers steady; attention mixes information across positions; the FFN refines each token’s features.</p>
         </div>
       </div>
 
@@ -512,7 +237,7 @@
           <ul>
             <li>Dot products & linear maps → <a href="physics-toolkit-intuition.html#vectors-and-dot-product">Toolkit</a>.</li>
             <li>Optimization intuition → <a href="physics-math-primer.html#potentials-and-small-oscillations">Primer</a>.</li>
-            <li>Softmax appears in attention & classification; oscillations echo Toolkit’s Fourier view.</li>
+            <li>Softmax appears in attention & classification.</li>
           </ul>
         </div>
       </div>

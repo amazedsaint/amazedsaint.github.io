@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game of Flies — Build Houses, Add Hazards</title>
+  <title>Game of Flies: Build Houses, Add Hazards</title>
   <meta name="description" content="Place houses and hazards. Flies explore, join teams, orbit flags, fight rivals, and sometimes switch sides." />
   <link rel="stylesheet" href="../style.css" />
+  <script defer src="../js/connections.js"></script>
   <style>
     html, body { height: 100%; }
     body { margin: 0; background: #fff; }
@@ -21,7 +22,9 @@
     #canvas { width: 100%; height: 100%; display: block; background: #ffffff; cursor: crosshair; }
     .hud { position: fixed; left: 12px; bottom: 12px; background: rgba(255,255,255,0.95); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 12px; color: var(--text); }
     .legend { color: var(--muted); font-size: 12px; }
-    .sim-title { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 25; background: rgba(255,255,255,0.92); border:1px solid var(--border); padding: 6px 10px; border-radius: 999px; font-weight: 700; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .sim-title { position: fixed; left: 50%; top: 56px; transform: translateX(-50%); z-index: 25; background: rgba(255,255,255,0.92); border:1px solid var(--border); padding: 6px 10px; border-radius: 999px; font-weight: 700; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    /* Header overlay to keep site nav consistent */
+    .header-overlay { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); backdrop-filter: saturate(1.2) blur(4px); }
     /* Emoji button color cues (channel + valence) */
     /* Flag buttons as colored blocks */
     /* House buttons */
@@ -33,11 +36,11 @@
     .tool-btn[data-house="walkers"] { background:#3b82f6; border-color:#2563eb; }
     .tool-btn[data-house="wildfire"] { background:#10b981; border-color:#059669; }
     /* Collapsible math panel */
-    .panel.math { position: fixed; right: 12px; top: 12px; width: 380px; max-width: 92vw; z-index: 20; }
+    .panel.math { position: fixed; right: 12px; top: 68px; width: 380px; max-width: 92vw; z-index: 20; }
     .panel.collapsed { height: 48px; overflow: hidden; }
     .panel.collapsed .panel-content { display: none; }
     /* Controls panel */
-    .panel.controls { position: fixed; left: 12px; top: 12px; width: 480px; max-width: 96vw; z-index: 20; }
+    .panel.controls { position: fixed; left: 12px; top: 68px; width: 480px; max-width: 96vw; z-index: 20; }
     .controls .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
     .controls .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .controls .row small { color: var(--muted); width: 80px; flex:0 0 auto; }
@@ -60,6 +63,8 @@
     .swatch.red{ background:#e44242; }
     .swatch.blue{ background:#3b82f6; }
     .swatch.white{ background:#f3f4f6; border:1px solid #e5e7eb; }
+    /* Fullscreen button */
+    .fullscreen-btn { position: fixed; right: 12px; top: 116px; z-index: 30; padding:6px 10px; border:1px solid var(--border); background:#fff; border-radius:8px; font-size:12px; cursor:pointer; }
   </style>
   <script>
     // Guard against duplicate custom element registrations from third‑party overlays
@@ -85,10 +90,22 @@
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
 <body>
+  <div class="container header-overlay">
+    <header class="header" style="padding: 10px 0; border-bottom: none;">
+      <h1 class="site-title" style="font-size: 20px; margin: 0;"><a href="../index.html">antifold</a></h1>
+      <nav class="nav" style="gap: 12px; font-size: 14px;">
+        <a href="../index.html">Home</a>
+        <a href="physics-aware-flies-article.html">Research</a>
+        <a href="https://github.com/amazedsaint">GitHub</a>
+        <a href="https://twitter.com/amazedsaint">Twitter</a>
+      </nav>
+    </header>
+  </div>
   <div class="sim-root">
     <canvas id="canvas"></canvas>
   </div>
   <div class="sim-title" id="simTitle">Game of Flies</div>
+  <button class="fullscreen-btn" id="fullscreenBtn">⛶ Fullscreen</button>
   <div class="panel controls" id="controlsPanel">
     <div class="panel-header" id="controlsHeader">
       <span class="panel-title">Controls</span>
@@ -154,7 +171,7 @@
   <div class="legend-mini" id="legendMini"></div>
   <div class="panel math collapsed" id="mathPanel">
     <div class="panel-header" id="mathHeader">
-      <span class="panel-title">Game of Flies — Axioms</span>
+      <span class="panel-title">Game of Flies: Axioms</span>
       <button class="panel-toggle" id="mathToggle">▼</button>
     </div>
     <div class="panel-content">
@@ -194,6 +211,7 @@
       flies: [], // {x,y,vx,vy,info:[r,g,b], allegiance:-1, s:0}
       objs: [],  // {x,y,emoji,type:'flag', color?:'red'|'blue'|'white', qty?, maxQty?}
       grid: null, // spatial hash
+      tmp: null,  // scratch arrays for performance
       // Align names with usage in step(); prevent undefined -> NaN
       params: {
         N:220, kAttr:140, kRepel:180, commR:110, infoRate:1.2, speed:42, forget:0.18, beta:0.8,
@@ -368,10 +386,19 @@
       info[0]=clamp(r+dr,-1,1); info[1]=clamp(g+dg,-1,1); info[2]=clamp(b+db,-1,1);
     }
 
+    function ensureTmp(N){
+      if (!state.tmp) state.tmp = {};
+      const t = state.tmp;
+      if (!t.ax || t.ax.length !== N){ t.ax = new Float32Array(N); t.ay = new Float32Array(N); }
+      if (!t.lch0 || t.lch0.length !== N){ t.lch0 = new Float32Array(N); t.lch1 = new Float32Array(N); t.lch2 = new Float32Array(N); t.lw = new Float32Array(N); }
+      t.ax.fill(0); t.ay.fill(0); t.lch0.fill(0); t.lch1.fill(0); t.lch2.fill(0); t.lw.fill(0);
+      return t;
+    }
+
     function step(dt){
       const {kAttr,kRepel,commR,infoRate,speed,forget,beta,social,cohesion,separation,sepDist,hazardAlpha,gamma,allyAlign,enemyAntiAlign,hostility,attackRange,attackDamage,healRate,healBase,hazardDamage,explore,noiseTau,motor,vmin,submissionRate,dominanceThresh} = state.params;
       const commR2 = commR*commR;
-      const N = state.flies.length; const ax = new Float32Array(N), ay = new Float32Array(N);
+      const N = state.flies.length; const tmp = ensureTmp(N); const ax = tmp.ax, ay = tmp.ay;
       let conflicts = 0;
       // forgetting and object forces with hazard dominance
       for(let i=0;i<N;i++){
@@ -438,7 +465,7 @@
       // communication + social alignment
       buildGrid();
       // local channel influence accumulators for group-level allegiance shifts
-      const lch0 = new Float32Array(N), lch1 = new Float32Array(N), lch2 = new Float32Array(N), lw = new Float32Array(N);
+      const lch0 = tmp.lch0, lch1 = tmp.lch1, lch2 = tmp.lch2, lw = tmp.lw;
       const maxLinks=120; let drawn=0;
       for(let i=0;i<N;i++){
         const f = state.flies[i]; const vfi = Math.hypot(f.vx,f.vy)||1e-6; const ufi=[f.vx/vfi, f.vy/vfi];
@@ -727,6 +754,8 @@
       document.querySelectorAll('.tool-btn[data-house]').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       state.tool.house = btn.getAttribute('data-house');
+      // ARIA pressed toggle for accessibility
+      document.querySelectorAll('.tool-btn[data-house]').forEach(b=> b.setAttribute('aria-pressed', b===btn ? 'true' : 'false'));
     }
     document.querySelectorAll('.tool-btn[data-house]').forEach(btn=>{
       btn.addEventListener('click', ()=> pickHouse(btn));
@@ -744,6 +773,13 @@
       if (e.shiftKey || state.tool.mode==='remove') removeNearestObject(x,y);
       else addObject(x,y,state.tool.house);
     });
+    // Touch support
+    canvas.addEventListener('touchstart', (e)=>{
+      const t=e.touches && e.touches[0]; if(!t) return; const r=canvas.getBoundingClientRect();
+      const x=(t.clientX-r.left), y=(t.clientY-r.top);
+      if (e.shiftKey || state.tool.mode==='remove') removeNearestObject(x,y); else addObject(x,y,state.tool.house);
+      e.preventDefault();
+    }, {passive:false});
 
     // Controls
     function bindRange(id, prop, fmt=(v)=>v){
@@ -836,6 +872,30 @@
     document.querySelectorAll('#settingsSection input[type=range]').forEach(el=> el.addEventListener('input', saveSettings));
     loadSettings();
 
+    // Fullscreen toggle
+    (function(){
+      const btn = document.getElementById('fullscreenBtn');
+      if(!btn) return;
+      const update = ()=>{ btn.textContent = document.fullscreenElement? '× Exit Fullscreen' : '⛶ Fullscreen'; };
+      btn.addEventListener('click', ()=>{
+        if (!document.fullscreenElement){
+          (document.documentElement.requestFullscreen && document.documentElement.requestFullscreen())
+          || (document.body.requestFullscreen && document.body.requestFullscreen());
+        } else {
+          document.exitFullscreen && document.exitFullscreen();
+        }
+      });
+      document.addEventListener('fullscreenchange', update);
+      update();
+    })();
+
+    // Respect reduced motion: start paused
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        state.paused = true; const p=document.getElementById('togglePause'); if(p) p.textContent='Resume';
+      }
+    } catch(_){ /* no-op */ }
+
     // Loop
     let last=performance.now();
     function loop(now){
@@ -879,9 +939,21 @@
     start();
   })();
   </script>
+  <div class="connections" style="position: fixed; left: 12px; bottom: 64px; z-index: 26; max-width: 420px; width: calc(100vw - 24px);">
+    <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
+    <div class="content">
+      <p class="desc">How this simulator connects to related posts:</p>
+      <ul>
+        <li>Read the companion article <a href="physics-aware-flies-article.html">How Flies Move in 3D</a> for the SE(3) motion ideas that inspired this.</li>
+        <li>Try the <a href="physics-aware-flies-simulation.html">3D Flies Simulator</a> to see the manifold‑aware variant and its proposal prior.</li>
+        <li>Background intuition in <a href="physics-math-primer.html">Physics Math Primer</a> and <a href="physics-toolkit-intuition.html">Toolkit Intuition</a> helps decode forces and fields.</li>
+        <li>For a visual roadmap, see <a href="physics-roadmap-visualisations.html">Physics Roadmap Visualisations</a>.</li>
+      </ul>
+    </div>
+  </div>
   <div class="related-links" style="position: static; margin: 12px;">
     <strong>Related:</strong>
-    <a href="../index.html">Home</a>
+    <a href="../index.html">Home</a> • <a href="physics-aware-flies-article.html">How Flies Move in 3D</a> • <a href="physics-aware-flies-simulation.html">3D Flies Simulator</a>
   </div>
   <footer class="footer">
     <p>&copy; 2025 antifold • Essays and simulations</p>

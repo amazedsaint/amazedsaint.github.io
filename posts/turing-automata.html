@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Turing Machines & Automata — Interactive</title>
+  <title>Turing Machines & Automata: Interactive</title>
   <meta name="description" content="Interactive visuals for finite automata and Turing machines with step‑by‑step execution, history, and intuitive breakdowns of the formal parts." />
   <link rel="stylesheet" href="../style.css" />
   <script>
@@ -50,7 +50,7 @@
         function arrows(){ const a=nodeOf('q0'), b=nodeOf('q1'); arrow(a.x,a.y,b.x,b.y,'1'); arrow(b.x,b.y,a.x,a.y,'1'); selfLoop(a,'0'); selfLoop(b,'0'); }
         function states(){ nodes.forEach(n=> stateCircle(n, n.id===cur)); }
         function tape(){ const bx=30, by=30; const cell=24; ctx.strokeStyle='#ddd'; ctx.fillStyle='#111'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; for(let i=0;i<Math.max(12, input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x, by, cell, cell); const ch = input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===head){ ctx.fillStyle='#1a8917'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#111'; } }
-          const acc = nodeOf(cur).accept && head>=input.length; const out=document.getElementById('dfaStatus'); if(out) out.textContent = (head<input.length? `state=${cur}, reading…` : `halted in ${cur} — ${acc? 'accepted':'rejected'}`); }
+          const acc = nodeOf(cur).accept && head>=input.length; const out=document.getElementById('dfaStatus'); if(out) out.textContent = (head<input.length? `state=${cur}, reading…` : `halted in ${cur} · ${acc? 'accepted':'rejected'}`); }
         function step(){ if(head>=input.length){ draw(); return; } const sym=input[head]; const nxt = trans[cur][sym]; cur=nxt; head++; draw(); }
         function reset(){ input=(document.getElementById('dfaInput').value||'').replace(/[^01]/g,''); head=0; cur='q0'; draw(); }
         document.getElementById('dfaStep').onclick=step; document.getElementById('dfaReset').onclick=reset; document.getElementById('dfaInput').oninput=reset;
@@ -96,7 +96,7 @@
         document.getElementById('dfabReset').onclick=()=>{ input=(ui.input.value||''); cur=start; head=0; renderStatus(); draw(); };
         document.getElementById('dfabStep').onclick=()=>{ if(cur==null){ ui.status.textContent='No start state.'; return; } if(head>=(input||'').length){ renderStatus(); return; } const sym=input[head]; const nxt=(trans[cur]||{})[sym]; if(!nxt){ head=input.length; renderStatus(); return; } cur=nxt; head++; renderStatus(); draw(); };
         ui.input.oninput=()=>{ input=ui.input.value||''; head=0; cur=start; renderStatus(); };
-        function renderStatus(){ const n=nodes.find(x=>x.id===cur); const acc=(head>=(input||'').length) && n && n.accept; ui.status.textContent = `state=${cur??'—'} pos=${head}/${(input||'').length} ${ (head>=(input||'').length? (acc? '• accepted':'• rejected') : '') }`; }
+        function renderStatus(){ const n=nodes.find(x=>x.id===cur); const acc=(head>=(input||'').length) && n && n.accept; ui.status.textContent = `state=${cur??'…'} pos=${head}/${(input||'').length} ${ (head>=(input||'').length? (acc? '• accepted':'• rejected') : '') }`; }
         // init
         addNode(W*0.35,H*0.5); addNode(W*0.65,H*0.5); nodes[1].accept=true; trans[nodes[0].id]={'a':nodes[1].id}; trans[nodes[1].id]={'a':nodes[0].id}; updateUI(); draw();
       }
@@ -146,7 +146,7 @@
     <article class="article-content">
       <div class="article-header">
         <span class="tile-category">Computation</span>
-        <h1 class="article-title">Turing Machines & Automata — Interactive</h1>
+        <h1 class="article-title">Turing Machines & Automata: Interactive</h1>
         <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
         <p class="article-description">A hands‑on tour of the core models of computation: finite automata (tiny, fast pattern checkers) and Turing machines (general, step‑by‑step algorithms). Each comes with a live visual and a breakdown of the parts.</p>
         <p class="note">Hover <span class="idea" data-note="Connects to NFAs: nondeterminism and ε‑moves; to Primer/Toolkit: matrices & state diagrams echo basis changes and linear maps.">here</span> for connections to companion pieces.</p>
@@ -155,7 +155,7 @@
       <div class="section">
         <h2 id="finite-automata-dfa">Finite Automata (DFA)</h2>
         <p class="note">A DFA is a small machine that reads an input left to right and keeps only a <em>state</em>. The classic five‑tuple is $(Q,\Sigma,\delta,q_0,F)$: states $Q$, alphabet $\Sigma$, transition function $\delta$, start $q_0$, accepting set $F$. <span class="idea" data-note="Connections: NFAs extend this with sets of states and ε‑moves; see ‘NFAs from First Principles’.">related</span></p>
-        <p class="note">Below is a DFA that accepts exactly the binary strings with an even number of 1s. Shift your attention between the tape and the highlighted state—the machine stores only “parity so far”. That’s the trick: limited memory, fast decisions.</p>
+        <p class="note">Below is a DFA that accepts exactly the binary strings with an even number of 1s. Shift your attention between the tape and the highlighted state: the machine stores only “parity so far”. That’s the trick: limited memory, fast decisions.</p>
         <div class="demo">
           <canvas id="dfa" width="680" height="280"></canvas>
           <div class="controls">
@@ -177,13 +177,13 @@
           <p class="note">Terms in the formula: $Q=\{q0,q1\}$; $\Sigma=\{0,1\}$; $\delta(q,\sigma)$ picks the next state; $q_0=q0$ is the start; $F=\{q0\}$ accepts even‑parity strings.</p>
           <p class="note">Deterministic vs nondeterministic: an NFA can branch, but you can track all branches as a set of states (subset construction). This is why NFAs and DFAs recognize the same class (regular languages). Kleene showed regular expressions, NFAs, and DFAs are equivalent; DFAs are closed under union/intersection (product) and, when total, complement (swap accepts).</p>
         </div>
-        <p class="note">Context: Kleene and others used such automata to formalize “regular patterns”. They are fast and simple, but they can’t count arbitrarily far—that needs a stack (pushdown) or a tape (Turing).</p>
+        <p class="note">Context: Kleene and others used such automata to formalize “regular patterns”. They are fast and simple, but they can’t count arbitrarily far; that needs a stack (pushdown) or a tape (Turing).</p>
       </div>
 
       <div class="section">
         <h2 id="turing-machines">Turing Machines</h2>
         <p class="note">A Turing machine is an idealized paper‑and‑pencil computer: a tape of symbols, a head that reads/writes, and a finite state control. Formally, $(Q,\Gamma,\Sigma,\delta,q_0,q_{acc},q_{rej})$ with tape alphabet $\Gamma$, input alphabet $\Sigma\subseteq\Gamma$, and $\delta$ mapping $(\text{state},\text{symbol})$ to $(\text{write},\text{move},\text{next})$.</p>
-        <p class="note">Below: a tiny program that increments a <em>unary</em> number (a run of 1’s). It moves right over 1’s until it finds blank, writes a 1, and halts. Simple, but you can see the head walking, the local edit, and the stop—exactly how bigger programs behave.</p>
+        <p class="note">Below: a tiny program that increments a <em>unary</em> number (a run of 1’s). It moves right over 1’s until it finds blank, writes a 1, and halts. Simple, but you can see the head walking, the local edit, and the stop: exactly how bigger programs behave.</p>
         <div class="demo">
           <div class="controls">
             <label>Unary input (1s): <input id="tmInput" type="text" value="111" /></label>
@@ -223,7 +223,7 @@
             <button id="dfabStep">Step</button>
             <button id="dfabReset">Reset</button>
           </div>
-          <p class="note" id="dfabStatus">—</p>
+          <p class="note" id="dfabStatus">…</p>
           <p class="note">Parts: $Q$ = your states; $\Sigma$ = symbols you use in transitions; $\delta$ = your arrows; $q_0$ = start; $F$ = states you toggled to accept.</p>
         </div>
         <p class="note">Tip: Try to build a DFA for strings over {0,1} that end with 01. How many states do you need? Where does the machine store “I just saw a 0”?</p>
@@ -245,7 +245,7 @@
             <button id="pdaStep">Step</button>
             <button id="pdaReset">Reset</button>
           </div>
-          <p class="note" id="pdaStatus">—</p>
+          <p class="note" id="pdaStatus">…</p>
           <p class="note">Parts: states $Q=\{q\}$ (one is enough here), stack alphabet $\Gamma=\{\$, (\}$ with base symbol $\$$; transition pushes on '(' and pops on ')' if possible; acceptance when input ends and top is $\$$.</p>
         </div>
         <p class="note">Try adding a stray ')' mid‑string and step: the pop fails and the PDA rejects immediately. That’s the stack telling you “too many closes”.</p>
@@ -269,7 +269,7 @@ q0,_ -> 1,S,qh
             <button id="tm2Reset">Reset</button>
           </div>
           <div id="tm2Tape" style="text-align:center; margin-top:8px;"></div>
-          <p class="note" id="tm2Status">—</p>
+          <p class="note" id="tm2Status">…</p>
           <p class="note">Terms: each line is $\delta(q,\sigma)=(\sigma',\text{move},q')$. Use '_' for blank. You can add states freely; halting occurs when no rule applies or you reach a halt state you designate (e.g., qh).</p>
         </div>
       </div>

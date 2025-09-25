@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Flies Simulator — Place Goals and See Motion</title>
+    <title>3D Flies Simulator: Place Goals and See Motion</title>
     <meta name="description" content="Simple 3D simulator: click to add goals, hazards, and plumes; watch how motion responds in real time.">
     <link rel="stylesheet" href="../style.css">
 </head>
@@ -134,8 +134,8 @@
       <li><b>Flies</b> = Agents with poses in <b>SE(3)</b>; they move by sampling <i>on‑manifold</i> increments (body‑frame step + small rotation) and left‑multiplying their pose.</li>
       <li><b>Generator</b> (top panel) samples increments from a mixture:
         <div class="legend">
-          <b>Haar</b> (uniform orientation on SO(3)) — preserves measure; <b>Goal</b> — heads toward nearest <span style="color:#ad8c00">attractor</span>; 
-          <b>Plume</b> — follows <span style="color:#1e7aff">attention</span> gradient; <b>Explore</b> — jitter/curiosity.
+          <b>Haar</b> (uniform orientation on SO(3)): preserves measure; <b>Goal</b>: heads toward nearest <span style="color:#ad8c00">attractor</span>;
+          <b>Plume</b>: follows <span style="color:#1e7aff">attention</span> gradient; <b>Explore</b>: jitter/curiosity.
         </div>
       </li>
       <li><b>Critic</b> (GAN-like) scores proposals by reward: closer to attractors, away from repellents, riding attention plumes, avoiding walls/collisions. With <b>Evolve</b> ✓, the generator's mixture weights update online (REINFORCE‑style).</li>
@@ -147,7 +147,7 @@
           <li>Shift‑click removes the nearest object.</li>
         </ul>
       </li>
-      <li><b>Ghost segments</b> show sampled proposals (the generator's one‑step prior) near a subset of flies — you're seeing the distribution you're training.</li>
+      <li><b>Ghost segments</b> show sampled proposals (the generator's one‑step prior) near a subset of flies. You can see the distribution you're training.</li>
     </ul>
   </div>
 

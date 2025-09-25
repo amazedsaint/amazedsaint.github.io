@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph Theory: A Practical Guide</title>
+  <meta name="description" content="A concise, visual guide to graphs: paths and cuts, trees, flows, spectra, and how networks show up across computation and physics." />
+  <link rel="stylesheet" href="../style.css">
+  <script defer src="../js/connections.js"></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="site-title"><a href="../index.html">antifold</a></h1>
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="https://github.com/amazedsaint">GitHub</a>
+        <a href="https://twitter.com/amazedsaint">Twitter</a>
+      </nav>
+    </header>
+
+    <article class="article-content">
+      <div class="article-header">
+        <span class="tile-category">Theory</span>
+        <h1 class="article-title">Graph Theory: A Practical Guide</h1>
+        <div class="article-meta">September 25, 2025 • Article • Graphs</div>
+        <p class="article-description">Graphs are the language of connection. With a few simple ideas (paths, cuts, trees, and spectra), you can model networks in computation, physics, and learning.</p>
+      </div>
+
+      <h2>Why graphs?</h2>
+      <p>Graphs capture <em>relations</em>: who talks to whom, which states are reachable, which components touch. A graph $G=(V,E)$ has vertices $V$ and edges $E\subseteq V\times V$ (undirected if $(u,v)\in E \Rightarrow (v,u)\in E$). The <strong>adjacency matrix</strong> $A\in\{0,1\}^{|V|\times|V|}$ records edges; $A_{uv}=1$ if $u\to v$.</p>
+      <p>Matrix powers count walks: $(A^k)_{uv}$ is the number of length-$k$ walks from $u$ to $v$. Add edge weights to model costs, capacities, or affinities.</p>
+
+      <h2>Local structure</h2>
+      <ul>
+        <li><strong>Degree</strong>: $\deg(u)=\sum_v A_{uv}$; the diagonal of $D=\operatorname{diag}(\deg(u))$ collects degrees.</li>
+        <li><strong>Paths & cycles</strong>: reachability (BFS) and structure (cycles vs. acyclic). Trees are connected, acyclic graphs.</li>
+        <li><strong>Special families</strong>: DAGs (topo order), bipartite graphs (2-colorable, no odd cycles), planar graphs (drawn without crossings).</li>
+      </ul>
+
+      <h2>Traversal and shortest paths</h2>
+      <p><strong>Breadth‑first search</strong> (BFS) explores in layers and yields shortest paths in unweighted graphs. For nonnegative weights, <strong>Dijkstra</strong> finds shortest paths; allowing negative edges, <strong>Bellman–Ford</strong> detects negative cycles and computes shortest distances when they don’t exist.</p>
+
+      <h2>Spanning trees and cuts</h2>
+      <p>A <strong>spanning tree</strong> touches all vertices with $|V|-1$ edges. With positive weights, <strong>minimum spanning trees</strong> (MSTs) can be found by <em>Kruskal</em> (sort edges; greedy add if no cycle) or <em>Prim</em> (grow a frontier). Cuts partition $V=S\cup \bar S$; their capacity is the sum of crossing edge weights. The <strong>max‑flow min‑cut</strong> theorem ties maximum flow from $s$ to $t$ to the minimum $s\!:\!t$ cut capacity.</p>
+
+      <h2>Spectra: smoothness and clusters</h2>
+      <p>The (combinatorial) <strong>Laplacian</strong> is $L=D-A$. For a vector $x\in\mathbb{R}^{|V|}$ defined on nodes, the <em>Dirichlet energy</em></p>
+      <p>$$\mathcal{E}(x)=x^\top L x = \frac{1}{2}\sum_{(u,v)\in E} w_{uv}\,(x_u-x_v)^2$$</p>
+      <p>is small when adjacent nodes have similar values (often read as “smooth” over the graph). The smallest eigenvalue is $0$ with eigenvector $\mathbf{1}$. The second eigenvector (the <strong>Fiedler</strong> vector) approximately separates the graph into two balanced parts with a small cut; this underpins <em>spectral clustering</em>.</p>
+
+      <h2>Random walks and diffusion</h2>
+      <p>A random walk moves $u\to v$ with probability proportional to weight $w_{uv}$. Normalized operators (e.g., $L_{\text{rw}}=I-D^{-1}A$) govern diffusion and hitting times. Many ranking and centrality measures are walk‑based: degree centrality, <em>PageRank</em>, betweenness and closeness centrality.</p>
+
+      <h2>Graphs in algorithms and learning</h2>
+      <ul>
+        <li><strong>Programs and automata</strong>: control‑flow graphs; DFA/NFA state diagrams are directed graphs; reachability and language acceptance are path questions.</li>
+        <li><strong>Optimization</strong>: flows, matchings, cuts, and network design (MST, Steiner trees).</li>
+        <li><strong>Message passing</strong>: graph neural networks update node features by aggregating neighbors (learned, weighted versions of $A$ or $D^{-1}A$).</li>
+      </ul>
+
+      <h2>Planarity and Euler’s formula</h2>
+      <p>Planar graphs satisfy $V - E + F = 2$ in any planar embedding (Euler characteristic). Non‑planarity is characterized by subdivisions of $K_5$ or $K_{3,3}$ (Kuratowski). These constraints inform routing, VLSI, and visualization.</p>
+
+      <h2>A compact toolbox</h2>
+      <ul>
+        <li><strong>Adjacency</strong> $A$ for combinatorics; <strong>Laplacian</strong> $L$ for smoothness, diffusion, and cuts.</li>
+        <li><strong>BFS/DFS</strong> for reachability, topological order, and components.</li>
+        <li><strong>Shortest paths</strong> (Dijkstra/Bellman‑Ford), <strong>MST</strong> (Kruskal/Prim), <strong>max‑flow</strong> (Edmonds–Karp/Dinic).</li>
+        <li><strong>Spectral</strong> intuition for clustering and semi‑supervised learning.</li>
+      </ul>
+
+      <div class="connections">
+        <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
+        <div class="content">
+          <p class="desc">How this article plugs into other pieces on the site:</p>
+          <ul>
+            <li>Automata as graphs: see <a href="nfa-automata.html">NFAs from First Principles</a> and <a href="turing-automata.html">Turing Machines & Automata</a> for state graphs, reachability, and products.</li>
+            <li>Learning on graphs: <a href="nn-transformers-foundations.html">Transformers: A Visual Introduction</a> frames attention as dynamic neighborhoods (implicit graphs) and aggregation.</li>
+            <li>Visual math intuition: <a href="physics-math-primer.html">Physics & Math Primer</a> and the <a href="physics-toolkit-intuition.html">Toolkit</a> build linear algebra tools used in $A$, $D$, and $L$.</li>
+            <li>Networks & fields: the <a href="physics-roadmap-visualisations.html">Physics Roadmap</a> and <a href="topology-inspired-visualisation-article.html">Shapes, Paths, and Patterns</a> connect flows, paths, and embeddings.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="related-links">
+        <strong>Related:</strong>
+        <a href="nfa-automata.html">NFAs from First Principles</a> •
+        <a href="turing-automata.html">Turing Machines & Automata</a> •
+        <a href="../index.html">Home</a>
+      </div>
+    </article>
+
+    <footer class="footer">
+      <p>&copy; 2025 antifold • Essays and simulations</p>
+      <p class="meta-mini">By Anoop • <a href="https://twitter.com/amazedsaint">Twitter</a> • <a href="https://github.com/amazedsaint">GitHub</a> • <a href="../index.html">Home</a></p>
+    </footer>
+  </div>
+</body>
+</html>

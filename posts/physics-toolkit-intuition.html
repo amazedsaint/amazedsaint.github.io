@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Physics Toolkit — Visual Intuition</title>
+  <title>Physics Toolkit: A Guided Tour</title>
   <meta name="description" content="Interactive visuals for vectors and dot product, linear maps and eigenvectors, basis mixing, damped oscillators, and a small Fourier builder." />
   <link rel="stylesheet" href="../style.css" />
   <script>
@@ -190,7 +190,7 @@
     <article class="article-content">
       <div class="article-header">
         <span class="tile-category">Toolkit</span>
-        <h1 class="article-title">Physics Toolkit — Visual Intuition</h1>
+        <h1 class="article-title">Physics Toolkit: A Guided Tour</h1>
         <div class="article-meta">September 24, 2025 • Toolkit • Interactive</div>
         <p class="article-description">Key tools used across the physics pieces here: vectors and dot product, linear maps and eigenvectors, basis mixing, damped motion, and small Fourier builds. Each has a live visual and a short breakdown of terms.</p>
         <p class="note">Hover <span class="idea" data-note="Connections: Lorentz axes and lensing geometry relate to basis & dot‑product; Spinors use rotations; Higgs uses potential curvature; Neutrinos echo Fourier/oscillations.">here</span> for how this toolkit plugs into Spacetime, Fields, and Light.</p>
@@ -221,7 +221,7 @@
         <h2 id="vectors-and-dot-product">Vectors and Dot Product</h2>
         <p class="note">The dot product measures alignment: $\mathbf a\cdot\mathbf b=\|a\|\,\|b\|\cos\theta$. It is projection times length.</p>
         <p class="note">Think of one arrow asking the other, “how much of you points in my direction?” That number is the length of the projection, scaled by the length of the receiver. In mechanics this shows up as <em>work</em>: force dot displacement. In statistics it becomes correlation. In machine learning it becomes similarity. Same picture, same rule.</p>
-        <p class="note">When the green arrow swings to be perpendicular to the blue one, the dot product goes to zero: no alignment, no work. When they overlap, it’s maximal and positive; when they point opposite, it’s large in magnitude but negative—same line, opposite direction.</p>
+        <p class="note">When the green arrow swings to be perpendicular to the blue one, the dot product goes to zero: no alignment, no work. When they overlap, it’s maximal and positive; when they point opposite, it’s large in magnitude but negative (same line, opposite direction).</p>
         <div class="demo">
           <canvas id="dot" width="540" height="280"></canvas>
           <p class="note">This picture shows two vectors (blue, green), and the projection of one onto the other (orange). Readout: a·b = <span id="dotVal">…</span></p>
@@ -238,7 +238,7 @@
       <div class="section">
         <h2 id="linear-maps-and-eigenvectors">Linear Maps and Eigenvectors</h2>
         <p class="note">A $2\times2$ matrix sends grids to sheared/scaled grids. Eigenvectors are directions that do not turn; they only stretch by $\lambda$.</p>
-        <p class="note">Watch the gray grid go to tan: that’s the map acting on space. The unit circle goes to a green ellipse. The ellipse’s principal axes are the special directions that the map doesn’t rotate—those are the eigenvectors (orange), and the radii along them are the eigenvalues.</p>
+        <p class="note">Watch the gray grid go to tan: that’s the map acting on space. The unit circle goes to a green ellipse. The ellipse’s principal axes are the special directions that the map doesn’t rotate (those are the eigenvectors, in orange), and the radii along them are the eigenvalues.</p>
         <p class="note">Why this matters: preferred directions show up everywhere. Diffusion is fastest along one axis of a crystal; a covariance matrix has principal components; stability near an equilibrium point is set by the eigenvalues of the linearized system. This little picture is the common thread.</p>
         <div class="demo">
           <canvas id="linmap" width="540" height="300"></canvas>
@@ -269,7 +269,7 @@
       <div class="section">
         <h2 id="damped-oscillator">Damped Oscillator</h2>
         <p class="note">The equation $\ddot x + \gamma\dot x + \omega^2 x=0$ models a mass on a spring with drag. In phase space, spirals show energy loss.</p>
-        <p class="note">Set $\gamma=0$ and the trail is a closed loop: energy cycles between potential ($\omega^2x^2$) and kinetic ($\dot{x}^2$). Add damping and the loop spirals inward. Mathematically, $\tfrac{\mathrm d}{\mathrm dt}\big[\tfrac12(\omega^2x^2+\dot{x}^2)\big] = -\gamma\,\dot{x}^2 \le 0$—drag always drains energy.</p>
+        <p class="note">Set $\gamma=0$ and the trail is a closed loop: energy cycles between potential ($\omega^2x^2$) and kinetic ($\dot{x}^2$). Add damping and the loop spirals inward. Mathematically, $\tfrac{\mathrm d}{\mathrm dt}\big[\tfrac12(\omega^2x^2+\dot{x}^2)\big] = -\gamma\,\dot{x}^2 \le 0$; in short, drag always drains energy.</p>
         <p class="note">Three regimes sit in that one line: underdamped ($\gamma<2\omega$) spirals with decaying oscillations; critically damped ($\gamma=2\omega$) returns fastest without overshoot; overdamped ($\gamma>2\omega$) crawls back with no wiggles. Car suspensions, microphones, and qubits all live on this diagram.</p>
         <div class="demo">
           <canvas id="sho" width="540" height="280"></canvas>

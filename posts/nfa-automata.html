@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NFAs from First Principles — Interactive</title>
+  <title>NFAs from First Principles: Interactive</title>
   <meta name="description" content="From first principles: nondeterministic finite automata (NFAs), ε‑moves, and subset construction, with live runners and a small builder." />
   <link rel="stylesheet" href="../style.css" />
   <script>
@@ -81,7 +81,7 @@
           const bx=20, by=30, cell=24; ctx.strokeStyle='#ddd'; ctx.fillStyle='#111'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           for(let i=0;i<Math.max(12,input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x,by,cell,cell); const ch=input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===pos){ ctx.fillStyle='#1a8917'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#111'; } }
           const accepting = Array.from(curSet).some(id => (nodes.find(n=>n.id===id)||{}).accept);
-          const status=document.getElementById('nfaStatus'); status.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} reading…` : `halted in {${Array.from(curSet).join(',')}} — ${accepting? 'accepted':'rejected'}`);
+          const status=document.getElementById('nfaStatus'); status.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} reading…` : `halted in {${Array.from(curSet).join(',')}} · ${accepting? 'accepted':'rejected'}`);
         }
         // init
         loadPreset(presetSel.value || 'aOrAb');
@@ -103,7 +103,7 @@
         function closure(S){ const res=new Set(S); let changed=true; while(changed){ changed=false; for(const q of Array.from(res)){ for(const t of (eps[q]||[])){ if(!res.has(t)){ res.add(t); changed=true; } } } } return res; }
         function step(){ curSet = closure(curSet); if(pos>=input.length){ renderStatus(); draw(); return; } const a=input[pos]||''; const next=new Set(); for(const q of Array.from(curSet)){ for(const d of ((trans[q]||{})[a]||[])) next.add(d); } curSet=next; pos++; renderStatus(); draw(); }
         function reset(){ input=(ui.inp.value||''); pos=0; curSet = new Set([start]); renderStatus(); draw(); }
-        function renderStatus(){ const accepting = Array.from(curSet).some(id=>acc.has(id)); ui.stat.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} pos=${pos}/${input.length}` : `halted in {${Array.from(curSet).join(',')}} — ${accepting? 'accepted':'rejected'}`); }
+        function renderStatus(){ const accepting = Array.from(curSet).some(id=>acc.has(id)); ui.stat.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} pos=${pos}/${input.length}` : `halted in {${Array.from(curSet).join(',')}} · ${accepting? 'accepted':'rejected'}`); }
         // events
         ui.add.onclick=()=>{ placing=!placing; };
         cv.addEventListener('click', (e)=>{ if(!placing) return; const r=cv.getBoundingClientRect(); addNode(e.clientX-r.left, e.clientY-r.top); placing=false; });
@@ -142,7 +142,7 @@
     <article class="article-content">
       <div class="article-header">
         <span class="tile-category">Computation</span>
-        <h1 class="article-title">NFAs from First Principles — Interactive</h1>
+        <h1 class="article-title">NFAs from First Principles: Interactive</h1>
         <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
         <p class="article-description">Nondeterministic finite automata: what they are, how ε‑moves work, and why they recognize the same languages as DFAs. Includes a runner, a small builder with ε, and a determinize table.</p>
         <p class="note">Hover <span class="idea" data-note="Connections: DFA parity and builder in ‘Turing Machines & Automata’; determinized DFA echoes products and basis changes in math toolkit.">here</span> to see links to related content.</p>
@@ -173,8 +173,8 @@
             <button id="nfaStep">Step</button>
             <button id="nfaReset">Reset</button>
           </div>
-          <p class="note" id="nfaStatus">—</p>
-          <p class="note" id="nfaExplain">—</p>
+          <p class="note" id="nfaStatus">…</p>
+          <p class="note" id="nfaExplain">…</p>
         </div>
 
       <div class="section">
@@ -197,7 +197,7 @@
             <button id="nfabReset">Reset</button>
             <button id="nfabDet">Determinize</button>
           </div>
-          <p class="note" id="nfabStatus">—</p>
+          <p class="note" id="nfabStatus">…</p>
           <div id="nfabDetTable"></div>
           <p class="note">First principles recap: $\varepsilon$‑closure collects all states you can reach for free. Each input step follows transitions from the whole set, then re‑closes under $\varepsilon$. The determinized DFA has subsets as states; start at $\varepsilon$‑closure($\{q_0\}$) and follow symbols; accept subsets that contain any accepting NFA state.</p>
         </div>
