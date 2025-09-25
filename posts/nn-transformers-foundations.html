@@ -25,6 +25,9 @@
     .note { max-width:880px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
     .bar { height:10px; background:#e8ecef; border-radius:6px; overflow:hidden; position:relative; }
     .bar > span { position:absolute; left:0; top:0; bottom:0; background:#1a8917; }
+    .tokens { max-width:880px; margin:8px auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; }
+    .token { display:inline-block; padding:4px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:#fafafa; }
+    .pair { display:inline-block; padding:2px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:#fff; }
   </style>
   <script>
     (function(){
@@ -112,7 +115,61 @@
         render(); return { render };
       }
 
-      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); }
+      // ---------- Gradient descent on a quadratic ----------
+      function gdDemo(){ const cv=document.getElementById('gd'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=320;
+        // f(x,y) = ax^2 + bxy + cy^2
+        const a=1.0, b=0.6, c=0.8; let x=1.2, y=-0.8, lr=0.2; let running=false, raf=0;
+        function f(x,y){ return a*x*x + b*x*y + c*y*y; }
+        function grad(x,y){ return { gx: 2*a*x + b*y, gy: b*x + 2*c*y }; }
+        function draw(){ ctx.clearRect(0,0,W,H); // heatmap
+          const offx=40, offy=H-40, S=60; for(let i=-8;i<=8;i++){ for(let j=-8;j<=8;j++){ const xx=i/4, yy=j/4; const val=f(xx,yy); const col = Math.max(0, Math.min(1, (val-0)/(6))); ctx.fillStyle = `rgba(26,137,23,${0.05+0.35*col})`; const X=offx+xx*S, Y=offy-yy*S; ctx.fillRect(X-10,Y-10,20,20); } }
+          // axes
+          ctx.strokeStyle='#ddd'; ctx.beginPath(); ctx.moveTo(offx-20, offy); ctx.lineTo(W-20, offy); ctx.stroke(); ctx.beginPath(); ctx.moveTo(offx, 20); ctx.lineTo(offx, H-20); ctx.stroke();
+          // point and gradient arrow
+          const X=offx+x*S, Y=offy-y*S; const g=grad(x,y); const gscale=20; ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(X,Y,4,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#b91c1c'; ctx.beginPath(); ctx.moveTo(X,Y); ctx.lineTo(X - g.gx*gscale, Y + g.gy*gscale); ctx.stroke();
+          document.getElementById('gdxy').textContent = `x=${x.toFixed(2)}, y=${y.toFixed(2)}, f=${f(x,y).toFixed(3)}`;
+        }
+        function step(){ const g=grad(x,y); x = x - lr*g.gx; y = y - lr*g.gy; draw(); }
+        function setLR(v){ lr=parseFloat(v); }
+        function reset(){ x=1.2; y=-0.8; draw(); }
+        document.getElementById('gdStep').onclick=step; document.getElementById('gdReset').onclick=reset; document.getElementById('gdLR').oninput=(e)=> setLR(e.target.value);
+        draw(); return { step, reset };
+      }
+
+      // ---------- Tiny 1D MLP forward pass (2 ReLU units) ----------
+      function mlpDemo(){ const cv=document.getElementById('mlp'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width=520, H=cv.height=220;
+        let w1a=3.0, b1a=0.0, v1a=1.0; let w1b=-2.0, b1b=0.5, v1b=1.0; let b2=0.0; const target=(x)=> Math.sin(Math.PI*x)*0.8;
+        function relu(z){ return Math.max(0,z); }
+        function yhat(x){ return v1a*relu(w1a*x + b1a) + v1b*relu(w1b*x + b1b) + b2; }
+        function draw(){ ctx.clearRect(0,0,W,H); const offx=30, offy=H*0.5, scaleX=(W-60)/2, scaleY=60;
+          // axes
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(offx, offy); ctx.lineTo(W-30, offy); ctx.stroke();
+          // target
+          ctx.strokeStyle='#bbb'; ctx.beginPath(); for(let i=0;i<=200;i++){ const x=-1 + 2*i/200; const y=target(x); const X=offx + (x+1)*scaleX; const Y=offy - y*scaleY; if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);} ctx.stroke();
+          // prediction
+          ctx.strokeStyle='#1a8917'; ctx.beginPath(); for(let i=0;i<=200;i++){ const x=-1 + 2*i/200; const y=yhat(x); const X=offx + (x+1)*scaleX; const Y=offy - y*scaleY; if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);} ctx.stroke();
+          document.getElementById('mlpeq').textContent = `y = ${v1a.toFixed(2)}·ReLU(${w1a.toFixed(2)}x+${b1a.toFixed(2)}) + ${v1b.toFixed(2)}·ReLU(${w1b.toFixed(2)}x+${b1b.toFixed(2)}) + ${b2.toFixed(2)}`;
+        }
+        const bind=(id, fn)=> document.getElementById(id).oninput=(e)=>{ fn(parseFloat(e.target.value)); draw(); };
+        bind('w1a', v=> w1a=v); bind('b1a', v=> b1a=v); bind('v1a', v=> v1a=v);
+        bind('w1b', v=> w1b=v); bind('b1b', v=> b1b=v); bind('v1b', v=> v1b=v); bind('b2', v=> b2=v);
+        draw(); return { draw };
+      }
+
+      // ---------- Toy BPE stepper ----------
+      function bpeDemo(){ const area=document.getElementById('bpeArea'); if(!area) return; const inp=document.getElementById('bpeInput'); const out=document.getElementById('bpeTokens'); const pairsEl=document.getElementById('bpePairs'); const mergesEl=document.getElementById('bpeMerges');
+        let tokens=[], merges=[];
+        function tokenize(){ const s=(inp.value||'the other brother'); tokens = s.trim().split(/\s+/).join('▁').split(''); render(); }
+        function countPairs(){ const counts=new Map(); for(let i=0;i<tokens.length-1;i++){ const pair = tokens[i]+' '+tokens[i+1]; counts.set(pair, (counts.get(pair)||0)+1); } return counts; }
+        function topPair(){ const c=countPairs(); let best=null, bestc=0; c.forEach((v,k)=>{ if(v>bestc){ bestc=v; best=k; } }); return {pair:best, count:bestc}; }
+        function mergeOnce(){ const t=topPair(); if(!t.pair) return; merges.push(t.pair.replace(' ','▁')); const [a,b]=t.pair.split(' '); const res=[]; let i=0; while(i<tokens.length){ if(i<tokens.length-1 && tokens[i]===a && tokens[i+1]===b){ res.push(a+b); i+=2; } else { res.push(tokens[i]); i++; } } tokens=res; render(); }
+        function render(){ out.innerHTML=''; tokens.forEach(tok=>{ const span=document.createElement('span'); span.className='token'; span.textContent=tok; out.appendChild(span); }); const c=countPairs(); pairsEl.innerHTML=''; Array.from(c.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8).forEach(([k,v])=>{ const p=document.createElement('span'); p.className='pair'; p.textContent=`${k} × ${v}`; pairsEl.appendChild(p); }); mergesEl.textContent = merges.join(', ');
+        }
+        document.getElementById('bpeStep').onclick=mergeOnce; document.getElementById('bpeReset').onclick=()=>{ merges=[]; tokenize(); };
+        tokenize(); return { mergeOnce };
+      }
+
+      function start(){ linearUnit(); softmaxDemo(); attentionDemo(); posencDemo(); layerNormDemo(); receptiveDemo(); gdDemo(); mlpDemo(); bpeDemo(); }
       if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
     })();
   </script>
@@ -230,6 +287,55 @@
         </div>
       </div>
 
+      <div class="section">
+        <h2 id="gradient-descent">Gradient Descent (2D Bowl)</h2>
+        <p class="note">A simple quadratic energy $$f(x,y)=ax^2+bxy+cy^2$$ with $a,b,c>0$. The update $\theta\leftarrow \theta-\eta\,\nabla f$ walks downhill by learning rate $\eta$. Too small, it crawls; too big, it may overshoot.</p>
+        <div class="demo">
+          <canvas id="gd" width="520" height="320"></canvas>
+          <div class="controls">
+            <label>learning rate η <input id="gdLR" type="range" min="0.02" max="0.6" step="0.01" value="0.20"/></label>
+            <button id="gdStep">Step</button>
+            <button id="gdReset">Reset</button>
+          </div>
+          <p class="note"><span id="gdxy">—</span>. Terms: $\nabla f=(2ax+by,\,bx+2cy)$; $\eta$ scales the step.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 id="tiny-mlp">A Tiny MLP (Two ReLUs)</h2>
+        <p class="note">Even two ReLU bumps can sketch a curve. The output is $$y = v_1\,\mathrm{ReLU}(w_1 x + b_1) + v_2\,\mathrm{ReLU}(w_2 x + b_2) + b.$$ Play with weights/biases and compare to a smooth target (gray).</p>
+        <div class="demo">
+          <canvas id="mlp" width="520" height="220"></canvas>
+          <div class="controls">
+            <label>w1a <input id="w1a" type="range" min="-5" max="5" step="0.05" value="3.0"/></label>
+            <label>b1a <input id="b1a" type="range" min="-2" max="2" step="0.01" value="0.0"/></label>
+            <label>v1a <input id="v1a" type="range" min="-3" max="3" step="0.05" value="1.0"/></label>
+            <label>w1b <input id="w1b" type="range" min="-5" max="5" step="0.05" value="-2.0"/></label>
+            <label>b1b <input id="b1b" type="range" min="-2" max="2" step="0.01" value="0.5"/></label>
+            <label>v1b <input id="v1b" type="range" min="-3" max="3" step="0.05" value="1.0"/></label>
+            <label>b2 <input id="b2" type="range" min="-1" max="1" step="0.01" value="0.0"/></label>
+          </div>
+          <p class="note">Equation: <span id="mlpeq">—</span>. Terms: $w,b$ shape each bump; $v$ scales it; $b$ shifts the whole curve.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 id="toy-bpe">A Toy Tokenizer (BPE)</h2>
+        <p class="note">Byte‑Pair Encoding merges the most frequent adjacent pair into a new token, repeatedly. Below, step through merges and watch the token list change.</p>
+        <div class="demo" id="bpeArea">
+          <div class="controls">
+            <label>Input text <input id="bpeInput" type="text" value="the other brother"/></label>
+            <button id="bpeStep">Step merge</button>
+            <button id="bpeReset">Reset</button>
+          </div>
+          <div class="note">Tokens</div>
+          <div class="tokens" id="bpeTokens"></div>
+          <div class="note">Top pairs</div>
+          <div class="tokens" id="bpePairs"></div>
+          <div class="note">Merges so far: <span id="bpeMerges">—</span></div>
+        </div>
+      </div>
+
       <div class="connections">
         <div class="header"><span class="title">Connections</span><span aria-hidden="true">▸</span></div>
         <div class="content">
@@ -256,4 +362,3 @@
   </div>
 </body>
 </html>
-
