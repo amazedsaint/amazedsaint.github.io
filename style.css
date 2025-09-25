@@ -96,6 +96,8 @@ a:hover { text-decoration: underline; }
 /* Footer */
 .footer { border-top: 1px solid var(--border); padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
 .footer a { color: var(--link); font-weight: 600; }
+.idea { border-bottom: 1px dotted var(--muted); cursor: help; }
+#ideaNote { position: fixed; z-index: 10000; max-width: 300px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); padding: 8px 10px; font-size: 12px; color: var(--text); pointer-events: none; opacity: 0; transition: opacity 120ms ease; }
 .meta-mini { font-size: 12px; color: var(--muted); }
 .related-links { margin: 16px auto; max-width: 820px; font-size: 0.95em; }
 .related-links a { color: var(--link); }

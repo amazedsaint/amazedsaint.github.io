@@ -13,6 +13,7 @@
     };
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script defer src="../js/notes.js"></script>
   <style>
     .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
@@ -147,11 +148,12 @@
         <h1 class="article-title">Turing Machines & Automata — Interactive</h1>
         <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
         <p class="article-description">A hands‑on tour of the core models of computation: finite automata (tiny, fast pattern checkers) and Turing machines (general, step‑by‑step algorithms). Each comes with a live visual and a breakdown of the parts.</p>
+        <p class="note">Hover <span class="idea" data-note="Connects to NFAs: nondeterminism and ε‑moves; to Primer/Toolkit: matrices & state diagrams echo basis changes and linear maps.">here</span> for connections to companion pieces.</p>
       </div>
 
       <div class="section">
         <h2>Finite Automata (DFA)</h2>
-        <p class="note">A DFA is a small machine that reads an input left to right and keeps only a <em>state</em>. The classic five‑tuple is $(Q,\Sigma,\delta,q_0,F)$: states $Q$, alphabet $\Sigma$, transition function $\delta$, start $q_0$, accepting set $F$.</p>
+        <p class="note">A DFA is a small machine that reads an input left to right and keeps only a <em>state</em>. The classic five‑tuple is $(Q,\Sigma,\delta,q_0,F)$: states $Q$, alphabet $\Sigma$, transition function $\delta$, start $q_0$, accepting set $F$. <span class="idea" data-note="Connections: NFAs extend this with sets of states and ε‑moves; see ‘NFAs from First Principles’.">related</span></p>
         <p class="note">Below is a DFA that accepts exactly the binary strings with an even number of 1s. Shift your attention between the tape and the highlighted state—the machine stores only “parity so far”. That’s the trick: limited memory, fast decisions.</p>
         <div class="demo">
           <canvas id="dfa" width="680" height="280"></canvas>
@@ -169,7 +171,10 @@
               <tr><td>q1</td><td>q1</td><td>q0</td></tr>
             </table>
           </div>
+          <p class="note">From first principles: choose an alphabet $\Sigma$ (here $\{0,1\}$). Words are finite strings over $\Sigma$ (the set $\Sigma^*$), including the empty word $\varepsilon$. A DFA processes a word one symbol at a time. The transition extends to whole words via $$\hat{\delta}(q,\varepsilon)=q,\qquad \hat{\delta}(q,aw)=\hat{\delta}(\,\delta(q,a),\,w\,),$$ and a word $w$ is accepted precisely when $\hat{\delta}(q_0,w)\in F$.</p>
+          <p class="note">What the state really is: a compact summary of “everything about the prefix that still matters”. For parity, that summary is a single bit: even/odd so far. For “ends with 01”, it’s whether your last one or two symbols were 0 then 1. If no finite summary exists, the language is not regular.</p>
           <p class="note">Terms in the formula: $Q=\{q0,q1\}$; $\Sigma=\{0,1\}$; $\delta(q,\sigma)$ picks the next state; $q_0=q0$ is the start; $F=\{q0\}$ accepts even‑parity strings.</p>
+          <p class="note">Deterministic vs nondeterministic: an NFA can branch, but you can track all branches as a set of states (subset construction). This is why NFAs and DFAs recognize the same class (regular languages). Kleene showed regular expressions, NFAs, and DFAs are equivalent; DFAs are closed under union/intersection (product) and, when total, complement (swap accepts).</p>
         </div>
         <p class="note">Context: Kleene and others used such automata to formalize “regular patterns”. They are fast and simple, but they can’t count arbitrarily far—that needs a stack (pushdown) or a tape (Turing).</p>
       </div>
