@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game Of Flies — Houses and Hazards</title>
-  <meta name="description" content="Place houses and hazards; watch flies flock and spread information with physics-based rules." />
+  <title>Game Of Flies — Houses, Hazards, Orbiting, and Combat</title>
+  <meta name="description" content="Place houses and hazards; flies explore, adopt allegiances, orbit flags, fight rivals, and switch sides under morale and dominance. Influence lines show flag pull." />
   <link rel="stylesheet" href="../style.css" />
   <style>
     html, body { height: 100%; }
@@ -21,6 +21,7 @@
     #canvas { width: 100%; height: 100%; display: block; background: #ffffff; cursor: crosshair; }
     .hud { position: fixed; left: 12px; bottom: 12px; background: rgba(255,255,255,0.95); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 12px; color: var(--text); }
     .legend { color: var(--muted); font-size: 12px; }
+    .sim-title { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 25; background: rgba(255,255,255,0.92); border:1px solid var(--border); padding: 6px 10px; border-radius: 999px; font-weight: 700; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     /* Emoji button color cues (channel + valence) */
     /* Flag buttons as colored blocks */
     /* House buttons */
@@ -87,6 +88,7 @@
   <div class="sim-root">
     <canvas id="canvas"></canvas>
   </div>
+  <div class="sim-title" id="simTitle">Game Of Flies</div>
   <div class="panel controls" id="controlsPanel">
     <div class="panel-header" id="controlsHeader">
       <span class="panel-title">Controls</span>
@@ -710,8 +712,14 @@
       const concept = state.tool.house || 'object';
       // health summary
       let mh=0; for(const f of state.flies){ mh += (f.h||0); } mh/=n;
-      el.innerHTML = `flies=${state.flies.length} • objs=${state.objs.length} • mean q=[${mr.toFixed(2)}, ${mg.toFixed(2)}, ${mb.toFixed(2)}] • health=${mh.toFixed(2)} • clashes=${state.conflicts||0}`+
-                     `<div class="legend">Click to ${state.tool.mode==='add'?'place':'remove'} ${concept}. Shift-click always removes.</div>`;
+      // object breakdown
+      let nAt=0, nHz=0; for(const o of state.objs){ if(o.type==='attractor') nAt++; else nHz++; }
+      // allegiance counts
+      let c0=0,c1=0,c2=0,neu=0; for(const f of state.flies){ if(f.allegiance===0) c0++; else if(f.allegiance===1) c1++; else if(f.allegiance===2) c2++; else neu++; }
+      // status line
+      const status = state.paused? 'Paused' : (state.objs.length===0? 'Exploring' : ((state.conflicts||0)>0? 'Engaged' : 'Flocking'));
+      el.innerHTML = `status=${status} • flies=${state.flies.length} • flags=${nAt} • hazards=${nHz} • A[0,1,2]=[${c0},${c1},${c2}] • neutral=${neu} • ⟨q⟩=[${mr.toFixed(2)}, ${mg.toFixed(2)}, ${mb.toFixed(2)}] • ⟨health⟩=${mh.toFixed(2)} • clashes=${state.conflicts||0}`+
+                     `<div class="legend">Click to ${state.tool.mode==='add'?'place':'remove'} ${concept}. Shift‑click removes. Hover flags for awareness count.</div>`;
     }
 
     // Interaction
