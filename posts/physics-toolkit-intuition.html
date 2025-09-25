@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physics Toolkit — Visual Intuition</title>
+  <meta name="description" content="Interactive visuals for vectors and dot product, linear maps and eigenvectors, basis mixing, damped oscillators, and a small Fourier builder." />
+  <link rel="stylesheet" href="../style.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["$","$"],["\\(","\\)"]], displayMath: [["$$","$$"],["\\[","\\]"]], packages: {'[+]':['base','ams']}, processEscapes: true },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:820px; margin:12px auto; }
+    canvas { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
+    .controls label { font-size:12px; color: var(--muted); }
+    .controls input[type=range] { width: 160px; accent-color: var(--accent); }
+    .controls input[type=checkbox] { accent-color: var(--accent); }
+    .note { max-width:820px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
+  </style>
+  <script>
+    (function(){
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // 1) Vectors & dot product
+      function dotDemo(){
+        const cv = document.getElementById('dot'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=280; let aLen=1.0, aAng=0.2, bLen=1.0, bAng=1.0;
+        const s = 80; const cx=W*0.5, cy=H*0.6;
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          // axes
+          ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,cy); ctx.lineTo(W-20,cy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx,H-10); ctx.stroke();
+          // vectors
+          const ax = Math.cos(aAng)*aLen, ay = Math.sin(aAng)*aLen;
+          const bx = Math.cos(bAng)*bLen, by = Math.sin(bAng)*bLen;
+          drawArrow(cx,cy, cx+ax*s, cy-ay*s, 'rgba(0,120,255,0.9)');
+          drawArrow(cx,cy, cx+bx*s, cy-by*s, 'rgba(26,137,23,0.9)');
+          // projection of b onto a
+          const adotb = ax*bx + ay*by; const a2 = ax*ax+ay*ay; const k = (a2>1e-6)? (adotb/a2) : 0; const px = ax*k, py = ay*k;
+          ctx.setLineDash([4,3]); drawArrow(cx,cy, cx+px*s, cy-py*s, 'rgba(200,120,0,0.9)'); ctx.setLineDash([]);
+          // text
+          const val = adotb.toFixed(3);
+          const out = document.getElementById('dotVal'); if(out) out.textContent = val;
+        }
+        function drawArrow(x1,y1,x2,y2,color){ ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); const a=Math.atan2(y2-y1,x2-x1); const r=8; ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-r*Math.cos(a-0.3), y2-r*Math.sin(a-0.3)); ctx.lineTo(x2-r*Math.cos(a+0.3), y2-r*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle=color; ctx.fill(); }
+        function setALen(v){ aLen=parseFloat(v); draw(); }
+        function setAAng(v){ aAng=parseFloat(v); draw(); }
+        function setBLen(v){ bLen=parseFloat(v); draw(); }
+        function setBAng(v){ bAng=parseFloat(v); draw(); }
+        draw();
+        return { setALen, setAAng, setBLen, setBAng };
+      }
+
+      // 2) Linear map & eigenvectors for 2x2
+      function eigenDemo(){
+        const cv = document.getElementById('linmap'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=300; let a=1.2,b=0.3,c=0.1,d=0.9; const s=70; const cx=W*0.5, cy=H*0.7;
+        function Mx(x,y){ return { x:a*x + b*y, y:c*x + d*y }; }
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          // draw grid and its image
+          ctx.strokeStyle='#eee'; for(let gx=-3; gx<=3; gx++){ const p1=toPix(gx,-3), p2=toPix(gx,3); line(p1,p2,'#eee'); const q1=toPixM(gx,-3), q2=toPixM(gx,3); line(q1,q2,'#f0dbc2'); }
+          for(let gy=-3; gy<=3; gy++){ const p1=toPix(-3,gy), p2=toPix(3,gy); line(p1,p2,'#eee'); const q1=toPixM(-3,gy), q2=toPixM(3,gy); line(q1,q2,'#f0dbc2'); }
+          // unit circle and ellipse image
+          circle(toPix(0,0), s, 'rgba(0,120,255,0.25)');
+          drawEllipseImage();
+          // eigenvectors if real
+          const tr=a+d, det=a*d-b*c; const disc=tr*tr-4*det; const evOut=document.getElementById('eigVal');
+          if (disc>=0){ const r=Math.sqrt(disc); const l1=(tr+r)/2, l2=(tr-r)/2; if(evOut) evOut.textContent=`λ1=${l1.toFixed(3)}, λ2=${l2.toFixed(3)}`;
+            const v1 = eigenVec(l1), v2 = eigenVec(l2); if(v1) arrowVec(v1,'rgba(200,120,0,0.9)'); if(v2) arrowVec(v2,'rgba(200,120,0,0.9)');
+          } else { if(evOut) evOut.textContent='no real eigenvectors'; }
+        }
+        function eigenVec(l){ // solve (A-λI)v=0 -> pick v=(b, l-a) if not both ~0
+          const vx = Math.abs(b)>1e-6? b : (Math.abs(l-d)>1e-6? (l-d) : 0);
+          const vy = (Math.abs(b)>1e-6? (l-a) : (Math.abs(c)>1e-6? c : 0));
+          const n=Math.hypot(vx,vy); if(n<1e-9) return null; return {x:vx/n, y:vy/n};
+        }
+        function arrowVec(v,color){ const p=toPix(0,0); const q=toPix(v.x, v.y); line(p,q,color,true); }
+        function drawEllipseImage(){ ctx.strokeStyle='rgba(26,137,23,0.8)'; ctx.beginPath(); for(let t=0;t<=Math.PI*2+1e-3;t+=0.02){ const x=Math.cos(t), y=Math.sin(t); const m=Mx(x,y); const P=toPix(m.x,m.y); if(t===0) ctx.moveTo(P.x,P.y); else ctx.lineTo(P.x,P.y);} ctx.stroke(); }
+        function line(p1,p2,color,arrow){ ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); if(arrow){ const aAng=Math.atan2(p2.y-p1.y,p2.x-p1.x); const r=8; ctx.beginPath(); ctx.moveTo(p2.x,p2.y); ctx.lineTo(p2.x-r*Math.cos(aAng-0.3), p2.y-r*Math.sin(aAng-0.3)); ctx.lineTo(p2.x-r*Math.cos(aAng+0.3), p2.y-r*Math.sin(aAng+0.3)); ctx.closePath(); ctx.fillStyle=color; ctx.fill(); } }
+        function toPix(x,y){ return { x: cx + x*s, y: cy - y*s }; }
+        function toPixM(x,y){ const m=Mx(x,y); return toPix(m.x,m.y); }
+        function setA(v){ a=parseFloat(v); draw(); }
+        function setB(v){ b=parseFloat(v); draw(); }
+        function setC(v){ c=parseFloat(v); draw(); }
+        function setD(v){ d=parseFloat(v); draw(); }
+        draw();
+        return { setA, setB, setC, setD };
+      }
+
+      // 3) Basis mixing (2D rotation)
+      function mixingDemo(){
+        const cv = document.getElementById('mix'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=260; let th=0.6; const s=80; const cx=W*0.5, cy=H*0.7; const vec={x:1.0,y:0.4};
+        function draw(){ ctx.clearRect(0,0,W,H); axes();
+          // original basis
+          arrow(0,0,1,0,'#888'); arrow(0,0,0,1,'#888');
+          // rotated basis
+          const c=Math.cos(th), si=Math.sin(th); arrow(0,0,c,si,'rgba(0,120,255,0.9)'); arrow(0,0,-si,c,'rgba(0,120,255,0.9)');
+          // vector and its coordinates in both bases
+          arrow(0,0,vec.x,vec.y,'rgba(200,120,0,0.9)');
+          const vrot={ x: c*vec.x + si*vec.y, y: -si*vec.x + c*vec.y };
+          const out=document.getElementById('mixVal'); if(out) out.textContent=`in rotated basis: (${vrot.x.toFixed(2)}, ${vrot.y.toFixed(2)})`;
+        }
+        function axes(){ ctx.strokeStyle='#eee'; const p1=toPix(-2,0), p2=toPix(2,0), p3=toPix(0,-2), p4=toPix(0,2); line(p1,p2); line(p3,p4); }
+        function line(p1,p2){ ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); }
+        function toPix(x,y){ return { x: cx + x*s, y: cy - y*s }; }
+        function arrow(x1,y1,x2,y2,color){ const p1=toPix(x1,y1), p2=toPix(x2,y2); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); const a=Math.atan2(p2.y-p1.y,p2.x-p1.x); const r=7; ctx.beginPath(); ctx.moveTo(p2.x,p2.y); ctx.lineTo(p2.x-r*Math.cos(a-0.3), p2.y-r*Math.sin(a-0.3)); ctx.lineTo(p2.x-r*Math.cos(a+0.3), p2.y-r*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle=color; ctx.fill(); }
+        function setTheta(v){ th=parseFloat(v); draw(); }
+        draw();
+        return { setTheta };
+      }
+
+      // 4) Damped oscillator (phase space)
+      function shoDemo(){
+        const cv = document.getElementById('sho'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=540, H=cv.height=280; let w=2.0, g=0.2; let x=1.0, v=0.0; const dt=0.016; let raf=0;
+        function step(){ const a = -w*w*x - g*v; v += a*dt; x += v*dt; }
+        function draw(){ ctx.clearRect(0,0,W,H); axes(); const s=80, cx=W*0.5, cy=H*0.6; // phase portrait trail
+          ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.beginPath(); let tx=x, tv=v; for(let i=0;i<400;i++){ const px=cx+tx*s, py=cy-tv*s; if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); const a=-w*w*tx-g*tv; tv+=a*dt; tx+=tv*dt; }
+          ctx.stroke();
+          const E = 0.5*(w*w*x*x + v*v); const out=document.getElementById('shoE'); if(out) out.textContent=E.toFixed(3);
+        }
+        function axes(){ ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,H*0.6); ctx.lineTo(W-20,H*0.6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W*0.5,10); ctx.lineTo(W*0.5,H-10); ctx.stroke(); }
+        function setW(val){ w=parseFloat(val); }
+        function setG(val){ g=parseFloat(val); }
+        function reset(){ x=1.0; v=0.0; }
+        function loop(){ step(); draw(); if(!reduce) raf=requestAnimationFrame(loop); }
+        draw(); loop();
+        return { setW, setG, reset };
+      }
+
+      // 5) Tiny Fourier builder
+      function fourierDemo(){
+        const cv = document.getElementById('fourier'); if(!cv) return; const ctx=cv.getContext('2d');
+        const W=cv.width=560, H=cv.height=260; let A=[1,0,0,0,0];
+        function signal(t){ let s=0; for(let k=1;k<=5;k++){ s+= A[k-1]*Math.cos(2*Math.PI*k*t); } return s; }
+        function draw(){ ctx.clearRect(0,0,W,H); // time plot
+          const L=H*0.55; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(20,L); ctx.lineTo(W-20,L); ctx.stroke();
+          ctx.strokeStyle='rgba(0,120,255,0.9)'; ctx.beginPath(); for(let i=0;i<=520;i++){ const t=i/520; const y=L - signal(t)*60; const x=20 + i; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} ctx.stroke();
+          // spectrum bars
+          const baseY=H-20; const barW=20; for(let k=1;k<=5;k++){ const amp=Math.abs(A[k-1]); ctx.fillStyle='rgba(26,137,23,0.9)'; const h=amp*60; const x=30 + (k-1)*(barW+8); ctx.fillRect(x, baseY-h, barW, h); ctx.fillStyle='#666'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(String(k), x+6, baseY+12); }
+        }
+        function setAmp(k,val){ A[k-1]=parseFloat(val); draw(); }
+        draw();
+        return { setAmp };
+      }
+
+      function start(){
+        const dot = dotDemo(); const eig = eigenDemo(); const mix = mixingDemo(); const sho = shoDemo(); const f = fourierDemo();
+        const aLen=document.getElementById('aLen'); if(aLen) aLen.oninput=e=>dot.setALen(e.target.value);
+        const aAng=document.getElementById('aAng'); if(aAng) aAng.oninput=e=>dot.setAAng(e.target.value);
+        const bLen=document.getElementById('bLen'); if(bLen) bLen.oninput=e=>dot.setBLen(e.target.value);
+        const bAng=document.getElementById('bAng'); if(bAng) bAng.oninput=e=>dot.setBAng(e.target.value);
+        const A=document.getElementById('mA'); if(A) A.oninput=e=>eig.setA(e.target.value);
+        const B=document.getElementById('mB'); if(B) B.oninput=e=>eig.setB(e.target.value);
+        const C=document.getElementById('mC'); if(C) C.oninput=e=>eig.setC(e.target.value);
+        const D=document.getElementById('mD'); if(D) D.oninput=e=>eig.setD(e.target.value);
+        const TH=document.getElementById('mixTheta'); if(TH) TH.oninput=e=>mix.setTheta(e.target.value);
+        const W=document.getElementById('w'); if(W) W.oninput=e=>sho.setW(e.target.value);
+        const G=document.getElementById('g'); if(G) G.oninput=e=>sho.setG(e.target.value);
+        const RS=document.getElementById('shoReset'); if(RS) RS.onclick=()=>sho.reset();
+        for(let k=1;k<=5;k++){ const el=document.getElementById('A'+k); if(el) el.oninput=e=>f.setAmp(k,e.target.value); }
+      }
+      if (document.readyState==='complete' || document.readyState==='interactive') start(); else document.addEventListener('DOMContentLoaded', start);
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="site-title">antifold</h1>
+      <nav class="nav"><a href="../index.html">← Home</a></nav>
+    </header>
+
+    <article class="article-content">
+      <div class="article-header">
+        <span class="tile-category">Toolkit</span>
+        <h1 class="article-title">Physics Toolkit — Visual Intuition</h1>
+        <div class="article-meta">September 24, 2025 • Toolkit • Interactive</div>
+        <p class="article-description">Key tools used across the physics pieces here: vectors and dot product, linear maps and eigenvectors, basis mixing, damped motion, and small Fourier builds. Each has a live visual and a short breakdown of terms.</p>
+      </div>
+
+      <div class="section">
+        <h2>Vectors and Dot Product</h2>
+        <p class="note">The dot product measures alignment: $\mathbf a\cdot\mathbf b=\|a\|\,\|b\|\cos\theta$. It is projection times length.</p>
+        <div class="demo">
+          <canvas id="dot" width="540" height="280"></canvas>
+          <p class="note">This picture shows two vectors (blue, green), and the projection of one onto the other (orange). Readout: a·b = <span id="dotVal">…</span></p>
+          <div class="controls">
+            <label>a length <input id="aLen" type="range" min="0.2" max="2.5" step="0.01" value="1.00"/></label>
+            <label>a angle <input id="aAng" type="range" min="-3.14" max="3.14" step="0.01" value="0.20"/></label>
+            <label>b length <input id="bLen" type="range" min="0.2" max="2.5" step="0.01" value="1.00"/></label>
+            <label>b angle <input id="bAng" type="range" min="-3.14" max="3.14" step="0.01" value="1.00"/></label>
+          </div>
+          <p class="note">Terms in the formula: $\|a\|,\|b\|$ are lengths; $\theta$ is angle between; $\cos\theta$ is the fraction of one along the other; the projection arrow shows $\|b\|\cos\theta$.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Linear Maps and Eigenvectors</h2>
+        <p class="note">A $2\times2$ matrix sends grids to sheared/scaled grids. Eigenvectors are directions that do not turn; they only stretch by $\lambda$.</p>
+        <div class="demo">
+          <canvas id="linmap" width="540" height="300"></canvas>
+          <p class="note">This picture shows a grid (gray) and its image (tan), the unit circle (blue) and its image (green). Readout: <span id="eigVal">…</span></p>
+          <div class="controls">
+            <label>a <input id="mA" type="range" min="-2.0" max="2.0" step="0.01" value="1.20"/></label>
+            <label>b <input id="mB" type="range" min="-2.0" max="2.0" step="0.01" value="0.30"/></label>
+            <label>c <input id="mC" type="range" min="-2.0" max="2.0" step="0.01" value="0.10"/></label>
+            <label>d <input id="mD" type="range" min="-2.0" max="2.0" step="0.01" value="0.90"/></label>
+          </div>
+          <p class="note">Terms in the formulas: $\begin{bmatrix}a&b\\c&d\end{bmatrix}$ sets the map; eigenvalues solve $\det(A-\lambda I)=0$; eigenvectors solve $(A-\lambda I)\,\mathbf v=0$; real eigenvectors appear as orange arrows.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Basis Mixing</h2>
+        <p class="note">Changing basis rotates coordinates. A rotation by $\theta$ mixes components: $\begin{bmatrix}\cos\theta & \sin\theta\\-\sin\theta & \cos\theta\end{bmatrix}$.</p>
+        <div class="demo">
+          <canvas id="mix" width="540" height="260"></canvas>
+          <p class="note">This picture shows original axes (gray), rotated axes (blue), a fixed vector (orange), and its coordinates in the rotated basis. Readout: <span id="mixVal">…</span></p>
+          <div class="controls"><label>θ <input id="mixTheta" type="range" min="0" max="6.283" step="0.01" value="0.60"/></label></div>
+          <p class="note">Terms in the formulas: $\cos\theta$ keeps the part along the new axis; $\sin\theta$ moves the cross‑component; the matrix columns are where the unit basis vectors go.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Damped Oscillator</h2>
+        <p class="note">The equation $\ddot x + \gamma\dot x + \omega^2 x=0$ models a mass on a spring with drag. In phase space, spirals show energy loss.</p>
+        <div class="demo">
+          <canvas id="sho" width="540" height="280"></canvas>
+          <p class="note">This picture shows the phase portrait trail from the current state. Readout: energy‑like value $E=\tfrac12(\omega^2 x^2 + \dot x^2)= <span id="shoE">…</span>$</p>
+          <div class="controls">
+            <label>ω <input id="w" type="range" min="0.2" max="5.0" step="0.01" value="2.00"/></label>
+            <label>γ <input id="g" type="range" min="0.0" max="2.0" step="0.01" value="0.20"/></label>
+            <button class="btn" id="shoReset">Reset</button>
+          </div>
+          <p class="note">Terms in the formula: $x$ is displacement; $\dot x$ is velocity; $\ddot x$ is acceleration; $\gamma$ controls damping strength; $\omega$ sets the natural frequency; with $\gamma=0$, $E$ stays constant.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>A Tiny Fourier Builder</h2>
+        <p class="note">Many signals can be written as a sum of tones: $s(t)=\sum_k A_k\cos(2\pi k t)$. Turning tones on/off changes shape instantly.</p>
+        <div class="demo">
+          <canvas id="fourier" width="560" height="260"></canvas>
+          <p class="note">This picture shows time signal (blue) and a small bar spectrum (green) for $k=1..5$.</p>
+          <div class="controls">
+            <label>A1 <input id="A1" type="range" min="0" max="1.5" step="0.01" value="1.00"/></label>
+            <label>A2 <input id="A2" type="range" min="0" max="1.5" step="0.01" value="0.00"/></label>
+            <label>A3 <input id="A3" type="range" min="0" max="1.5" step="0.01" value="0.00"/></label>
+            <label>A4 <input id="A4" type="range" min="0" max="1.5" step="0.01" value="0.00"/></label>
+            <label>A5 <input id="A5" type="range" min="0" max="1.5" step="0.01" value="0.00"/></label>
+          </div>
+          <p class="note">Terms in the formula: $A_k$ is the amplitude of tone $k$; the cosine sets the shape; higher $k$ means higher frequency; the bar height shows $|A_k|$.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Summary</h2>
+        <p class="note">You now have visuals for core tools: alignment and projection (dot), linear maps and eigenvectors (shape & preferred directions), basis mixing (rotations), damped motion (phase space), and a tiny Fourier builder (time/frequency). Each term in the equations is spelled out where it appears; use the sliders until the shapes feel familiar.</p>
+      </div>
+    </article>
+
+    <footer class="footer">
+      <p>&copy; 2025 antifold • Essays and simulations</p>
+    </footer>
+  </div>
+</body>
+</html>
+
