@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Physics & Math Primer — Simple Visuals</title>
-  <meta name="description" content="Plain-English primer for phase, rotations, spacetime metric, two-state systems, simple potentials, and basic gauge ideas — each with a small interactive visual." />
+  <title>Physics & Math Primer — Visual Foundations</title>
+  <meta name="description" content="Interactive primer for complex phase, rotations, spacetime metric, two‑state systems, potentials, and basic gauge ideas — each with a small visual and equation." />
   <link rel="stylesheet" href="../style.css" />
   <script>
     window.MathJax = {
@@ -199,14 +199,14 @@
     <article class="article-content">
       <div class="article-header">
         <span class="tile-category">Primer</span>
-        <h1 class="article-title">Physics & Math Primer — Simple Visuals</h1>
+        <h1 class="article-title">Physics & Math Primer — Visual Foundations</h1>
         <div class="article-meta">September 24, 2025 • Primer • Interactive</div>
-        <p class="article-description">Short, plain‑English notes with small visuals for the ideas used in the main article: phase, rotations, spacetime metric, two‑state systems, potentials, and basic gauge thinking.</p>
+        <p class="article-description">Short notes with small visuals for core tools: complex phase, rotations, spacetime metric, two‑state waves, potentials and curvature, and a first look at gauge fields.</p>
       </div>
 
       <div class="section">
         <h2>Complex Numbers and Phase</h2>
-        <p class="note">The number $e^{i\alpha}$ is a unit arrow in the plane: it rotates by angle $\alpha$ without changing length. Real and imaginary parts are $\cos\alpha$ and $\sin\alpha$.</p>
+        <p class="note">The number $e^{i\alpha}$ is a unit arrow in the plane: it rotates by angle $\alpha$ without changing length. Real and imaginary parts are $\cos\alpha$ and $\sin\alpha$. Euler linked exponentials with sines and cosines in the 1700s; later, Argand’s diagram made the picture standard. Engineers and physicists use this to track oscillations and waves cleanly.</p>
         <div class="demo">
           <canvas id="phaseWheel" width="420" height="240"></canvas>
           <p class="note">This picture shows $e^{i\alpha}=(\cos\alpha,\,\sin\alpha)$. Re/Im are the x/y components.</p>
@@ -217,7 +217,7 @@
 
       <div class="section">
         <h2>Rotations as Matrices</h2>
-        <p class="note">A 2D rotation is a simple matrix acting on a vector. The matrix entries are sines and cosines of the angle.</p>
+        <p class="note">A 2D rotation is a matrix acting on a vector. The entries are sines and cosines of the angle. This form became common in 19th–20th century mechanics because matrices compose cleanly: two rotations multiply to give a third. It’s also how computers represent and combine rotations.</p>
         <div class="demo">
           <canvas id="rot2D" width="420" height="240"></canvas>
           <p class="note">This picture shows $R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}$ rotating an arrow by $\theta$.</p>
@@ -228,7 +228,7 @@
 
       <div class="section">
         <h2>Euclidean Circles vs. Minkowski Cones</h2>
-        <p class="note">In ordinary space, $x^2+y^2=r^2$ draws a circle. In spacetime (with $c=1$ in 1+1D), $t^2-x^2=s^2$ draws hyperbolas that keep the “spacetime distance” fixed.</p>
+        <p class="note">In ordinary space, $x^2+y^2=r^2$ draws a circle. In spacetime (with $c=1$ in 1+1D), $t^2-x^2=s^2$ draws hyperbolas that keep the “spacetime distance” fixed. Einstein’s 1905 postulate about light’s speed led Minkowski in 1908 to fold space and time together; these hyperbolas are the footprints of that geometry.</p>
         <div class="demo">
           <canvas id="metric" width="560" height="280"></canvas>
           <p class="note">This picture shows a unit circle (blue) and the hyperbola $t^2-x^2=s^2$ (green). Both express an invariant “distance”, but with different signs.</p>
@@ -239,7 +239,7 @@
 
       <div class="section">
         <h2>Two‑State Systems (Bloch Picture)</h2>
-        <p class="note">A two‑state wave can be written as $|\psi\rangle=\cos\tfrac{\theta}{2}\,|0\rangle+e^{i\phi}\sin\tfrac{\theta}{2}\,|1\rangle$. Probabilities are $P(0)=\cos^2(\theta/2)$ and $P(1)=\sin^2(\theta/2)$.</p>
+        <p class="note">A two‑state wave can be written as $|\psi\rangle=\cos\tfrac{\theta}{2}\,|0\rangle+e^{i\phi}\sin\tfrac{\theta}{2}\,|1\rangle$. Probabilities are $P(0)=\cos^2(\theta/2)$ and $P(1)=\sin^2(\theta/2)$. The Bloch picture dates to the 1940s (NMR): a single point on a sphere encodes the state, with angles setting measurement outcomes. It is now the standard way to think about qubits.</p>
         <div class="demo">
           <canvas id="bloch" width="420" height="240"></canvas>
           <p class="note">This picture shows the state’s direction on the Bloch circle (equator projection) and reports $P(0)$ and $P(1)$.</p>
@@ -253,7 +253,7 @@
 
       <div class="section">
         <h2>Potentials and Small Oscillations</h2>
-        <p class="note">A particle tends to roll downhill in a potential $V(x)$. Near a minimum, the curvature $V''(x_\text{min})$ sets the small‑oscillation frequency. In particle physics, with $\hbar=c=1$, a mass behaves like $m^2\sim V''$.</p>
+        <p class="note">A particle tends to roll downhill in a potential $V(x)$. Near a minimum, the curvature $V''(x_\text{min})$ sets the small‑oscillation frequency. From Lagrange onward, this “small oscillations” idea powered mechanics: approximate the bottom of a well by a quadratic and read off the frequency. In high‑energy units ($\hbar=c=1$), a mass behaves like $m^2\sim V''$.</p>
         <div class="demo">
           <canvas id="potential" width="560" height="260"></canvas>
           <p class="note">This picture shows $V(x)=\tfrac{\lambda}{4}(x^2-v^2)^2$. The readout shows $m^2=V''(x_\text{min})=2\lambda v^2$.</p>
@@ -268,7 +268,7 @@
 
       <div class="section">
         <h2>Why We Need a Covariant Derivative (1D)</h2>
-        <p class="note">If a wave’s phase $\alpha(x)$ varies with position, an ordinary derivative “sees” that variation even when the amplitude is constant. A gauge field $A_\mu$ fixes this so that the derivative respects the relabeling.</p>
+        <p class="note">If a wave’s phase $\alpha(x)$ varies with position, an ordinary derivative “sees” that variation even when the amplitude is constant. A gauge field $A_\mu$ fixes this so that the derivative respects the relabeling. This grew out of Maxwell’s equations, where a hidden freedom to change potentials leaves the fields unchanged; Yang–Mills extended the idea to richer “internal labels”.</p>
         <div class="demo">
           <canvas id="gauge1D" width="560" height="160"></canvas>
           <p class="note">This picture shows a 1D phase $\alpha(x)$ and compares the average size of $\partial_x\psi$ vs. $D_x\psi$ with $A_x=-(1/g)\,\partial_x\alpha$.</p>
