@@ -63,6 +63,7 @@
         const cv = document.getElementById('linmap'); if(!cv) return; const ctx=cv.getContext('2d');
         const W=cv.width=540, H=cv.height=300; let a=1.2,b=0.3,c=0.1,d=0.9; const s=70; const cx=W*0.5, cy=H*0.7;
         function Mx(x,y){ return { x:a*x + b*y, y:c*x + d*y }; }
+        function circle(p, r, color){ ctx.strokeStyle=color; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.stroke(); }
         function draw(){
           ctx.clearRect(0,0,W,H);
           // draw grid and its image
@@ -275,4 +276,3 @@
   </div>
 </body>
 </html>
-
