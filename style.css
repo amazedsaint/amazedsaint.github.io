@@ -273,7 +273,7 @@ em { font-style: italic; color: var(--text-2); }
 
 .card-cover {
   position: relative;
-  height: 44px;
+  height: 52px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
