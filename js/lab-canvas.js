@@ -1,34 +1,72 @@
-// lab-canvas.js — Shared animation engine for research lab pages
-// Dot field, flow lines, connection graph, noise, ASCII overlay
-// Mouse + scroll reactive
+// lab-canvas.js — Lattice animation engine
+// Staged intro, translucent rendering, strong mouse response, theme-aware
 (function(){
   'use strict';
 
-  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ── Colors ──
-  const C = {
-    dot:      'rgba(255,255,255,0.12)',
-    dotBright:'rgba(255,255,255,0.25)',
-    line:     'rgba(106,169,255,0.06)',
-    lineHot:  'rgba(106,169,255,0.15)',
-    flow:     'rgba(155,124,255,0.04)',
-    flowBright:'rgba(155,124,255,0.10)',
-    ascii:    'rgba(255,255,255,0.025)',
-    green:    'rgba(124,255,196,0.08)',
-  };
+  // ── Theme-reactive colors ──
+  var C = {};
+  function readColors(){
+    var s = getComputedStyle(document.documentElement);
+    function g(n,fb){ return s.getPropertyValue(n).trim() || fb; }
+    C.bg       = g('--canvas-bg',       '#0a0a0a');
+    C.dot      = g('--canvas-dot',      'rgba(255,255,255,0.12)');
+    C.dotBright= g('--canvas-dot-bright','rgba(255,255,255,0.30)');
+    C.line     = g('--canvas-line',     'rgba(106,169,255,0.06)');
+    C.lineHot  = g('--canvas-line-hot', 'rgba(106,169,255,0.18)');
+    C.flow     = g('--canvas-flow',     'rgba(155,124,255,0.04)');
+    C.ascii    = g('--canvas-ascii',    'rgba(255,255,255,0.025)');
+    C.trail    = g('--canvas-trail',    'rgba(10,10,10,0.12)');
+  }
 
   // ── State ──
-  let canvas, ctx, W, H, DPR;
-  let mouse = { x: -9999, y: -9999 };
-  let scrollY = 0, scrollMax = 1;
-  let dots = [];
-  let flows = [];
-  let raf = 0;
-  const DOT_SPACING = 50;
-  const FLOW_COUNT = 8;
-  const CONNECTION_DIST = 120;
-  const MOUSE_RADIUS = 180;
+  var canvas, ctx, W, H, DPR;
+  var mouse = { x: -9999, y: -9999, vx: 0, vy: 0, prevX: -9999, prevY: -9999 };
+  var scrollY = 0, scrollMax = 1;
+  var dots = [];
+  var flows = [];
+  var ripples = [];
+  var raf = 0;
+  var startTime = 0;
+  var introFired = false;
+
+  var DOT_SPACING = 48;
+  var FLOW_COUNT = 10;
+  var CONNECTION_DIST = 110;
+  var MOUSE_INNER = 120;
+  var MOUSE_OUTER = 280;
+
+  // ── Spatial hash for O(n) connections ──
+  var grid = {};
+  var cellSize = CONNECTION_DIST;
+
+  function hashKey(x, y){
+    return (Math.floor(x / cellSize)) + ',' + (Math.floor(y / cellSize));
+  }
+
+  function buildGrid(){
+    grid = {};
+    for (var i = 0; i < dots.length; i++){
+      var d = dots[i];
+      var k = hashKey(d.dx || d.x, d.dy || d.y);
+      if (!grid[k]) grid[k] = [];
+      grid[k].push(i);
+    }
+  }
+
+  function getNeighborCells(x, y){
+    var cx = Math.floor(x / cellSize);
+    var cy = Math.floor(y / cellSize);
+    var result = [];
+    for (var dx = -1; dx <= 1; dx++){
+      for (var dy = -1; dy <= 1; dy++){
+        var k = (cx+dx) + ',' + (cy+dy);
+        if (grid[k]) result.push(grid[k]);
+      }
+    }
+    return result;
+  }
 
   // ── Init ──
   function setup(){
@@ -37,18 +75,32 @@
     ctx = canvas.getContext('2d');
     DPR = Math.min(2, window.devicePixelRatio || 1);
 
+    readColors();
     resize();
+
     if (!reduce) {
       initDots();
       initFlows();
-      window.addEventListener('resize', debounce(()=>{ resize(); initDots(); initFlows(); }, 200));
-      window.addEventListener('mousemove', e=>{ mouse.x = e.clientX; mouse.y = e.clientY; });
-      window.addEventListener('scroll', ()=>{ scrollY = window.scrollY; scrollMax = Math.max(1, document.body.scrollHeight - window.innerHeight); }, { passive: true });
+      startTime = performance.now();
+      window.addEventListener('resize', debounce(function(){ resize(); initDots(); initFlows(); }, 200));
+      window.addEventListener('mousemove', function(e){
+        mouse.prevX = mouse.x; mouse.prevY = mouse.y;
+        mouse.x = e.clientX; mouse.y = e.clientY;
+        mouse.vx = mouse.x - mouse.prevX;
+        mouse.vy = mouse.y - mouse.prevY;
+        // Spawn ripple on fast mouse movement
+        var speed = Math.sqrt(mouse.vx*mouse.vx + mouse.vy*mouse.vy);
+        if (speed > 30 && ripples.length < 5){
+          ripples.push({ x: mouse.x, y: mouse.y, r: 0, maxR: 150, alpha: 0.15, born: performance.now() });
+        }
+      });
+      window.addEventListener('scroll', function(){ scrollY = window.scrollY; scrollMax = Math.max(1, document.body.scrollHeight - window.innerHeight); }, { passive: true });
+      window.addEventListener('themechange', function(){ readColors(); });
       raf = requestAnimationFrame(loop);
     } else {
-      // Static frame for reduced motion
       initDots();
       drawStatic();
+      fireIntro();
     }
   }
 
@@ -65,46 +117,60 @@
   // ── Dot field ──
   function initDots(){
     dots = [];
-    const cols = Math.ceil(W / DOT_SPACING) + 2;
-    const rows = Math.ceil(H / DOT_SPACING) + 2;
-    for (let r = 0; r < rows; r++){
-      for (let c = 0; c < cols; c++){
+    var cols = Math.ceil(W / DOT_SPACING) + 2;
+    var rows = Math.ceil(H / DOT_SPACING) + 2;
+    var cx = W / 2, cy = H / 2;
+    for (var r = 0; r < rows; r++){
+      for (var c = 0; c < cols; c++){
+        var bx = c * DOT_SPACING;
+        var by = r * DOT_SPACING;
+        var dist = Math.sqrt((bx - cx) * (bx - cx) + (by - cy) * (by - cy));
         dots.push({
-          bx: c * DOT_SPACING,
-          by: r * DOT_SPACING,
-          x:  c * DOT_SPACING + (Math.random() - 0.5) * 12,
-          y:  r * DOT_SPACING + (Math.random() - 0.5) * 12,
+          bx: bx,
+          by: by,
+          x:  bx + (Math.random() - 0.5) * 10,
+          y:  by + (Math.random() - 0.5) * 10,
+          dx: bx, dy: by,
           phase: Math.random() * Math.PI * 2,
-          speed: 0.3 + Math.random() * 0.5,
+          speed: 0.3 + Math.random() * 0.4,
+          // For intro: radial birth time from center
+          birthDist: dist,
+          noiseX: Math.random() * 100,
+          noiseY: Math.random() * 100,
         });
       }
+    }
+    // Sort by distance for intro wave effect
+    var maxDist = Math.sqrt(W*W + H*H) / 2;
+    for (var i = 0; i < dots.length; i++){
+      dots[i].birthTime = (dots[i].birthDist / maxDist) * 1.4; // 0..1.4 seconds
     }
   }
 
   // ── Flow lines ──
   function initFlows(){
     flows = [];
-    for (let i = 0; i < FLOW_COUNT; i++){
+    for (var i = 0; i < FLOW_COUNT; i++){
       flows.push(makeFlow());
     }
   }
 
   function makeFlow(){
-    const startY = Math.random() * H;
+    var startY = Math.random() * H;
     return {
       points: generateCurve(startY),
       progress: 0,
       speed: 0.0003 + Math.random() * 0.0005,
-      opacity: 0.02 + Math.random() * 0.04,
+      opacity: 0.015 + Math.random() * 0.03,
     };
   }
 
   function generateCurve(startY){
-    const pts = [];
-    const steps = 12;
-    let x = -40, y = startY;
-    for (let i = 0; i <= steps; i++){
-      pts.push({ x, y });
+    var pts = [];
+    var steps = 14;
+    var x = -40, y = startY;
+    for (var i = 0; i <= steps; i++){
+      pts.push({ x: x, y: y });
       x += (W + 80) / steps;
       y += (Math.random() - 0.5) * 80;
       y = Math.max(20, Math.min(H - 20, y));
@@ -114,272 +180,351 @@
 
   // ── Utility ──
   function debounce(fn, ms){
-    let t; return function(){ clearTimeout(t); t = setTimeout(fn, ms); };
+    var t; return function(){ clearTimeout(t); t = setTimeout(fn, ms); };
   }
 
-  function lerp(a, b, t){ return a + (b - a) * t; }
-
   function catmull(p0, p1, p2, p3, t){
-    const t2 = t*t, t3 = t2*t;
+    var t2 = t*t, t3 = t2*t;
     return 0.5 * (
-      (2*p1) +
-      (-p0 + p2) * t +
-      (2*p0 - 5*p1 + 4*p2 - p3) * t2 +
-      (-p0 + 3*p1 - 3*p2 + p3) * t3
+      (2*p1) + (-p0 + p2) * t + (2*p0 - 5*p1 + 4*p2 - p3) * t2 + (-p0 + 3*p1 - 3*p2 + p3) * t3
     );
   }
 
-  // ── Draw ──
+  // Simple noise-like function
+  function noise(x, y, t){
+    return Math.sin(x * 0.03 + t * 0.2) * Math.cos(y * 0.02 + t * 0.15) * 0.5
+         + Math.sin(x * 0.01 + y * 0.02 + t * 0.1) * 0.5;
+  }
+
+  function fireIntro(){
+    if (introFired) return;
+    introFired = true;
+    window.dispatchEvent(new Event('lattice-ready'));
+  }
+
+  // ── Main loop ──
   function loop(ts){
-    const t = ts * 0.001;
-    ctx.clearRect(0, 0, W, H);
+    var elapsed = (ts - startTime) / 1000; // seconds since start
+    var t = ts * 0.001;
+    var sf = scrollY / scrollMax;
 
-    const scrollFactor = scrollY / scrollMax; // 0..1
+    // Translucent trail instead of full clear
+    ctx.fillStyle = C.trail;
+    ctx.fillRect(0, 0, W, H);
+    // Then clear with bg at low opacity for clean base
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
 
-    drawDots(t, scrollFactor);
-    drawConnections(t, scrollFactor);
-    drawFlows(t, scrollFactor);
-    drawASCII(t);
+    // Intro phases
+    var dotPhase = Math.min(1, elapsed / 1.6);       // 0..1 over 1.6s
+    var linePhase = Math.min(1, Math.max(0, (elapsed - 0.8) / 1.0)); // 0..1 from 0.8s to 1.8s
+    var flowPhase = Math.min(1, Math.max(0, (elapsed - 1.6) / 0.8)); // 0..1 from 1.6s
+
+    // Fire intro event when lattice is formed
+    if (elapsed > 2.0) fireIntro();
+
+    drawDots(t, sf, elapsed, dotPhase);
+    buildGrid();
+    if (linePhase > 0) drawConnections(t, sf, linePhase);
+    if (flowPhase > 0) drawFlows(t, sf, flowPhase);
+    drawRipples(ts);
+    drawASCII(t, elapsed);
 
     raf = requestAnimationFrame(loop);
   }
 
   function drawStatic(){
-    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = C.dot;
-    for (const d of dots){
+    for (var i = 0; i < dots.length; i++){
       ctx.beginPath();
-      ctx.arc(d.x, d.y, 1, 0, Math.PI * 2);
+      ctx.arc(dots[i].x, dots[i].y, 1, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  function drawDots(t, sf){
-    for (const d of dots){
-      // Subtle breathing
-      const pulse = 0.5 + 0.5 * Math.sin(t * d.speed + d.phase);
+  function drawDots(t, sf, elapsed, phase){
+    for (var i = 0; i < dots.length; i++){
+      var d = dots[i];
 
-      // Mouse repulsion
-      const dx = d.x - mouse.x;
-      const dy = d.y - mouse.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      let mx = 0, my = 0;
-      if (dist < MOUSE_RADIUS && dist > 0){
-        const force = (1 - dist / MOUSE_RADIUS) * 8;
-        mx = (dx / dist) * force;
-        my = (dy / dist) * force;
+      // Intro: fade in radially
+      var birthProgress = phase > 0 ? Math.min(1, Math.max(0, (elapsed - d.birthTime) / 0.4)) : 0;
+      if (birthProgress <= 0) { d.dx = d.x; d.dy = d.y; continue; }
+
+      // Slow organic drift via noise
+      var nx = noise(d.noiseX, d.noiseY, t) * 4;
+      var ny = noise(d.noiseX + 50, d.noiseY + 50, t) * 4;
+
+      // Breathing
+      var pulse = 0.5 + 0.5 * Math.sin(t * d.speed + d.phase);
+
+      // Mouse interaction (two-zone: inner strong, outer gentle)
+      var dx = (d.x + nx) - mouse.x;
+      var dy = (d.y + ny) - mouse.y;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var mx = 0, my = 0, mGlow = 0;
+
+      if (dist < MOUSE_OUTER && dist > 0){
+        if (dist < MOUSE_INNER){
+          // Strong repulsion + glow
+          var force = (1 - dist / MOUSE_INNER) * 22;
+          mx = (dx / dist) * force;
+          my = (dy / dist) * force;
+          mGlow = (1 - dist / MOUSE_INNER) * 0.25;
+        } else {
+          // Gentle outer push
+          var force2 = (1 - (dist - MOUSE_INNER) / (MOUSE_OUTER - MOUSE_INNER)) * 6;
+          mx = (dx / dist) * force2;
+          my = (dy / dist) * force2;
+          mGlow = (1 - dist / MOUSE_OUTER) * 0.08;
+        }
       }
 
-      const drawX = d.x + mx;
-      const drawY = d.y + my;
-      const alpha = 0.06 + pulse * 0.08 + (dist < MOUSE_RADIUS ? 0.08 : 0);
-      const radius = 1 + (dist < MOUSE_RADIUS ? 0.5 : 0);
+      var drawX = d.x + nx + mx;
+      var drawY = d.y + ny + my;
+      var alpha = (0.05 + pulse * 0.07 + mGlow) * birthProgress;
+      var radius = (1 + mGlow * 3) * birthProgress;
 
       ctx.beginPath();
       ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillStyle = mGlow > 0.05 ? C.dotBright : C.dot;
+      ctx.globalAlpha = alpha;
       ctx.fill();
 
-      // Store draw position for connections
       d.dx = drawX;
       d.dy = drawY;
-      d.alpha = alpha;
+      d.drawAlpha = alpha;
     }
+    ctx.globalAlpha = 1;
   }
 
-  function drawConnections(t, sf){
-    // Connection density increases with scroll
-    const threshold = CONNECTION_DIST - sf * 30;
-    const maxAlpha = 0.03 + sf * 0.04;
+  function drawConnections(t, sf, phase){
+    var threshold = CONNECTION_DIST;
+    var maxAlpha = (0.025 + sf * 0.03) * phase;
 
     ctx.lineWidth = 0.5;
-    for (let i = 0; i < dots.length; i++){
-      const a = dots[i];
-      for (let j = i + 1; j < dots.length; j++){
-        const b = dots[j];
-        const dx = a.dx - b.dx;
-        const dy = a.dy - b.dy;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist > threshold) continue;
+    for (var i = 0; i < dots.length; i++){
+      var a = dots[i];
+      if (!a.drawAlpha || a.drawAlpha < 0.01) continue;
+      var cells = getNeighborCells(a.dx, a.dy);
+      for (var ci = 0; ci < cells.length; ci++){
+        var cell = cells[ci];
+        for (var ji = 0; ji < cell.length; ji++){
+          var j = cell[ji];
+          if (j <= i) continue;
+          var b = dots[j];
+          if (!b.drawAlpha || b.drawAlpha < 0.01) continue;
 
-        // Mouse proximity boost
-        const midX = (a.dx + b.dx) * 0.5;
-        const midY = (a.dy + b.dy) * 0.5;
-        const mDist = Math.sqrt((midX-mouse.x)**2 + (midY-mouse.y)**2);
-        const mBoost = mDist < MOUSE_RADIUS ? (1 - mDist/MOUSE_RADIUS) * 0.08 : 0;
+          var dx = a.dx - b.dx;
+          var dy = a.dy - b.dy;
+          var dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist > threshold) continue;
 
-        const alpha = (1 - dist / threshold) * maxAlpha + mBoost;
-        if (alpha < 0.005) continue;
+          // Mouse proximity boost
+          var midX = (a.dx + b.dx) * 0.5;
+          var midY = (a.dy + b.dy) * 0.5;
+          var mDx = midX - mouse.x;
+          var mDy = midY - mouse.y;
+          var mDist = Math.sqrt(mDx*mDx + mDy*mDy);
+          var mBoost = mDist < MOUSE_OUTER ? (1 - mDist/MOUSE_OUTER) * 0.12 : 0;
 
-        ctx.beginPath();
-        ctx.moveTo(a.dx, a.dy);
-        ctx.lineTo(b.dx, b.dy);
-        ctx.strokeStyle = mBoost > 0
-          ? `rgba(106,169,255,${alpha})`
-          : `rgba(255,255,255,${alpha})`;
-        ctx.stroke();
+          var alpha = (1 - dist / threshold) * maxAlpha + mBoost;
+          if (alpha < 0.004) continue;
+
+          var lw = mBoost > 0.02 ? 0.5 + mBoost * 8 : 0.5;
+
+          ctx.beginPath();
+          ctx.moveTo(a.dx, a.dy);
+          ctx.lineTo(b.dx, b.dy);
+          ctx.strokeStyle = mBoost > 0.02 ? C.lineHot : C.line;
+          ctx.globalAlpha = Math.min(0.3, alpha);
+          ctx.lineWidth = lw;
+          ctx.stroke();
+        }
       }
     }
+    ctx.globalAlpha = 1;
   }
 
-  function drawFlows(t, sf){
-    // Flow speed increases slightly with scroll
-    const speedMult = 1 + sf * 0.5;
+  function drawFlows(t, sf, phase){
+    var speedMult = (1 + sf * 0.5) * phase;
 
-    for (const f of flows){
-      f.progress += f.speed * speedMult * 16; // ~16ms frame
+    for (var fi = 0; fi < flows.length; fi++){
+      var f = flows[fi];
+      f.progress += f.speed * speedMult * 16;
       if (f.progress > 1){
-        // Reset
-        const idx = flows.indexOf(f);
-        flows[idx] = makeFlow();
-        flows[idx].progress = 0;
+        flows[fi] = makeFlow();
+        flows[fi].progress = 0;
         continue;
       }
 
-      const pts = f.points;
-      const n = pts.length;
+      var pts = f.points;
+      var n = pts.length;
       if (n < 4) continue;
 
       ctx.beginPath();
       ctx.lineWidth = 1;
-      ctx.strokeStyle = `rgba(155,124,255,${f.opacity})`;
+      ctx.strokeStyle = C.flow;
+      ctx.globalAlpha = f.opacity * phase;
 
-      // Draw curve up to current progress
-      const totalSegments = n - 1;
-      const endSeg = f.progress * totalSegments;
+      var totalSegments = n - 1;
+      var endSeg = f.progress * totalSegments;
 
-      for (let seg = 0; seg < Math.min(Math.ceil(endSeg), totalSegments); seg++){
-        const p0 = pts[Math.max(0, seg - 1)];
-        const p1 = pts[seg];
-        const p2 = pts[Math.min(n-1, seg + 1)];
-        const p3 = pts[Math.min(n-1, seg + 2)];
+      for (var seg = 0; seg < Math.min(Math.ceil(endSeg), totalSegments); seg++){
+        var p0 = pts[Math.max(0, seg - 1)];
+        var p1 = pts[seg];
+        var p2 = pts[Math.min(n-1, seg + 1)];
+        var p3 = pts[Math.min(n-1, seg + 2)];
 
-        const steps = 8;
-        const segEnd = seg < Math.floor(endSeg) ? 1 : (endSeg - seg);
+        var steps = 8;
+        var segEnd = seg < Math.floor(endSeg) ? 1 : (endSeg - seg);
 
-        for (let s = 0; s <= steps * segEnd; s++){
-          const tt = s / steps;
-          const cx = catmull(p0.x, p1.x, p2.x, p3.x, tt);
-          const cy = catmull(p0.y, p1.y, p2.y, p3.y, tt);
-          if (seg === 0 && s === 0) ctx.moveTo(cx, cy);
-          else ctx.lineTo(cx, cy);
+        for (var s = 0; s <= steps * segEnd; s++){
+          var tt = s / steps;
+          var cx2 = catmull(p0.x, p1.x, p2.x, p3.x, tt);
+          var cy2 = catmull(p0.y, p1.y, p2.y, p3.y, tt);
+          if (seg === 0 && s === 0) ctx.moveTo(cx2, cy2);
+          else ctx.lineTo(cx2, cy2);
         }
       }
       ctx.stroke();
     }
+    ctx.globalAlpha = 1;
   }
 
-  function drawASCII(t){
-    // Very faint ASCII grid characters
+  function drawRipples(ts){
+    for (var i = ripples.length - 1; i >= 0; i--){
+      var rip = ripples[i];
+      var age = (ts - rip.born) / 1000;
+      if (age > 0.8){ ripples.splice(i, 1); continue; }
+      var progress = age / 0.8;
+      var r = rip.maxR * progress;
+      var alpha = rip.alpha * (1 - progress);
+      ctx.beginPath();
+      ctx.arc(rip.x, rip.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = C.lineHot;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawASCII(t, elapsed){
+    if (elapsed < 1.5) return; // Wait for dots first
+    var fadeIn = Math.min(1, (elapsed - 1.5) / 1.0);
     ctx.font = '10px monospace';
     ctx.fillStyle = C.ascii;
-    const chars = '|/\\·+─│┌┐└┘├┤┬┴┼';
-    const spacing = 80;
-    const phase = t * 0.05;
+    var chars = '|/\\·+─│┌┐└┘├┤┬┴┼';
+    var spacing = 80;
 
-    for (let x = spacing; x < W; x += spacing){
-      for (let y = spacing; y < H; y += spacing){
-        // Only render some cells, varies with time
-        const hash = (x * 7 + y * 13 + Math.floor(t * 0.3)) % 17;
+    for (var x = spacing; x < W; x += spacing){
+      for (var y = spacing; y < H; y += spacing){
+        var hash = (x * 7 + y * 13 + Math.floor(t * 0.3)) % 17;
         if (hash > 3) continue;
-        const ci = (x * 3 + y * 7 + Math.floor(t * 0.2)) % chars.length;
+        var ci = (x * 3 + y * 7 + Math.floor(t * 0.2)) % chars.length;
+        ctx.globalAlpha = fadeIn * 0.6;
         ctx.fillText(chars[ci], x, y);
       }
     }
+    ctx.globalAlpha = 1;
   }
 
   // ── Card hover animation ──
   window.labCardAnimate = function(card){
-    const cvs = document.createElement('canvas');
+    var cvs = document.createElement('canvas');
     cvs.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
     card.style.position = 'relative';
     card.style.overflow = 'hidden';
     card.appendChild(cvs);
 
-    const c = cvs.getContext('2d');
-    let w = 0, h = 0, active = false, animRaf = 0;
+    var c = cvs.getContext('2d');
+    var w = 0, h = 0, active = false, animRaf = 0;
 
     function sizeCard(){
-      const r = card.getBoundingClientRect();
+      var r = card.getBoundingClientRect();
       w = r.width; h = r.height;
       cvs.width = w * DPR; cvs.height = h * DPR;
       c.setTransform(DPR, 0, 0, DPR, 0, 0);
     }
 
-    // Generate small internal node set
-    const N = 6 + Math.floor(Math.random() * 4);
-    const nodes = [];
-    for (let i = 0; i < N; i++){
-      nodes.push({
-        x: Math.random(), y: Math.random(),
-        tx: Math.random(), ty: Math.random(),
-        vx: 0, vy: 0,
-      });
+    var N = 6 + Math.floor(Math.random() * 4);
+    var nodes = [];
+    for (var i = 0; i < N; i++){
+      nodes.push({ x: Math.random(), y: Math.random(), tx: Math.random(), ty: Math.random(), vx: 0, vy: 0 });
     }
 
-    function drawCard(ts){
+    function drawCard(){
       if (!active) return;
       c.clearRect(0, 0, w, h);
 
-      // Animate nodes toward targets
-      for (const n of nodes){
+      for (var i2 = 0; i2 < nodes.length; i2++){
+        var n = nodes[i2];
         n.vx += (n.tx * w - n.x * w) * 0.002;
         n.vy += (n.ty * h - n.y * h) * 0.002;
         n.vx *= 0.95; n.vy *= 0.95;
         n.x += n.vx / w; n.y += n.vy / h;
         n.x = Math.max(0.05, Math.min(0.95, n.x));
         n.y = Math.max(0.05, Math.min(0.95, n.y));
-
-        // Occasionally pick new target
-        if (Math.random() < 0.003){
-          n.tx = Math.random(); n.ty = Math.random();
-        }
+        if (Math.random() < 0.003){ n.tx = Math.random(); n.ty = Math.random(); }
       }
 
-      // Draw connections
       c.lineWidth = 0.5;
-      for (let i = 0; i < N; i++){
-        for (let j = i+1; j < N; j++){
-          const dx = (nodes[i].x - nodes[j].x) * w;
-          const dy = (nodes[i].y - nodes[j].y) * h;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist > 100) continue;
-          const alpha = (1 - dist/100) * 0.12;
-          c.strokeStyle = `rgba(106,169,255,${alpha})`;
+      for (var i3 = 0; i3 < N; i3++){
+        for (var j = i3+1; j < N; j++){
+          var ddx = (nodes[i3].x - nodes[j].x) * w;
+          var ddy = (nodes[i3].y - nodes[j].y) * h;
+          var dd = Math.sqrt(ddx*ddx + ddy*ddy);
+          if (dd > 100) continue;
+          var al = (1 - dd/100) * 0.12;
+          c.strokeStyle = C.lineHot || 'rgba(106,169,255,0.18)';
+          c.globalAlpha = al;
           c.beginPath();
-          c.moveTo(nodes[i].x * w, nodes[i].y * h);
+          c.moveTo(nodes[i3].x * w, nodes[i3].y * h);
           c.lineTo(nodes[j].x * w, nodes[j].y * h);
           c.stroke();
         }
       }
-
-      // Draw nodes
-      for (const n of nodes){
+      c.globalAlpha = 1;
+      for (var i4 = 0; i4 < nodes.length; i4++){
         c.beginPath();
-        c.arc(n.x * w, n.y * h, 1.5, 0, Math.PI*2);
-        c.fillStyle = 'rgba(106,169,255,0.2)';
+        c.arc(nodes[i4].x * w, nodes[i4].y * h, 1.5, 0, Math.PI*2);
+        c.fillStyle = C.lineHot || 'rgba(106,169,255,0.20)';
+        c.globalAlpha = 0.3;
         c.fill();
       }
-
+      c.globalAlpha = 1;
       animRaf = requestAnimationFrame(drawCard);
     }
 
-    card.addEventListener('mouseenter', ()=>{
-      sizeCard();
-      active = true;
-      animRaf = requestAnimationFrame(drawCard);
-    });
-    card.addEventListener('mouseleave', ()=>{
-      active = false;
-      cancelAnimationFrame(animRaf);
-      c.clearRect(0, 0, w, h);
-    });
+    card.addEventListener('mouseenter', function(){ sizeCard(); active = true; animRaf = requestAnimationFrame(drawCard); });
+    card.addEventListener('mouseleave', function(){ active = false; cancelAnimationFrame(animRaf); c.clearRect(0, 0, w, h); });
   };
 
+  // ── Scroll reveal observer ──
+  function setupScrollReveal(){
+    var sections = document.querySelectorAll('.lab-section, .lab-section-narrow');
+    if (!sections.length) return;
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) e.target.classList.add('visible');
+      });
+    }, { rootMargin: '-40px', threshold: 0.05 });
+    sections.forEach(function(s){ observer.observe(s); });
+  }
+
   // ── Boot ──
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', setup);
-  } else {
+  function boot(){
     setup();
+    setupScrollReveal();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
   }
 })();

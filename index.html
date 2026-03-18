@@ -7,12 +7,13 @@
   <meta name="description" content="A research lab building computational systems that unify learning, control, and physical processes.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="lab-style.css">
   <meta name="theme-color" content="#0a0a0a">
   <meta property="og:title" content="antifold — Computation is state evolution">
   <meta property="og:description" content="A research lab exploring structure and efficiency in computational systems.">
   <meta property="og:type" content="website">
+  <script src="js/lab-theme.js"></script>
 </head>
 <body>
   <canvas id="lab-canvas"></canvas>
@@ -33,17 +34,18 @@
       <a href="education.html">Education</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
+      <button class="theme-toggle" aria-label="Toggle theme"></button>
     </div>
   </nav>
 
   <div class="lab-page">
     <!-- Hero -->
     <section class="lab-hero">
-      <h1>Computation is <span class="accent">state evolution.</span></h1>
-      <p class="lab-hero-sub">
+      <h1 class="hero-reveal delay-1">Computation is <span class="accent">state evolution.</span></h1>
+      <p class="lab-hero-sub hero-reveal delay-2">
         Current systems scale by brute repetition. They discard structure, waste energy, and accumulate instability. We study a different question: what happens when you treat computation as a physical process — one that preserves information, corrects itself, and evolves state with minimal waste.
       </p>
-      <div class="lab-hero-cta">
+      <div class="lab-hero-cta hero-reveal delay-3">
         <a href="thesis.html" class="primary">Read the thesis</a>
         <a href="research.html">Explore research</a>
       </div>
@@ -72,26 +74,31 @@
       <h2>Five areas of focus.</h2>
       <div class="lab-grid" style="margin-top:32px;">
         <div class="lab-card" id="rc-1">
+          <div class="lab-card-icon"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="7" y1="7.5" x2="11" y2="16.5"/><line x1="17" y1="7.5" x2="13" y2="16.5"/></svg></div>
           <div class="lab-card-tag">01</div>
           <div class="lab-card-title">Learning Systems</div>
           <div class="lab-card-desc">How models update state over time without loss. Structure-preserving transformations instead of gradient descent alone.</div>
         </div>
         <div class="lab-card" id="rc-2">
+          <div class="lab-card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><line x1="10" y1="6.5" x2="14" y2="6.5"/><line x1="6.5" y1="10" x2="6.5" y2="14"/><line x1="17.5" y1="10" x2="17.5" y2="14"/></svg></div>
           <div class="lab-card-tag">02</div>
           <div class="lab-card-title">Execution Substrates</div>
           <div class="lab-card-desc">New runtimes that treat computation as evolving state, not instruction sequences.</div>
         </div>
         <div class="lab-card" id="rc-3">
+          <div class="lab-card-icon"><svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="6"/><path d="M12 8v4l3 3"/></svg></div>
           <div class="lab-card-tag">03</div>
           <div class="lab-card-title">Control Systems</div>
           <div class="lab-card-desc">Continuous correction instead of periodic adjustment. Feedback embedded in the system, not bolted on.</div>
         </div>
         <div class="lab-card" id="rc-4">
+          <div class="lab-card-icon"><svg viewBox="0 0 24 24"><path d="M3 20c4-4 8 0 9-8s5-9 9-9"/><circle cx="3" cy="20" r="1.5"/><circle cx="21" cy="3" r="1.5"/></svg></div>
           <div class="lab-card-tag">04</div>
           <div class="lab-card-title">Physical Modeling</div>
           <div class="lab-card-desc">Mapping computation directly to real-world processes. The boundary between simulation and system dissolves.</div>
         </div>
         <div class="lab-card" id="rc-5">
+          <div class="lab-card-icon"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="19" r="2"/><line x1="7" y1="11" x2="10" y2="6.5"/><line x1="14" y1="6.5" x2="17" y2="11"/><line x1="17" y1="13" x2="14" y2="17.5"/><line x1="10" y1="17.5" x2="7" y2="13"/></svg></div>
           <div class="lab-card-tag">05</div>
           <div class="lab-card-title">Distributed Coordination</div>
           <div class="lab-card-desc">Many small systems behaving as one coherent system. Consensus without centralization.</div>
@@ -128,8 +135,12 @@
 
   <script src="js/lab-canvas.js"></script>
   <script>
+    // Hero text reveals after lattice animation
+    window.addEventListener('lattice-ready', function(){
+      document.querySelectorAll('.hero-reveal').forEach(function(el){ el.classList.add('visible'); });
+    });
     // Card hover animations
-    document.querySelectorAll('.lab-card').forEach(c => {
+    document.querySelectorAll('.lab-card').forEach(function(c){
       if (window.labCardAnimate) window.labCardAnimate(c);
     });
   </script>
