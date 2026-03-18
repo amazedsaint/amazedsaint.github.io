@@ -79,6 +79,8 @@
     resize();
 
     if (!reduce) {
+      // Tell CSS the canvas is running (delays hero text to sync with intro)
+      document.documentElement.classList.add('canvas-active');
       initDots();
       initFlows();
       startTime = performance.now();
@@ -161,7 +163,7 @@
       points: generateCurve(startY),
       progress: 0,
       speed: 0.0003 + Math.random() * 0.0005,
-      opacity: 0.015 + Math.random() * 0.03,
+      opacity: 0.04 + Math.random() * 0.06,
     };
   }
 
@@ -199,6 +201,8 @@
   function fireIntro(){
     if (introFired) return;
     introFired = true;
+    // Canvas is running — add class so CSS delays hero text to sync
+    document.documentElement.classList.add('canvas-active');
     window.dispatchEvent(new Event('lattice-ready'));
   }
 
@@ -208,14 +212,10 @@
     var t = ts * 0.001;
     var sf = scrollY / scrollMax;
 
-    // Translucent trail instead of full clear
-    ctx.fillStyle = C.trail;
-    ctx.fillRect(0, 0, W, H);
-    // Then clear with bg at low opacity for clean base
-    ctx.globalAlpha = 0.88;
+    // Clear canvas with background
+    ctx.globalAlpha = 1;
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = 1;
 
     // Intro phases
     var dotPhase = Math.min(1, elapsed / 1.6);       // 0..1 over 1.6s
@@ -229,6 +229,7 @@
     buildGrid();
     if (linePhase > 0) drawConnections(t, sf, linePhase);
     if (flowPhase > 0) drawFlows(t, sf, flowPhase);
+    drawMouseGlow();
     drawRipples(ts);
     drawASCII(t, elapsed);
 
@@ -285,8 +286,8 @@
 
       var drawX = d.x + nx + mx;
       var drawY = d.y + ny + my;
-      var alpha = (0.05 + pulse * 0.07 + mGlow) * birthProgress;
-      var radius = (1 + mGlow * 3) * birthProgress;
+      var alpha = (0.15 + pulse * 0.15 + mGlow) * birthProgress;
+      var radius = (1.2 + mGlow * 4) * birthProgress;
 
       ctx.beginPath();
       ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
@@ -303,7 +304,7 @@
 
   function drawConnections(t, sf, phase){
     var threshold = CONNECTION_DIST;
-    var maxAlpha = (0.025 + sf * 0.03) * phase;
+    var maxAlpha = (0.08 + sf * 0.04) * phase;
 
     ctx.lineWidth = 0.5;
     for (var i = 0; i < dots.length; i++){
@@ -329,12 +330,12 @@
           var mDx = midX - mouse.x;
           var mDy = midY - mouse.y;
           var mDist = Math.sqrt(mDx*mDx + mDy*mDy);
-          var mBoost = mDist < MOUSE_OUTER ? (1 - mDist/MOUSE_OUTER) * 0.12 : 0;
+          var mBoost = mDist < MOUSE_OUTER ? (1 - mDist/MOUSE_OUTER) * 0.2 : 0;
 
           var alpha = (1 - dist / threshold) * maxAlpha + mBoost;
           if (alpha < 0.004) continue;
 
-          var lw = mBoost > 0.02 ? 0.5 + mBoost * 8 : 0.5;
+          var lw = mBoost > 0.02 ? 0.6 + mBoost * 10 : 0.6;
 
           ctx.beginPath();
           ctx.moveTo(a.dx, a.dy);
@@ -395,6 +396,17 @@
     ctx.globalAlpha = 1;
   }
 
+  function drawMouseGlow(){
+    if (mouse.x < -999) return;
+    var grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_OUTER);
+    grad.addColorStop(0, C.lineHot);
+    grad.addColorStop(1, 'transparent');
+    ctx.globalAlpha = 0.04;
+    ctx.fillStyle = grad;
+    ctx.fillRect(mouse.x - MOUSE_OUTER, mouse.y - MOUSE_OUTER, MOUSE_OUTER * 2, MOUSE_OUTER * 2);
+    ctx.globalAlpha = 1;
+  }
+
   function drawRipples(ts){
     for (var i = ripples.length - 1; i >= 0; i--){
       var rip = ripples[i];
@@ -426,7 +438,7 @@
         var hash = (x * 7 + y * 13 + Math.floor(t * 0.3)) % 17;
         if (hash > 3) continue;
         var ci = (x * 3 + y * 7 + Math.floor(t * 0.2)) % chars.length;
-        ctx.globalAlpha = fadeIn * 0.6;
+        ctx.globalAlpha = fadeIn * 0.35;
         ctx.fillText(chars[ci], x, y);
       }
     }

@@ -14,6 +14,16 @@
   <meta property="og:description" content="A research lab exploring structure and efficiency in computational systems.">
   <meta property="og:type" content="website">
   <script src="js/lab-theme.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ResearchOrganization",
+    "name": "antifold",
+    "description": "A research lab building computational systems that unify learning, control, and physical processes.",
+    "url": "https://amazedsaint.github.io"
+  }
+  </script>
+  <noscript><style>.hero-reveal{animation:none;opacity:1;transform:none;}#lab-canvas{display:none;}.lab-section,.lab-section-narrow{opacity:1;transform:none;}</style></noscript>
 </head>
 <body>
   <canvas id="lab-canvas"></canvas>
@@ -41,6 +51,8 @@
   <div class="lab-page">
     <!-- Hero -->
     <section class="lab-hero">
+      <div class="hero-line" aria-hidden="true"></div>
+      <div class="hero-status"><span class="hero-status-dot"></span> Research lab</div>
       <h1 class="hero-reveal delay-1">Computation is <span class="accent">state evolution.</span></h1>
       <p class="lab-hero-sub hero-reveal delay-2">
         Current systems scale by brute repetition. They discard structure, waste energy, and accumulate instability. We study a different question: what happens when you treat computation as a physical process — one that preserves information, corrects itself, and evolves state with minimal waste.
@@ -48,6 +60,9 @@
       <div class="lab-hero-cta hero-reveal delay-3">
         <a href="thesis.html" class="primary">Read the thesis</a>
         <a href="research.html">Explore research</a>
+      </div>
+      <div class="hero-scroll" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
       </div>
     </section>
 
@@ -135,10 +150,6 @@
 
   <script src="js/lab-canvas.js"></script>
   <script>
-    // Hero text reveals after lattice animation
-    window.addEventListener('lattice-ready', function(){
-      document.querySelectorAll('.hero-reveal').forEach(function(el){ el.classList.add('visible'); });
-    });
     // Card hover animations
     document.querySelectorAll('.lab-card').forEach(function(c){
       if (window.labCardAnimate) window.labCardAnimate(c);

@@ -23,12 +23,12 @@
 
   /* canvas vars (JS reads these) */
   --canvas-bg:   #0a0a0a;
-  --canvas-dot:  rgba(255,255,255,0.12);
-  --canvas-dot-bright: rgba(255,255,255,0.30);
-  --canvas-line: rgba(106,169,255,0.06);
-  --canvas-line-hot: rgba(106,169,255,0.18);
-  --canvas-flow: rgba(155,124,255,0.04);
-  --canvas-ascii: rgba(255,255,255,0.025);
+  --canvas-dot:  rgba(255,255,255,0.18);
+  --canvas-dot-bright: rgba(255,255,255,0.40);
+  --canvas-line: rgba(106,169,255,0.10);
+  --canvas-line-hot: rgba(106,169,255,0.25);
+  --canvas-flow: rgba(155,124,255,0.06);
+  --canvas-ascii: rgba(255,255,255,0.035);
   --canvas-trail: rgba(10,10,10,0.12);
 
   --nav-bg:    rgba(10,10,10,0.85);
@@ -61,12 +61,12 @@
   --green-bg:  rgba(26,154,108,0.06);
 
   --canvas-bg:   #f8f7f4;
-  --canvas-dot:  rgba(0,0,0,0.08);
-  --canvas-dot-bright: rgba(0,0,0,0.20);
-  --canvas-line: rgba(59,125,216,0.06);
-  --canvas-line-hot: rgba(59,125,216,0.14);
-  --canvas-flow: rgba(124,92,191,0.04);
-  --canvas-ascii: rgba(0,0,0,0.025);
+  --canvas-dot:  rgba(0,0,0,0.12);
+  --canvas-dot-bright: rgba(0,0,0,0.28);
+  --canvas-line: rgba(59,125,216,0.08);
+  --canvas-line-hot: rgba(59,125,216,0.20);
+  --canvas-flow: rgba(124,92,191,0.06);
+  --canvas-ascii: rgba(0,0,0,0.035);
   --canvas-trail: rgba(248,247,244,0.12);
 
   --nav-bg:    rgba(248,247,244,0.85);
@@ -204,10 +204,12 @@ img { max-width: 100%; display: block; }
   margin-bottom: 32px;
 }
 .lab-hero h1 .accent {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--violet) 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--violet) 50%, var(--green) 100%);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradientShift 6s ease-in-out infinite;
 }
 .lab-hero h1 .violet { color: var(--violet); }
 .lab-hero-sub {
@@ -244,21 +246,104 @@ img { max-width: 100%; display: block; }
   background: rgba(106,169,255,0.12);
 }
 
-/* ── Hero entrance animation ─────────────────────────────── */
+/* ── Hero decorative elements ───────────────────────────── */
+.hero-line {
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin-bottom: 24px;
+  animation: fadeSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.1s;
+}
+.canvas-active .hero-line { animation-delay: 1.9s; }
+.hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  margin-bottom: 20px;
+  animation: fadeSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.15s;
+}
+.canvas-active .hero-status { animation-delay: 2.0s; }
+.hero-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: gentlePulse 2.5s ease-in-out infinite;
+}
+.hero-divider {
+  width: 100%;
+  max-width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--violet) 50%, transparent 100%);
+  margin: 40px 0;
+  opacity: 0.4;
+}
+/* Scroll indicator */
+.hero-scroll {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: fadeSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 1.2s;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+.canvas-active .hero-scroll { animation-delay: 3s; }
+.hero-scroll:hover { opacity: 0.8; }
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(4px); }
+}
+.hero-scroll svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+
+/* ── Hero entrance animation (CSS-only, SEO-safe) ────────── */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes gentlePulse {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 .hero-reveal {
-  opacity: 0;
-  transform: translateY(30px);
+  animation: fadeSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.hero-reveal.visible {
-  animation: fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.hero-reveal.visible.delay-1 { animation-delay: 0.15s; }
-.hero-reveal.visible.delay-2 { animation-delay: 0.35s; }
-.hero-reveal.visible.delay-3 { animation-delay: 0.55s; }
+.hero-reveal.delay-1 { animation-delay: 0.3s; }
+.hero-reveal.delay-2 { animation-delay: 0.6s; }
+.hero-reveal.delay-3 { animation-delay: 0.9s; }
+/* When JS canvas is active, re-delay to sync with lattice intro */
+.canvas-active .hero-reveal { animation-delay: 2.0s; }
+.canvas-active .hero-reveal.delay-1 { animation-delay: 2.15s; }
+.canvas-active .hero-reveal.delay-2 { animation-delay: 2.35s; }
+.canvas-active .hero-reveal.delay-3 { animation-delay: 2.55s; }
 
 /* ── Scroll-triggered section reveals ────────────────────── */
 .lab-section,
@@ -289,8 +374,18 @@ img { max-width: 100%; display: block; }
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--fg-dim);
+  color: var(--accent);
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lab-section-label::before {
+  content: '';
+  width: 12px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.5;
 }
 .lab-section h2 {
   font-family: var(--font-heading);
@@ -381,7 +476,9 @@ img { max-width: 100%; display: block; }
   margin-bottom: 14px;
   color: var(--accent);
   opacity: 0.5;
+  transition: opacity 0.3s, transform 0.3s;
 }
+.lab-card:hover .lab-card-icon { opacity: 0.9; transform: scale(1.1); }
 .lab-card-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .lab-card-title {
   font-family: var(--font-heading);
@@ -646,6 +743,7 @@ img { max-width: 100%; display: block; }
   .lab-hero { padding: 100px 20px 60px; min-height: auto; }
   .lab-hero h1 { font-size: 2.2rem; }
   .lab-hero::before { display: none; }
+  .hero-scroll { display: none; }
   .lab-section { padding: 80px 20px; }
   .lab-section-narrow { padding: 60px 20px; }
   .lab-grid { grid-template-columns: 1fr; }
