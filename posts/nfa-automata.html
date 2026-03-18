@@ -146,19 +146,21 @@
         <span class="tile-category">Computation</span>
         <h1 class="article-title">NFAs from First Principles: Interactive</h1>
         <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
-        <p class="article-description">Nondeterministic finite automata: what they are, how ε‑moves work, and why they recognize the same languages as DFAs. Includes a runner, a small builder with ε, and a determinize table.</p>
+        <p class="article-description">What if a machine could be in many states at once? Nondeterministic finite automata explore every possible path simultaneously, and yet they are no more powerful than their deterministic cousins. Build one, run one, and watch the subset construction prove it.</p>
         <p class="note">Hover <span class="idea" data-note="Connections: DFA parity and builder in ‘Turing Machines & Automata’; determinized DFA echoes products and basis changes in math toolkit.">here</span> to see links to related content.</p>
       </div>
 
       <div class="section">
         <h2 id="nfa-from-words">From Words to Machines</h2>
-        <p class="note">Pick an alphabet $\Sigma$ (e.g., $\{a,b\}$). Words are finite strings over $\Sigma$; the set of all words is $\Sigma^*$ and includes the empty word $\varepsilon$. An NFA is a five‑tuple $(Q,\Sigma,\delta,q_0,F)$ like a DFA, except $\delta(q,a)$ returns a <em>set</em> of possible next states, and we may also allow $\varepsilon$ moves that consume no input.</p>
-        <p class="note">The extended transition to sets and whole words is $$\hat{\delta}(S,\varepsilon)=\varepsilon\text{-closure}(S),\qquad \hat{\delta}(S,aw)=\hat{\delta}(\,\varepsilon\text{-closure}(\bigcup_{q\in S}\delta(q,a)),\,w\,).$$ A word $w$ is accepted when $\hat{\delta}(\{q_0\},w)$ intersects $F$. In plain words: keep all states you could be in, expand along $\varepsilon$ moves for free, then follow the next symbol from all of them at once.</p>
+        <p class="note">Here is an idea that should stop you in your tracks: what if a machine could be in multiple states at the same time? Not broken, not confused, but genuinely exploring every possible path through a computation simultaneously. That is exactly what a nondeterministic finite automaton does. Think of it like navigating a maze by cloning yourself at every fork. Each clone walks a different corridor. If any single clone reaches the exit, you win.</p>
+        <p class="note">The formal setup starts simply. Pick an alphabet $\Sigma$ (e.g., $\{a,b\}$). Words are finite strings over $\Sigma$; the set of all words is $\Sigma^*$, which includes the empty word $\varepsilon$. An NFA is a five-tuple $(Q,\Sigma,\delta,q_0,F)$, just like a DFA, except for one crucial difference: $\delta(q,a)$ returns a <em>set</em> of possible next states rather than a single one. We may also allow $\varepsilon$-moves, which let the machine jump between states without consuming any input at all.</p>
+        <p class="note">How does the machine process an entire word? The following formula says: first, collect all the states reachable via free $\varepsilon$-moves. Then, for each symbol, follow every possible transition from every current state and close under $\varepsilon$ again. $$\hat{\delta}(S,\varepsilon)=\varepsilon\text{-closure}(S),\qquad \hat{\delta}(S,aw)=\hat{\delta}(\,\varepsilon\text{-closure}(\bigcup_{q\in S}\delta(q,a)),\,w\,).$$</p>
+        <p class="note">A word $w$ is accepted when $\hat{\delta}(\{q_0\},w)$ intersects $F$. In plain words: if even one of your clones ends up in an accepting state, the whole string is accepted. The machine is an optimist; it only needs one successful path.</p>
       </div>
 
       <div class="section">
-        <h2 id="run-nfas">Run Preset NFAs</h2>
-        <p class="note">Pick a simple pattern and watch the NFA process the input. Nondeterminism means “try all possible next steps at once”; accept if at least one path lands in an accepting state after the last symbol.</p>
+        <h2 id=”run-nfas”>Try It Yourself: Run Preset NFAs</h2>
+        <p class=”note”>Pick a pattern from the dropdown, type an input string, and step through it. Watch how the set of active states splits and merges as the machine explores every possibility in parallel. Remember: the string is accepted if even one path ends in an accepting state. Try different inputs and see what gets through.</p>
         <div class="demo">
           <canvas id="nfaRun" width="720" height="280"></canvas>
           <div class="controls">
@@ -180,8 +182,8 @@
         </div>
 
       <div class="section">
-        <h2 id="build-nfa">Build an NFA (with ε)</h2>
-        <p class="note">Place states, pick a start, toggle accepting, and add transitions. Use 'ε' (or 'e') to add $\varepsilon$ moves. Enter input and step; the highlighted set shows “all places the machine might be now”. Click “Determinize” to see the subset construction table.</p>
+        <h2 id=”build-nfa”>Build Your Own NFA</h2>
+        <p class=”note”>Now it is your turn. Place states on the canvas, choose a start, toggle which states accept, and wire them up with transitions. Type 'e' for an $\varepsilon$-move and watch the machine teleport between states for free. There are no wrong answers here; experiment freely. Try building an NFA with redundant paths, or one that uses $\varepsilon$-moves to branch. Enter an input and step through to see all the places the machine might be at once. When you are ready, click “Determinize” to see how the subset construction collapses your nondeterministic design into a clean, equivalent DFA.</p>
         <div class="demo">
           <canvas id="nfaBuild" width="720" height="320"></canvas>
           <div class="controls" style="gap:6px;">
@@ -201,7 +203,7 @@
           </div>
           <p class="note" id="nfabStatus">…</p>
           <div id="nfabDetTable"></div>
-          <p class="note">First principles recap: $\varepsilon$‑closure collects all states you can reach for free. Each input step follows transitions from the whole set, then re‑closes under $\varepsilon$. The determinized DFA has subsets as states; start at $\varepsilon$‑closure($\{q_0\}$) and follow symbols; accept subsets that contain any accepting NFA state.</p>
+          <p class="note">Here is the beautiful thing about all of this. Every NFA, no matter how wildly nondeterministic, can be converted into a plain old DFA that accepts exactly the same strings. The trick is called subset construction, and the intuition is lovely: each "state" of the new DFA is an entire <em>set</em> of NFA states. The $\varepsilon$-closure gathers all the states you can reach for free. Each input step follows transitions from the whole set, then re-closes under $\varepsilon$. The starting state of the DFA is $\varepsilon$-closure($\{q_0\}$), and a DFA state is accepting if it contains any accepting NFA state. Nondeterminism, it turns out, is a convenience, not extra power.</p>
         </div>
       </div>
 

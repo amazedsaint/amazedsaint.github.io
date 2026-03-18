@@ -47,54 +47,64 @@
         <span class="tile-category">Theory</span>
         <h1 class="article-title">Graph Theory: A Practical Guide</h1>
         <div class="article-meta">September 25, 2025 • Article • Graphs</div>
-        <p class="article-description">Graphs are the language of connection. With a few simple ideas (paths, cuts, trees, and spectra), you can model networks in computation, physics, and learning.</p>
+        <p class="article-description">From your brain's wiring to Google's search algorithm, graphs are everywhere. This guide builds intuition from the ground up: what graphs are, why they matter, and how a handful of powerful ideas (paths, cuts, trees, eigenvalues) unlock problems across computer science, physics, and machine learning.</p>
       </div>
 
       <h2>Why graphs?</h2>
-      <p>Graphs capture <em>relations</em>: who talks to whom, which states are reachable, which components touch. A graph $G=(V,E)$ has vertices $V$ and edges $E\subseteq V\times V$ (undirected if $(u,v)\in E \Rightarrow (v,u)\in E$). The <strong>adjacency matrix</strong> $A\in\{0,1\}^{|V|\times|V|}$ records edges; $A_{uv}=1$ if $u\to v$.</p>
-      <p>Matrix powers count walks: $(A^k)_{uv}$ is the number of length-$k$ walks from $u$ to $v$. Add edge weights to model costs, capacities, or affinities.</p>
+      <p>Your brain has roughly 86 billion neurons, each connected to thousands of others. The internet links billions of devices. A social network maps who knows whom across the planet. What do these systems have in common? They're all <em>graphs</em>: collections of things (nodes) and the connections between them (edges). Graphs are arguably the most universal data structure in mathematics, and learning to think in graphs gives you a surprisingly powerful lens on the world.</p>
+
+      <p>Formally, a graph $G=(V,E)$ has vertices $V$ and edges $E\subseteq V\times V$ (undirected if $(u,v)\in E \Rightarrow (v,u)\in E$). We can represent it as an <strong>adjacency matrix</strong> $A\in\{0,1\}^{|V|\times|V|}$, where $A_{uv}=1$ if there's an edge from $u$ to $v$. This matrix encoding unlocks a beautiful trick: raising $A$ to the $k$-th power gives you $(A^k)_{uv}$, the number of distinct length-$k$ walks from $u$ to $v$. Add weights to the edges and you can model costs, capacities, or affinities.</p>
 
       <h2>Local structure</h2>
-      <ul>
-        <li><strong>Degree</strong>: $\deg(u)=\sum_v A_{uv}$; the diagonal of $D=\operatorname{diag}(\deg(u))$ collects degrees.</li>
-        <li><strong>Paths & cycles</strong>: reachability (BFS) and structure (cycles vs. acyclic). Trees are connected, acyclic graphs.</li>
-        <li><strong>Special families</strong>: DAGs (topo order), bipartite graphs (2-colorable, no odd cycles), planar graphs (drawn without crossings).</li>
-      </ul>
+      <p>The simplest question you can ask about a node is: how many connections does it have? That number is its <strong>degree</strong>, $\deg(u)=\sum_v A_{uv}$. In a social network, degree is your friend count. In a power grid, it's how many transmission lines meet at a substation. Collecting all degrees into a diagonal matrix $D=\operatorname{diag}(\deg(u))$ will become surprisingly useful later when we get to spectral methods.</p>
+
+      <p>Zoom out a bit and you start seeing <strong>paths</strong> (sequences of edges connecting two nodes) and <strong>cycles</strong> (paths that loop back to the start). A graph with no cycles at all is called a <strong>tree</strong>, and trees turn out to be the simplest connected structures: they use exactly $|V|-1$ edges to hold everything together, with no redundancy.</p>
+
+      <p>Some graph families are worth knowing by name. <strong>Directed acyclic graphs</strong> (DAGs) model dependencies and allow topological sorting, which is why your build system and spreadsheet both use them. <strong>Bipartite graphs</strong> split nodes into two groups where edges only cross between groups (think students and courses, or users and products). <strong>Planar graphs</strong> can be drawn flat without any edge crossings, a constraint that matters for circuit layout and map coloring.</p>
 
       <h2>Traversal and shortest paths</h2>
-      <p><strong>Breadth‑first search</strong> (BFS) explores in layers and yields shortest paths in unweighted graphs. For nonnegative weights, <strong>Dijkstra</strong> finds shortest paths; allowing negative edges, <strong>Bellman–Ford</strong> detects negative cycles and computes shortest distances when they don’t exist.</p>
+      <p>Every time you ask Google Maps for directions, a shortest-path algorithm runs on a graph where intersections are nodes and roads are weighted edges. The fundamental technique is <strong>breadth-first search</strong> (BFS): start at a source node and explore outward in concentric layers, like ripples on a pond. In an unweighted graph, BFS gives you the shortest path for free, because the first time you reach a node is guaranteed to be along the fewest edges.</p>
+
+      <p>When edges have different costs (some roads are longer than others), you need <strong>Dijkstra’s algorithm</strong>, which always expands the cheapest known frontier node next. It’s the workhorse behind most real-world routing. And if some edges have negative weights (think of them as rewards rather than costs), <strong>Bellman-Ford</strong> handles that case, and even detects negative cycles: loops you could traverse forever to accumulate infinite reward, which signals that "shortest path" is undefined.</p>
 
       <h2>Spanning trees and cuts</h2>
-      <p>A <strong>spanning tree</strong> touches all vertices with $|V|-1$ edges. With positive weights, <strong>minimum spanning trees</strong> (MSTs) can be found by <em>Kruskal</em> (sort edges; greedy add if no cycle) or <em>Prim</em> (grow a frontier). Cuts partition $V=S\cup \bar S$; their capacity is the sum of crossing edge weights. The <strong>max‑flow min‑cut</strong> theorem ties maximum flow from $s$ to $t$ to the minimum $s\!:\!t$ cut capacity.</p>
+      <p>Imagine you're a telecom company that needs to connect ten cities with fiber optic cable. You could connect every pair, but that's expensive. The cheapest network that still keeps everyone connected is a <strong>minimum spanning tree</strong> (MST): a tree that touches all $|V|$ vertices using exactly $|V|-1$ edges, chosen to minimize total weight.</p>
+
+      <p>Two classic algorithms find MSTs. <strong>Kruskal's</strong> approach is beautifully simple: sort all edges by weight, then greedily add the cheapest one that doesn't create a cycle. <strong>Prim's</strong> algorithm grows a single connected frontier outward, always reaching for the cheapest edge that connects a new node. Both work because of a deep property called the <strong>cut property</strong>: for any partition of the vertices into two groups, the lightest edge crossing between them must belong to some MST.</p>
+
+      <p>Cuts themselves are fundamental. A <strong>cut</strong> partitions the vertices into two sets $S$ and $\bar{S}$, and its capacity is the total weight of edges crossing between them. The celebrated <strong>max-flow min-cut theorem</strong> says that the maximum amount of "stuff" you can push from a source $s$ to a sink $t$ through a network equals the capacity of the smallest bottleneck (minimum cut) separating them. It's one of the most satisfying dualities in all of combinatorics.</p>
 
       <h2>Spectra: smoothness and clusters</h2>
-      <p>The (combinatorial) <strong>Laplacian</strong> is $L=D-A$. For a vector $x\in\mathbb{R}^{|V|}$ defined on nodes, the <em>Dirichlet energy</em></p>
+      <p>Here's where graph theory gets unexpectedly deep. Think of a guitar string: its vibration modes are sine waves of increasing frequency, and each mode has an associated frequency (eigenvalue). Graphs have an analogous notion. The <strong>graph Laplacian</strong> $L=D-A$ plays the role of the “vibration operator,” and its eigenvalues and eigenvectors reveal the graph's fundamental modes of variation.</p>
+
+      <p>To see why, imagine assigning a number $x_u$ to each node (a temperature, a label, a signal). The <em>Dirichlet energy</em></p>
       <p>$$\mathcal{E}(x)=x^\top L x = \frac{1}{2}\sum_{(u,v)\in E} w_{uv}\,(x_u-x_v)^2$$</p>
-      <p>is small when adjacent nodes have similar values (often read as “smooth” over the graph). The smallest eigenvalue is $0$ with eigenvector $\mathbf{1}$. The second eigenvector (the <strong>Fiedler</strong> vector) approximately separates the graph into two balanced parts with a small cut; this underpins <em>spectral clustering</em>.</p>
+      <p>measures how much the signal “jumps” across edges. When connected nodes have similar values, the energy is low: the signal is <em>smooth</em> over the graph. When neighbors disagree sharply, the energy is high.</p>
+
+      <p>The smallest eigenvalue of $L$ is always $0$, with eigenvector $\mathbf{1}$ (the constant signal, which is perfectly smooth). The second-smallest eigenvector, called the <strong>Fiedler vector</strong>, is the smoothest non-trivial signal on the graph, and it turns out to approximately split the graph into two communities with a small cut between them. This is the foundation of <strong>spectral clustering</strong>: let the graph's own geometry tell you where the natural divisions are.</p>
 
       <h2>Random walks and diffusion</h2>
-      <p>A random walk moves $u\to v$ with probability proportional to weight $w_{uv}$. Normalized operators (e.g., $L_{\text{rw}}=I-D^{-1}A$) govern diffusion and hitting times. Many ranking and centrality measures are walk‑based: degree centrality, <em>PageRank</em>, betweenness and closeness centrality.</p>
+      <p>In the late 1990s, two Stanford grad students had a radical idea: instead of judging a webpage by its content, judge it by the structure of links pointing to it. Imagine a "random surfer" who starts on a random page and keeps clicking random links. The pages where this surfer spends the most time are, intuitively, the most important. That's <strong>PageRank</strong>, and it's a random walk on a graph.</p>
+
+      <p>A random walk on a graph moves from node $u$ to a neighbor $v$ with probability proportional to the edge weight $w_{uv}$. The dynamics are governed by normalized operators like $L_{\text{rw}}=I-D^{-1}A$, which describe how a signal (or a probability distribution, or heat) diffuses across the network over time. Many of the most useful centrality measures, the ones that identify "important" nodes, are walk-based: <strong>degree centrality</strong> (who has the most connections), <strong>betweenness centrality</strong> (who sits on the most shortest paths), <strong>closeness centrality</strong> (who can reach everyone fastest), and of course PageRank itself.</p>
 
       <h2>Graphs in algorithms and learning</h2>
-      <ul>
-        <li><strong>Programs and automata</strong>: control‑flow graphs; DFA/NFA state diagrams are directed graphs; reachability and language acceptance are path questions.</li>
-        <li><strong>Optimization</strong>: flows, matchings, cuts, and network design (MST, Steiner trees).</li>
-        <li><strong>Message passing</strong>: graph neural networks update node features by aggregating neighbors (learned, weighted versions of $A$ or $D^{-1}A$).</li>
-      </ul>
+      <p>Graphs are everywhere in computer science, often hiding in plain sight. Every program has a <strong>control-flow graph</strong> where nodes are basic blocks and edges are branches. Finite automata (DFAs and NFAs) are directed graphs where reachability answers the question "does this machine accept this string?" Compilers, model checkers, and regex engines all run graph algorithms under the hood.</p>
+
+      <p>In optimization, graphs are the natural language for <strong>flows</strong> (routing goods through a supply chain), <strong>matchings</strong> (pairing job applicants to positions), and <strong>network design</strong> (building infrastructure at minimum cost).</p>
+
+      <p>Most recently, <strong>graph neural networks</strong> (GNNs) have brought graph thinking into deep learning. The core idea is message passing: each node updates its representation by aggregating information from its neighbors, which is really just a learned, weighted version of multiplying by $A$ or $D^{-1}A$. This powers drug discovery (molecules are graphs), social network analysis, and recommendation systems.</p>
 
       <h2>Planarity and Euler’s formula</h2>
-      <p>Planar graphs satisfy $V - E + F = 2$ in any planar embedding (Euler characteristic). Non‑planarity is characterized by subdivisions of $K_5$ or $K_{3,3}$ (Kuratowski). These constraints inform routing, VLSI, and visualization.</p>
+      <p>Can you draw a graph on a flat sheet of paper without any edges crossing? If so, it’s <strong>planar</strong>, and it obeys one of mathematics’ most elegant identities: $V - E + F = 2$, where $F$ counts the faces (regions) of the drawing, including the outer infinite face. This is Euler’s formula, and it places hard limits on how many edges a planar graph can have.</p>
+
+      <p>Not every graph is planar, and Kuratowski’s theorem tells you exactly when: a graph is non-planar if and only if it contains a subdivision of $K_5$ (five nodes, all pairs connected) or $K_{3,3}$ (two groups of three, fully cross-connected). These constraints matter for circuit board layout (VLSI design), where crossing wires means adding expensive extra layers, and for graph visualization, where a planar layout is the cleanest way to display structure.</p>
 
       <h2>A compact toolbox</h2>
-      <ul>
-        <li><strong>Adjacency</strong> $A$ for combinatorics; <strong>Laplacian</strong> $L$ for smoothness, diffusion, and cuts.</li>
-        <li><strong>BFS/DFS</strong> for reachability, topological order, and components.</li>
-        <li><strong>Shortest paths</strong> (Dijkstra/Bellman‑Ford), <strong>MST</strong> (Kruskal/Prim), <strong>max‑flow</strong> (Edmonds–Karp/Dinic).</li>
-        <li><strong>Spectral</strong> intuition for clustering and semi‑supervised learning.</li>
-      </ul>
+      <p>If you take away one thing from this article, let it be this mental toolkit. Two matrices capture most of what you need: the <strong>adjacency matrix</strong> $A$ for counting paths and combinatorial structure, and the <strong>Laplacian</strong> $L$ for smoothness, diffusion, clustering, and cuts. Two traversal strategies, <strong>BFS</strong> and <strong>DFS</strong>, handle reachability, connected components, and topological ordering. For optimization, you have <strong>Dijkstra</strong> and <strong>Bellman-Ford</strong> for shortest paths, <strong>Kruskal</strong> and <strong>Prim</strong> for minimum spanning trees, and <strong>Edmonds-Karp</strong> or <strong>Dinic</strong> for max-flow. And when you need to find hidden communities or propagate labels across a network, <strong>spectral methods</strong> turn graph structure into geometry you can cluster.</p>
 
       <div class="section">
-        <h2>Interactive: BFS shortest paths</h2>
+        <h2>Try It: Watch BFS Explore a Graph</h2>
         <div class="demo">
           <canvas id="gtBfs" class="gt" width="720" height="360"></canvas>
           <div class="controls">
@@ -106,14 +116,14 @@
             <button id="bfsRun">Run</button>
             <button id="bfsReset">Reset</button>
           </div>
-          <div class="legend">Click a node to pick the source. Colors show layers (distance) from the source; thin arrows point along the BFS tree.</div>
-          <div class="note">BFS explores the <em>frontier</em> layer by layer. If $A$ is the adjacency matrix, the set of nodes at distance $k$ from $s$ appears in the support of $A^k \mathbf{e}_s$ that wasn’t seen earlier. Distances $d(v)$ and parents $\pi(v)$ form a shortest‑path tree.</div>
+          <div class="legend">Click any node to make it the source, then hit Step or Run to watch BFS ripple outward. Each color ring is one "hop" further from the source.</div>
+          <div class="note">Notice how BFS discovers nodes in perfect layers, like concentric circles. Each layer contains all nodes at exactly the same distance from the source. The thin arrows trace the shortest-path tree: if you follow the arrows backward from any node, you get the shortest route back to the source. Mathematically, the nodes at distance $k$ correspond to the support of $A^k \mathbf{e}_s$ not seen at earlier distances.</div>
           <div class="kpi"><span class="pill">Frontier size: <span id="bfsFrontier">…</span></span><span class="pill">Visited: <span id="bfsVisited">…</span></span></div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Interactive: Kruskal’s MST</h2>
+        <h2>Try It: Build a Minimum Spanning Tree</h2>
         <div class="demo">
           <canvas id="gtMst" class="gt" width="720" height="360"></canvas>
           <div class="controls">
@@ -124,14 +134,14 @@
             <button id="mstAuto">Auto</button>
             <button id="mstReset">Reset</button>
           </div>
-          <div class="legend">Edges are weighted (length on screen). Kruskal sorts edges by weight and adds one if it doesn’t create a cycle (via disjoint sets). Green = in MST, gray = unused, amber = next candidate.</div>
-          <div class="note">MST minimizes $\sum_{(u,v)\in T} w_{uv}$ subject to $T$ being a tree. Greedy works because cuts have a <em>safe</em> minimum edge (cut property). We show $\text{find}$/$\text{union}$ sets to explain cycle tests.</div>
+          <div class="legend">Edge weights are proportional to their screen length. Watch Kruskal’s algorithm consider edges from cheapest to most expensive: green means "accepted into the tree," gray means "rejected (would create a cycle)," and amber highlights the edge currently under consideration.</div>
+          <div class="note">The algorithm is greedy yet optimal. It always picks the cheapest available edge that doesn’t form a cycle, and this works because of the cut property: for any way you split the nodes into two groups, the cheapest crossing edge is guaranteed to belong to some MST. The total weight shown is the minimum possible cost to keep all nodes connected.</div>
           <div class="kpi"><span class="pill">Total weight: <span id="mstTotal">0</span></span><span class="pill">Edges chosen: <span id="mstChosen">0</span></span></div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Interactive: Laplacian diffusion</h2>
+        <h2>Try It: Diffuse Heat Across a Graph</h2>
         <div class="demo">
           <canvas id="gtDiff" class="gt" width="720" height="360"></canvas>
           <div class="controls">
@@ -140,8 +150,8 @@
             <button id="diffRun">Run</button>
             <button id="diffReset">Reset</button>
           </div>
-          <div class="legend">Click nodes to toggle hot/cold seeds (fixed values). Others evolve by $x \leftarrow x - \alpha L x$ which decreases $\mathcal E(x)=x^\top L x$ (smooths values along edges).</div>
-          <div class="note">Here $L=D-A$ with $D_{uu}=\deg(u)$. Fixed seeds implement Dirichlet conditions. A small step $\alpha$ performs gradient descent on $\mathcal E(x)$; colors show $x_u$ (blue→white→red).</div>
+          <div class="legend">Click nodes to plant heat sources (red) or cold sinks (blue). The remaining nodes will gradually equilibrate, smoothing their values along edges. Hit Run to watch the temperature field evolve in real time.</div>
+          <div class="note">This is the Laplacian in action. Each step performs $x \leftarrow x - \alpha L x$, which is gradient descent on the Dirichlet energy $\mathcal{E}(x)=x^\top L x$. In physical terms: each node averages itself toward its neighbors. Fixed seeds act as boundary conditions (like holding one end of a metal bar in a flame). The colors (blue through white to red) show the evolving temperature at each node.</div>
         </div>
       </div>
 

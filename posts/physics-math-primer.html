@@ -215,11 +215,11 @@
 
       <div class="section">
         <h2 id="complex-numbers-and-phase">Complex Numbers and Phase</h2>
-        <p class="note">The number $e^{i\alpha}$ is a unit arrow in the plane: it rotates by angle $\alpha$ without changing length. Real and imaginary parts are $\cos\alpha$ and $\sin\alpha$. Euler linked exponentials with sines and cosines in the 1700s; later, Argand’s diagram made the picture standard. Engineers and physicists use this to track oscillations and waves cleanly.</p>
+        <p class="note">Complex numbers sound intimidating, but the picture is simple: they are arrows that spin. The number $e^{i\alpha}$ is a unit arrow in the plane, pointing at angle $\alpha$. Its real part is $\cos\alpha$, its imaginary part is $\sin\alpha$. That is it. Euler discovered this link between exponentials and trigonometry in the 1700s, and it turned out to be one of the most useful identities in all of mathematics. Physicists use it constantly to track oscillations, waves, and quantum phases.</p>
         <div class="demo">
           <canvas id="phaseWheel" width="420" height="240"></canvas>
-          <p class="note">This picture shows $e^{i\alpha}=(\cos\alpha,\,\sin\alpha)$. Re/Im are the x/y components.</p>
-          <p class="note">Terms in the formula: $\alpha$ is the rotation angle; $i$ rotates by 90° in the plane; $\cos\alpha$ is the horizontal component; $\sin\alpha$ is the vertical component; the length stays 1.</p>
+          <p class="note">Drag the slider and watch the arrow sweep around the unit circle. The horizontal reach is $\cos\alpha$; the vertical reach is $\sin\alpha$. The arrow never stretches or shrinks -- it just rotates.</p>
+          <p class="note">Key pieces: $\alpha$ is the rotation angle; $i$ means "rotate 90 degrees"; $\cos\alpha$ and $\sin\alpha$ are the horizontal and vertical components; the length stays exactly 1.</p>
           <div class="controls"><label>α <input id="alpha" type="range" min="0" max="6.283" step="0.01" value="0.80"/></label></div>
           <p class="note" id="phaseRead">cos(α)=…, sin(α)=…</p>
         </div>
@@ -230,8 +230,8 @@
         <p class="note">A 2D rotation is a matrix acting on a vector. The entries are sines and cosines of the angle. This form became common in 19th–20th century mechanics because matrices compose cleanly: two rotations multiply to give a third. It’s also how computers represent and combine rotations.</p>
         <div class="demo">
           <canvas id="rot2D" width="420" height="240"></canvas>
-          <p class="note">This picture shows $R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}$ rotating an arrow by $\theta$.</p>
-          <p class="note">Terms in the formula: $\theta$ is the rotation angle; $\cos\theta$ keeps the component along the original axis; $\sin\theta$ swaps components with a sign; columns show where unit basis vectors move; determinant $=1$ means no stretching.</p>
+          <p class="note">Sweep the angle and watch the arrow turn. The matrix $R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}$ does the rotating; its columns are simply the new positions of the original unit vectors.</p>
+          <p class="note">What each piece does: $\theta$ is the rotation angle; $\cos\theta$ keeps the component along the original axis; $\sin\theta$ mixes in the perpendicular component; the determinant equals 1, so nothing stretches -- pure rotation.</p>
           <div class="controls"><label>θ <input id="thetaR" type="range" min="0" max="6.283" step="0.01" value="0.60"/></label></div>
           <p class="note" id="rotMat">R(θ) = …</p>
         </div>
@@ -239,11 +239,11 @@
 
       <div class="section">
         <h2 id="euclidean-circles-vs-minkowski-cones">Euclidean Circles vs. Minkowski Cones</h2>
-        <p class="note">In ordinary space, $x^2+y^2=r^2$ draws a circle. In spacetime (with $c=1$ in 1+1D), $t^2-x^2=s^2$ draws hyperbolas that keep the “spacetime distance” fixed. Einstein’s 1905 postulate about light’s speed led Minkowski in 1908 to fold space and time together; these hyperbolas are the footprints of that geometry.</p>
+        <p class=”note”>In ordinary space, “same distance from the origin” means a circle: $x^2+y^2=r^2$. In spacetime, a single minus sign changes everything. Replace the plus with a minus and you get $t^2-x^2=s^2$, which draws hyperbolas instead of circles. That tiny sign flip is the entire story of special relativity. It is why time slows down for fast travelers, why lengths contract, and why nothing outruns light. Einstein’s 1905 postulate about light’s speed forced it; Minkowski in 1908 saw the geometry it implied.</p>
         <div class="demo">
           <canvas id="metric" width="560" height="280"></canvas>
-          <p class="note">This picture shows a unit circle (blue) and the hyperbola $t^2-x^2=s^2$ (green). Both express an invariant “distance”, but with different signs.</p>
-          <p class="note">Terms in the relation: $t$ is time, $x$ is space (with $c=1$); $s$ is the invariant interval (proper time when timelike); the sign flip (minus) encodes that time and space contribute differently; lines $t=\pm x$ are light rays.</p>
+          <p class=”note”>See both geometries side by side. The blue circle is Euclidean distance; the green hyperbola is spacetime “distance”. Same idea, different sign -- and that difference reshapes the universe.</p>
+          <p class=”note”>Reading the picture: $t$ is time, $x$ is space (with $c=1$); $s$ is the invariant interval (proper time for a moving clock); the minus sign means time and space pull in opposite directions; lines $t=\pm x$ are light rays, and nothing crosses them.</p>
           <div class="controls"><label>s <input id="sVal" type="range" min="0.3" max="2.5" step="0.01" value="1.00"/></label></div>
           <p class="note">In a Lorentz boost, the light cone stays fixed while the axes tilt; these hyperbolas stay the same.</p>
         </div>
@@ -251,11 +251,11 @@
 
       <div class="section">
         <h2 id="two-state-systems-bloch-picture">Two‑State Systems (Bloch Picture)</h2>
-        <p class="note">A two‑state wave can be written as $|\psi\rangle=\cos\tfrac{\theta}{2}\,|0\rangle+e^{i\phi}\sin\tfrac{\theta}{2}\,|1\rangle$. Probabilities are $P(0)=\cos^2(\theta/2)$ and $P(1)=\sin^2(\theta/2)$. The Bloch picture dates to the 1940s (NMR): a single point on a sphere encodes the state, with angles setting measurement outcomes. It is now the standard way to think about qubits.</p>
+        <p class="note">Quantum computers run on qubits -- systems that can be in a blend of two states at once. How do you picture something that is partly $|0\rangle$ and partly $|1\rangle$? The Bloch sphere gives the answer: a single point on a sphere encodes the entire quantum state $|\psi\rangle=\cos\tfrac{\theta}{2}\,|0\rangle+e^{i\phi}\sin\tfrac{\theta}{2}\,|1\rangle$, with probabilities $P(0)=\cos^2(\theta/2)$ and $P(1)=\sin^2(\theta/2)$. The idea dates to Bloch's work on nuclear magnetic resonance in the 1940s and is now the standard language of quantum information.</p>
         <div class="demo">
           <canvas id="bloch" width="420" height="240"></canvas>
-          <p class="note">This picture shows the state’s direction on the Bloch circle (equator projection) and reports $P(0)$ and $P(1)$.</p>
-          <p class="note">Terms in the formula: $\theta$ sets the split between $|0\rangle$ and $|1\rangle$ (probabilities $\cos^2(\theta/2)$ and $\sin^2(\theta/2)$); $\phi$ is the relative phase that matters for interference; $|0\rangle,|1\rangle$ are the measurement outcomes.</p>
+          <p class="note">Tilt the $\theta$ slider from pole to pole and watch the probabilities trade places. At the north pole the qubit is pure $|0\rangle$; at the south pole, pure $|1\rangle$; anywhere in between, a genuine quantum blend.</p>
+          <p class="note">What the angles mean: $\theta$ sets how much $|0\rangle$ versus $|1\rangle$ (probabilities $\cos^2(\theta/2)$ and $\sin^2(\theta/2)$); $\phi$ is the relative phase -- invisible in a single measurement but crucial when quantum states interfere.</p>
           <div class="controls">
             <label>θ <input id="thetaB" type="range" min="0" max="3.1416" step="0.005" value="1.5708"/></label>
             <label>φ <input id="phiB" type="range" min="0" max="6.283" step="0.01" value="0.00"/></label>
@@ -269,8 +269,8 @@
         <p class="note">A particle tends to roll downhill in a potential $V(x)$. Near a minimum, the curvature $V''(x_\text{min})$ sets the small‑oscillation frequency. From Lagrange onward, this “small oscillations” idea powered mechanics: approximate the bottom of a well by a quadratic and read off the frequency. In high‑energy units ($\hbar=c=1$), a mass behaves like $m^2\sim V''$.</p>
         <div class="demo">
           <canvas id="potential" width="560" height="260"></canvas>
-          <p class="note">This picture shows $V(x)=\tfrac{\lambda}{4}(x^2-v^2)^2$. The readout shows $m^2=V''(x_\text{min})=2\lambda v^2$.</p>
-          <p class="note">Terms in the formula: $x$ is the field/position; $v$ sets where the minima sit; $\lambda$ controls how steep the walls are; $V'(x)$ is the slope (force $=-V'$); the curvature $V''$ at a minimum sets the small‑oscillation scale.</p>
+          <p class="note">Watch the ball roll toward a minimum of the double-well potential $V(x)=\tfrac{\lambda}{4}(x^2-v^2)^2$. How sharply the valley curves at the bottom determines the mass: $m^2=V''(x_\text{min})=2\lambda v^2$.</p>
+          <p class="note">Reading the landscape: $x$ is the field value or position; $v$ sets where the minima sit; $\lambda$ controls wall steepness; $V'(x)$ is the slope (force $=-V'$); and the curvature $V''$ at a minimum sets how fast small oscillations wiggle -- that is, the mass.</p>
           <div class="controls">
             <label>λ <input id="lam" type="range" min="0.1" max="1.5" step="0.01" value="0.60"/></label>
             <label>v <input id="vmin" type="range" min="0.5" max="2.0" step="0.01" value="1.00"/></label>
@@ -282,11 +282,11 @@
 
       <div class="section">
         <h2 id="covariant-derivative-1d">Why We Need a Covariant Derivative (1D)</h2>
-        <p class="note">If a wave’s phase $\alpha(x)$ varies with position, an ordinary derivative “sees” that variation even when the amplitude is constant. A gauge field $A_\mu$ fixes this so that the derivative respects the relabeling. This grew out of Maxwell’s equations, where a hidden freedom to change potentials leaves the fields unchanged; Yang–Mills extended the idea to richer “internal labels”.</p>
+        <p class=”note”>Imagine you are measuring wind speed from a moving car. Your speedometer reading mixes the true wind with your own motion. You need a correction to separate the two. That is exactly the problem a covariant derivative solves, but for quantum phases instead of wind. If a wave’s phase $\alpha(x)$ varies with position, an ordinary derivative picks up that variation even when the actual amplitude is perfectly constant. A gauge field $A_\mu$ provides the correction, so the derivative respects the relabeling. This idea grew out of Maxwell’s equations, where a hidden freedom to shift potentials leaves the physical fields unchanged; Yang and Mills later extended it to richer “internal labels”.</p>
         <div class="demo">
           <canvas id="gauge1D" width="560" height="160"></canvas>
-          <p class="note">This picture shows a 1D phase $\alpha(x)$ and compares the average size of $\partial_x\psi$ vs. $D_x\psi$ with $A_x=-(1/g)\,\partial_x\alpha$.</p>
-          <p class="note">Terms in the formula: $\psi$ is a complex wave with amplitude and phase; $\alpha(x)$ is the position‑dependent phase; $\partial_x$ is the ordinary derivative; $A_x$ is the gauge field that cancels pure phase gradients; $g$ sets how strongly $A_x$ enters; $D_x=\partial_x+i g A_x$ respects the relabeling.</p>
+          <p class="note">Crank up the phase amplitude and notice how the naive derivative $\partial_x\psi$ grows large -- it is reacting to the phase wobble, not to any real change in the wave. The covariant derivative $D_x\psi$, with its gauge correction $A_x=-(1/g)\,\partial_x\alpha$, stays calm.</p>
+          <p class="note">The moving parts: $\psi$ is a complex wave with amplitude and phase; $\alpha(x)$ is the position-dependent phase; $\partial_x$ is the ordinary derivative (fooled by relabeling); $A_x$ is the gauge field that cancels pure phase gradients; $g$ is the coupling strength; $D_x=\partial_x+i g A_x$ is the corrected derivative that sees only real physics.</p>
           <div class="controls"><label>Phase amplitude <input id="amp1D" type="range" min="0" max="1.5" step="0.01" value="0.90"/></label></div>
           <p class="note">Readout: ⟨|∂xψ|⟩ = <span id="g1">…</span>; ⟨|Dxψ|⟩ = <span id="g2">…</span></p>
         </div>
@@ -294,11 +294,8 @@
 
       <div class="section">
         <h2 id="what-you-learned">What You Learned</h2>
-        <p class="note">These are the small tools behind many modern physics ideas:</p>
-        <p class="note">
-          • Complex phase is a simple rotation in the plane. • Rotations are matrices with sines and cosines. • Spacetime uses a sign‑flipped “distance” that keeps light cones fixed. • A two‑state wave has probabilities set by angles on a circle. • The curvature of a potential near a minimum sets a mass‑like scale. • A covariant derivative keeps calculations honest when phase depends on position.
-        </p>
-        <p class="note">Use the sliders above to build intuition. Each picture is driven directly by the equation next to it.</p>
+        <p class=”note”>You now have six ideas in your pocket, and they are more connected than they first appear. Complex phase is just a spinning arrow. Rotations package that spin into a matrix. Flip one sign in the distance formula and Euclidean geometry becomes spacetime. Put a quantum state on a sphere and you can see a qubit. Read the curvature at the bottom of a valley and you get a mass. Correct a derivative for a shifting phase and you have invented force fields.</p>
+        <p class=”note”>These are not abstract curiosities -- they are the actual building blocks of modern physics. Every section in the main article ahead will call on at least one of them. Go back, move the sliders again, and let the shapes become second nature. When you meet them in context, they will feel like familiar faces.</p>
       </div>
 
       <div class="connections">

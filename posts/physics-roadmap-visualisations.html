@@ -363,7 +363,7 @@
         <span class="tile-category">Theory</span>
         <h1 class="article-title">Spacetime, Fields, and Light</h1>
         <div class="article-meta">Interactive • Self‑contained</div>
-        <p class="article-description">A connected walk through core physics ideas with live canvases and the equations that define them.</p>
+        <p class="article-description">A connected walk through core physics ideas with live canvases and the equations that define them. Each section builds on the last, so by the end you will have a single thread running from Einstein's spacetime all the way to gravitational lensing.</p>
         <p class="note">Hover <span class="idea" data-note="Primer → Metric hyperbolas and phase wheel. Toolkit → Rotations, basis mixing, dot product.">here</span> for connections to the Primer/Toolkit; look for green dotted hints throughout.</p>
       </div>
 
@@ -400,12 +400,12 @@
 
       <div class="section">
         <h2 id="spacetime">Spacetime</h2>
-        <p class="note">Einstein kept one rule: everyone who moves at a constant speed measures the same speed of light. That rule forces space and time to mix when you change your speed. Minkowski showed it is easier to think of one thing called spacetime. Different observers take different “slices”, but the physics stays the same.</p>
-        <p class="note">In our simple 1+1 picture (time and one space direction), a boost along $x$ mixes coordinates as $x' = \gamma(x-vt)$ and $t' = \gamma(t-vx)$ with $\gamma = 1/\sqrt{1-v^2}$. In the canvas, the light cone stays fixed. The blue $x'$ and $t'$ axes tilt as you change $v$. The gray curves show the same quantity $t^2-x^2$ staying constant.</p>
+        <p class=”note”>Einstein kept one rule: everyone who moves at a constant speed measures the same speed of light. That rule forces space and time to mix when you change your speed. Minkowski showed it is easier to think of one thing called spacetime. Different observers take different “slices”, but the physics stays the same.</p>
+        <p class=”note”>The weird thing is this: two observers can disagree about the order of events, about how long a second lasts, and about how long a meter stick is -- yet they always agree on the speed of light and on the spacetime interval $t^2-x^2$. In our simple 1+1 picture, a boost along $x$ mixes coordinates as $x' = \gamma(x-vt)$ and $t' = \gamma(t-vx)$ with $\gamma = 1/\sqrt{1-v^2}$. In the canvas, the light cone stays fixed. The blue $x'$ and $t'$ axes tilt as you change $v$. The gray curves show $t^2-x^2$ staying constant -- the one thing all observers share.</p>
         <div class="demo">
           <canvas id="lorentz" class="demo-canvas" width="700" height="380"></canvas>
-          <p class="note">This picture shows a Lorentz boost: $x' = \gamma(x- v t)$ and $t' = \gamma(t- v x)$; the light cone stays fixed.</p>
-          <p class="note">Terms in the formula: $x,t$ are the original space and time; $v$ is speed as a fraction of $c$; $\gamma=1/\sqrt{1-v^2}$ stretches time and squeezes length; the lines $t=\pm x$ are light rays and do not change under boosts; $t^2-x^2$ stays the same for all inertial observers.</p>
+          <p class="note">Drag the velocity slider and watch the blue axes scissor together. The orange light cone never budges -- that is the whole point. Lorentz boost: $x' = \gamma(x- v t)$ and $t' = \gamma(t- v x)$.</p>
+          <p class="note">Reading the diagram: $x,t$ are the original space and time; $v$ is speed as a fraction of $c$; $\gamma=1/\sqrt{1-v^2}$ stretches time and squeezes length; the lines $t=\pm x$ are light rays and do not change under boosts; $t^2-x^2$ stays the same for all inertial observers.</p>
           <div class="controls">
             <label>Velocity v/c <input id="vSlider" type="range" min="-0.95" max="0.95" step="0.01" value="0.60"/></label>
           </div>
@@ -418,11 +418,11 @@
 
       <div class="section">
         <h2 id="spin-1-2">Spin‑1/2</h2>
-        <p class="note">Electrons have spin. That means they behave like tiny magnets and come in two basic states we call “up” and “down”. When you rotate a spin‑1/2 particle by 360°, its wave picks up a minus sign. That does not change measured probabilities, but it matters when waves add together. After 720°, the wave comes back to itself.</p>
-        <p class="note">A rotation about $z$ looks like $R_z(\theta)=\exp\!\big(-\tfrac{i}{2}\,\theta\,\sigma_z\big)$. The factor $1/2$ explains the 720° return. In the canvas, the blue arrow shows the physical direction (period $2\pi$). The green hand shows the spinor phase (period $4\pi$).</p>
+        <p class=”note”>Electrons have spin. That means they behave like tiny magnets and come in two basic states we call “up” and “down”. Now here is the truly mind-bending part: rotate a spin-1/2 particle by a full 360 degrees and it does not come back to itself. Its wave function picks up a minus sign. You have to go all the way around twice -- 720 degrees -- before it returns to its original state. Nothing in everyday experience prepares you for this. It is as if you turned a key one full revolution and found the lock only half-done.</p>
+        <p class=”note”>Mathematically, a rotation about $z$ looks like $R_z(\theta)=\exp\!\big(-\tfrac{i}{2}\,\theta\,\sigma_z\big)$. That factor of $1/2$ is the whole story -- it is why the period doubles. In the canvas, the blue arrow shows the physical direction (period $2\pi$). The green hand shows the spinor phase (period $4\pi$). Watch them carefully: the blue arrow completes a lap while the green one is only halfway home.</p>
         <div class="demo">
           <canvas id="spinor" class="demo-canvas" width="540" height="260"></canvas>
-          <p class="note">This picture shows a spin‑1/2 rotation: $R_z(\theta)=\exp\!\big(-i\,\theta\,\sigma_z/2\big)$; $2\pi$ flips sign, $4\pi$ returns.</p>
+          <p class="note">Slowly sweep $\theta$ from 0 to $2\pi$: the blue arrow completes a full turn, but the green phase hand is only halfway. Keep going to $4\pi$ to bring the spinor home. $R_z(\theta)=\exp\!\big(-i\,\theta\,\sigma_z/2\big)$.</p>
           <p class="note">Terms in the formula: $\theta$ is the rotation angle; $\sigma_z=\begin{bmatrix}1&0\\0&-1\end{bmatrix}$ is the Pauli matrix that distinguishes up/down; the exponential makes a unitary rotation; the factor $1/2$ causes the 720° return; an overall minus sign leaves probabilities unchanged.</p>
           <div class="controls"><label>Rotation $\theta$ <input id="thetaSpin" type="range" min="0" max="6.283" step="0.01" value="0"/></label></div>
         </div>
@@ -430,11 +430,11 @@
 
       <div class="section">
         <h2 id="gauge-symmetry">Gauge Symmetry</h2>
-        <p class="note">A complex wave has a phase. If you change only the phase, measurements do not change. If you let that phase depend on position, ordinary derivatives create extra terms. We fix this by using the covariant derivative $D_\mu=\partial_\mu+i g A_\mu$. The new field $A_\mu$ is the gauge field. It keeps the math consistent when phases vary in space and time.</p>
+        <p class="note">A complex wave has a phase, like a clock hand pointing at some angle. If you reset every clock in a room by the same amount, nothing observable changes. But what if you reset each clock by a different amount -- a different phase at each point in space? Now ordinary derivatives notice the mismatch. To fix this, you introduce a new field $A_\mu$ that compensates for the local relabeling, giving you the covariant derivative $D_\mu=\partial_\mu+i g A_\mu$. That compensating field is not just bookkeeping -- it turns out to be the electromagnetic field (or, for richer symmetries, the strong and weak forces). The requirement of local relabeling freedom creates the forces of nature.</p>
         <p class="note">The field strength is $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ (and plus a commutator for non‑Abelian groups). A simple Lagrangian is $\mathcal L=-\tfrac14 F^a_{\mu\nu}F^{a\,\mu\nu}+ i\bar\psi\gamma^\mu D_\mu\psi$. In the canvas, we pick $A_\mu=-(1/g)\,\partial_\mu\alpha$. That choice cancels the extra gradient from a pure phase so $\|D\psi\|$ is small when $|\psi|$ is constant.</p>
         <div class="demo">
           <canvas id="u1" class="demo-canvas" width="540" height="260"></canvas>
-          <p class="note">This picture shows gauge cancelation with the covariant derivative: $D_\mu=\partial_\mu+i g A_\mu$, choosing $A_\mu=-(1/g)\,\partial_\mu\alpha$.</p>
+          <p class="note">Increase the phase amplitude and notice how the naive gradient blows up while the covariant derivative stays near zero. That is gauge cancelation at work: $D_\mu=\partial_\mu+i g A_\mu$, with $A_\mu=-(1/g)\,\partial_\mu\alpha$.</p>
           <p class="note">Terms in the formula: $\psi$ is the complex field (amplitude + phase); $\alpha(x)$ is the local phase relabeling; $\partial_\mu$ is the ordinary derivative; $A_\mu$ is the gauge field; $g$ is the coupling strength; $D_\mu$ adjusts derivatives so relabeling does not change physics; $F_{\mu\nu}=\partial_\mu A_\nu-\partial_\nu A_\mu$ is the field’s curl‑like strength.</p>
           <div class="controls"><label>Phase amplitude <input id="amp" type="range" min="0" max="1.5" step="0.01" value="0.8"/></label></div>
           <div class="kpis">
@@ -446,11 +446,11 @@
 
       <div class="section">
         <h2 id="the-higgs-and-mass">The Higgs and Mass</h2>
-        <p class="note">Gauge symmetry blocks you from just writing a mass for many fields. A way around this is a scalar field with a potential that prefers a nonzero value everywhere. We call that the vacuum value. Small waves around that value behave like particles. One of them is the Higgs boson. Gauge fields also pick up mass from this background.</p>
+        <p class="note">Why can't we just give particles mass directly? Because gauge symmetry forbids it. A naive mass term in the equations would break the relabeling freedom that gives us forces in the first place. So nature found a workaround: a scalar field whose potential has a valley shaped like the brim of a Mexican hat. The field settles into a nonzero value everywhere -- the vacuum expectation value. Small ripples around that value behave like a particle: the Higgs boson, discovered at CERN in 2012. And the background field itself gives mass to gauge bosons and fermions without breaking any symmetry.</p>
         <p class="note">A simple model is $\mathcal L_\phi=|D_\mu\phi|^2-\tfrac{\lambda}{4}(|\phi|^2-v^2)^2$. Around $|\phi|=v$, the radial mode has $m_H^2=2\lambda v^2$. The angular mode is “eaten”, giving a gauge boson $m_A=g v$ (Abelian case). A fermion that couples with $\mathcal L_Y=-y\,\bar\psi\phi\psi$ gets $m_f= y v/\sqrt{2}$. In the canvas, a point rolls downhill and the readouts show the masses from your settings.</p>
         <div class="demo">
           <canvas id="higgs" class="demo-canvas" width="700" height="380"></canvas>
-          <p class="note">This picture shows the Higgs setup: $V=\tfrac{\lambda}{4}(|\phi|^2- v^2)^2$, with $m_H^2=2\lambda v^2$, $m_A=g v$, and $m_f= y v/\sqrt{2}$.</p>
+          <p class="note">Watch the ball roll into the valley of the Mexican-hat potential. The green dashed circle marks the vacuum; the ball settles there and small radial ripples become the Higgs boson. $V=\tfrac{\lambda}{4}(|\phi|^2- v^2)^2$, giving $m_H^2=2\lambda v^2$, $m_A=g v$, and $m_f= y v/\sqrt{2}$.</p>
           <p class="note">Terms in the formula: $\phi$ is the scalar field; $|\phi|$ is its size; $v$ is the vacuum value picked by the minimum; $\lambda$ sets how stiff the potential is; $m_H$ is the mass of the radial ripple; $g$ controls the gauge boson mass $m_A$; $y$ (Yukawa) sets the fermion mass $m_f$.</p>
           <div class="controls">
             <label>λ <input id="lambda" type="range" min="0.1" max="1.5" step="0.05" value="0.50"/></label>
@@ -469,11 +469,11 @@
 
       <div class="section">
         <h2 id="neutrino-oscillations">Neutrino Oscillations</h2>
-        <p class="note">Detectors on Earth saw fewer electron neutrinos from the Sun than expected. The reason: neutrinos can change flavor as they travel. The states that interact are not the same as the states with definite mass, so the flavor content varies with distance and energy.</p>
-        <p class="note">In a two‑flavor model, $\lvert \nu_e\rangle=\cos\theta\,\lvert \nu_1\rangle+\sin\theta\,\lvert \nu_2\rangle$. Different masses pick up different phases, $\Delta\phi\sim \Delta m^2 L/(2E)$. The survival probability is $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$ with $\Delta m^2$ in eV$^2$, $L$ in km, and $E$ in GeV. Move the sliders to see how $L/E$ shifts the pattern.</p>
+        <p class="note">For decades, detectors on Earth caught only about a third of the electron neutrinos the Sun should have been producing. Physicists checked and rechecked the solar models. The models were fine. The neutrinos were not missing -- they were changing identity on the way here. This "solar neutrino problem" was one of the great puzzles of 20th-century physics, and its solution earned the 2015 Nobel Prize.</p>
+        <p class="note">The key insight: the neutrino states that interact (electron, muon, tau) are not the same as the states with definite mass. A neutrino born as an electron type is a blend of mass states, and those mass states travel at slightly different speeds, so the flavor content oscillates as it flies. In a two-flavor model, $\lvert \nu_e\rangle=\cos\theta\,\lvert \nu_1\rangle+\sin\theta\,\lvert \nu_2\rangle$. Different masses pick up different phases, $\Delta\phi\sim \Delta m^2 L/(2E)$. The survival probability is $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$. Move the sliders to see the oscillation pattern shift with distance and energy.</p>
         <div class="demo">
           <canvas id="nu" class="demo-canvas" width="700" height="200"></canvas>
-          <p class="note">This picture shows two‑flavor oscillations: $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$.</p>
+          <p class="note">The green curve traces the survival probability as a function of $L/E$. The dot marks your current settings. Try pushing the baseline $L$ out to 1000 km and watch the oscillation complete several cycles. $P_{ee}=1-\sin^2(2\theta)\,\sin^2\!\big(1.267\,\Delta m^2 L/E\big)$.</p>
           <p class="note">Terms in the formula: $\theta$ is the mixing angle between flavor and mass states; $\Delta m^2$ is the mass‑squared difference; $L$ is travel distance (km); $E$ is energy (GeV); the factor $1.267$ makes the units work; $P_{ee}$ is the chance to remain electron flavor and oscillates with $L/E$.</p>
           <div class="controls">
             <label>θ <input id="theta" type="range" min="0.0" max="1.57" step="0.01" value="0.52"/></label>
@@ -490,11 +490,11 @@
 
       <div class="section">
         <h2 id="gravitational-lensing">Gravitational Lensing</h2>
-        <p class="note">In general relativity, gravity is the shape of spacetime. Light follows the straightest possible path in that shape. Near a massive object the path bends. On the sky this looks like one object making multiple images of a more distant source. If the alignment is close, the image turns into a ring.</p>
+        <p class="note">In general relativity, gravity is not a force pulling on things -- it is the shape of spacetime itself. Light follows the straightest possible path through that curved geometry, and near a massive object the path bends. The result is one of the most visually stunning predictions in all of physics: a massive foreground object acts as a cosmic lens, splitting a distant source into multiple images. When the alignment is nearly perfect, the images merge into a luminous ring -- an Einstein ring, first observed in 1988 and now routinely photographed by space telescopes.</p>
         <p class="note">In the thin‑lens, small‑angle limit a point mass deflects by $\alpha=\tfrac{4GM}{c^2 b}$. In angles on the sky, $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$. The solutions are $\theta_{\pm}=\tfrac12\big(\beta\pm\sqrt{\beta^2+4\theta_E^2}\big)$. We draw in units where the Einstein radius $\theta_E$ is the green circle. Slide the source and watch the two images move and merge.</p>
         <div class="demo">
           <canvas id="lens" class="demo-canvas" width="540" height="300"></canvas>
-          <p class="note">This picture shows thin‑lens gravity: $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$, images $\theta_{\pm}=\tfrac12(\beta\pm\sqrt{\beta^2+4\theta_E^2})$.</p>
+          <p class="note">Slide the source angle toward zero and watch the two red images converge into an Einstein ring. That perfect ring is what you see when source, lens, and observer line up exactly. $\beta=\theta-\theta_E^2\,\theta/|\theta|^2$, with images at $\theta_{\pm}=\tfrac12(\beta\pm\sqrt{\beta^2+4\theta_E^2})$.</p>
           <p class="note">Terms in the formula: $\theta$ is the apparent image angle; $\beta$ is the source angle without lensing; $\theta_E$ is the Einstein radius set by mass and distances; the two solutions $\theta_\pm$ are the bright images; at $\beta=0$ they form a ring at $\theta=\theta_E$.</p>
           <div class="controls">
             <label>Source angle $\beta/\theta_E$ <input id="betaSlider" type="range" min="-1.5" max="1.5" step="0.01" value="0.6"/></label>
@@ -510,12 +510,12 @@
 
       <div class="section">
         <h2 id="putting-it-together">Putting It Together</h2>
-        <p class="note">These pieces fit well. Spacetime says how to relate moving observers. Gauge symmetry turns a relabeling rule into a force field. The Higgs field lets particles and some force carriers have mass without breaking the rules. Neutrino mixing shows how a change of basis can have clear effects in experiments. Gravity bends light because spacetime has curvature. The equations here are short, and the pictures let you see them act.</p>
+        <p class="note">Step back and notice how tightly these pieces lock together. Spacetime tells moving observers how to compare their measurements. Gauge symmetry says that the freedom to relabel phases must be compensated by a force field -- and that is where electromagnetism, the weak force, and the strong force come from. The Higgs mechanism lets particles have mass without wrecking the gauge symmetry that gave us forces. Neutrino oscillations show that a simple change of basis -- the same idea you met in the Toolkit -- has dramatic, measurable consequences across hundreds of kilometers. And gravity bends light because spacetime itself has curvature. Six sections, one story.</p>
       </div>
 
       <div class="section">
         <h2 id="try-it-yourself">Try It Yourself</h2>
-        <p class="note">Each canvas is a small experiment. Change a slider, watch what moves, and connect it to the line of math beside it. If something feels unclear, try a slower change and look for patterns. Plain rules, seen clearly, go a long way.</p>
+        <p class="note">Each canvas above is a small experiment waiting for you. Change a slider, watch what moves, and connect it to the equation beside it. If something feels unclear, try a slower change and look for what stays the same -- invariants are often more revealing than the things that move. You do not need a physics degree to build real intuition here. Play with the pictures, let the patterns sink in, and trust that the understanding will follow. Plain rules, seen clearly, go a surprisingly long way.</p>
       </div>
     </article>
 

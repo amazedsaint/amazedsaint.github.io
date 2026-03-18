@@ -194,7 +194,7 @@
         <span class="tile-category">Toolkit</span>
         <h1 class="article-title">Physics Toolkit: A Guided Tour</h1>
         <div class="article-meta">September 24, 2025 • Toolkit • Interactive</div>
-        <p class="article-description">Key tools used across the physics pieces here: vectors and dot product, linear maps and eigenvectors, basis mixing, damped motion, and small Fourier builds. Each has a live visual and a short breakdown of terms.</p>
+        <p class="article-description">Physics keeps reusing a small set of ideas: how arrows align, how transformations stretch space, how coordinates rotate, how energy drains away, how any signal breaks into pure tones. Master these five tools and you hold the Swiss Army knife of modern physics. Each one below has a live visual you can play with and a short breakdown of the math.</p>
         <p class="note">Hover <span class="idea" data-note="Connections: Lorentz axes and lensing geometry relate to basis & dot‑product; Spinors use rotations; Higgs uses potential curvature; Neutrinos echo Fourier/oscillations.">here</span> for how this toolkit plugs into Spacetime, Fields, and Light.</p>
       </div>
 
@@ -221,12 +221,12 @@
 
       <div class="section">
         <h2 id="vectors-and-dot-product">Vectors and Dot Product</h2>
-        <p class="note">The dot product measures alignment: $\mathbf a\cdot\mathbf b=\|a\|\,\|b\|\cos\theta$. It is projection times length.</p>
+        <p class="note">Here is one of the most useful questions in all of physics: "How much do these two things point in the same direction?" The dot product answers it. $\mathbf a\cdot\mathbf b=\|a\|\,\|b\|\cos\theta$ -- projection times length, nothing more.</p>
         <p class="note">Think of one arrow asking the other, “how much of you points in my direction?” That number is the length of the projection, scaled by the length of the receiver. In mechanics this shows up as <em>work</em>: force dot displacement. In statistics it becomes correlation. In machine learning it becomes similarity. Same picture, same rule.</p>
         <p class="note">When the green arrow swings to be perpendicular to the blue one, the dot product goes to zero: no alignment, no work. When they overlap, it’s maximal and positive; when they point opposite, it’s large in magnitude but negative (same line, opposite direction).</p>
         <div class="demo">
           <canvas id="dot" width="540" height="280"></canvas>
-          <p class="note">This picture shows two vectors (blue, green), and the projection of one onto the other (orange). Readout: a·b = <span id="dotVal">…</span></p>
+          <p class="note">Drag the sliders to swing the arrows around. The blue and green vectors move independently; the orange arrow is the projection of one onto the other. Readout: a·b = <span id="dotVal">…</span></p>
           <div class="controls">
             <label>a length <input id="aLen" type="range" min="0.2" max="2.5" step="0.01" value="1.00"/></label>
             <label>a angle <input id="aAng" type="range" min="-3.14" max="3.14" step="0.01" value="0.20"/></label>
@@ -239,12 +239,12 @@
 
       <div class="section">
         <h2 id="linear-maps-and-eigenvectors">Linear Maps and Eigenvectors</h2>
-        <p class="note">A $2\times2$ matrix sends grids to sheared/scaled grids. Eigenvectors are directions that do not turn; they only stretch by $\lambda$.</p>
-        <p class="note">Watch the gray grid go to tan: that’s the map acting on space. The unit circle goes to a green ellipse. The ellipse’s principal axes are the special directions that the map doesn’t rotate (those are the eigenvectors, in orange), and the radii along them are the eigenvalues.</p>
+        <p class="note">A $2\times2$ matrix sends grids to sheared, stretched, or rotated grids. But here is the remarkable thing: no matter how complicated the transformation looks, there are almost always special directions that refuse to turn. They just stretch (or shrink) by a factor $\lambda$. Those are the eigenvectors, and finding them is one of the most powerful moves in applied mathematics.</p>
+        <p class="note">Watch the gray grid warp into its image as you drag the sliders. The unit circle deforms into a green ellipse. The ellipse’s principal axes are exactly those stubborn directions that the map does not rotate (shown in orange), and the radii along them are the eigenvalues.</p>
         <p class="note">Why this matters: preferred directions show up everywhere. Diffusion is fastest along one axis of a crystal; a covariance matrix has principal components; stability near an equilibrium point is set by the eigenvalues of the linearized system. This little picture is the common thread.</p>
         <div class="demo">
           <canvas id="linmap" width="540" height="300"></canvas>
-          <p class="note">This picture shows a grid (gray) and its image (tan), the unit circle (blue) and its image (green). Readout: <span id="eigVal">…</span></p>
+          <p class="note">Notice how the circle stretches into an ellipse whose axes reveal the eigenvectors. Gray grid and its image, unit circle (blue) and its image (green). Readout: <span id="eigVal">…</span></p>
           <div class="controls">
             <label>a <input id="mA" type="range" min="-2.0" max="2.0" step="0.01" value="1.20"/></label>
             <label>b <input id="mB" type="range" min="-2.0" max="2.0" step="0.01" value="0.30"/></label>
@@ -270,12 +270,12 @@
 
       <div class="section">
         <h2 id="damped-oscillator">Damped Oscillator</h2>
-        <p class="note">The equation $\ddot x + \gamma\dot x + \omega^2 x=0$ models a mass on a spring with drag. In phase space, spirals show energy loss.</p>
+        <p class="note">Push a swinging door and let go. It swings back, overshoots, swings again, and gradually settles. That is a damped oscillator, and the equation $\ddot x + \gamma\dot x + \omega^2 x=0$ captures everything about it -- the spring-like restoring force, the friction that drains energy, and the phase-space spiral that shows the whole story at a glance.</p>
         <p class="note">Set $\gamma=0$ and the trail is a closed loop: energy cycles between potential ($\omega^2x^2$) and kinetic ($\dot{x}^2$). Add damping and the loop spirals inward. Mathematically, $\tfrac{\mathrm d}{\mathrm dt}\big[\tfrac12(\omega^2x^2+\dot{x}^2)\big] = -\gamma\,\dot{x}^2 \le 0$; in short, drag always drains energy.</p>
         <p class="note">Three regimes sit in that one line: underdamped ($\gamma<2\omega$) spirals with decaying oscillations; critically damped ($\gamma=2\omega$) returns fastest without overshoot; overdamped ($\gamma>2\omega$) crawls back with no wiggles. Car suspensions, microphones, and qubits all live on this diagram.</p>
         <div class="demo">
           <canvas id="sho" width="540" height="280"></canvas>
-          <p class="note">This picture shows the phase portrait trail from the current state. Readout: energy‑like value $E=\tfrac12(\omega^2 x^2 + \dot{x}^2)$ = <span id="shoE">…</span></p>
+          <p class="note">Watch the spiral tighten as damping steals energy, or set damping to zero and see a perfect closed loop -- energy cycling forever. Readout: energy-like value $E=\tfrac12(\omega^2 x^2 + \dot{x}^2)$ = <span id="shoE">…</span></p>
           <div class="controls">
             <label>ω <input id="w" type="range" min="0.2" max="5.0" step="0.01" value="2.00"/></label>
             <label>γ <input id="g" type="range" min="0.0" max="2.0" step="0.01" value="0.20"/></label>
@@ -287,12 +287,12 @@
 
       <div class="section">
         <h2 id="fourier-builder">A Tiny Fourier Builder</h2>
-        <p class="note">Many signals can be written as a sum of tones: $s(t)=\sum_k A_k\cos(2\pi k t)$. Turning tones on/off changes shape instantly.</p>
-        <p class="note">Add a second harmonic and the curve grows shoulders; add a third and corners begin to form. Higher $k$ brings finer detail. This is the time–frequency tradeoff in action: the left plot is time, the tiny bars are “how much” of each frequency you used. Most real decompositions include sines and phases too; here we keep the idea minimal.</p>
+        <p class=”note”>Every sound you hear -- a violin note, a spoken vowel, a drum hit -- is a sum of pure tones at different frequencies. Fourier's insight was that any repeating signal can be written this way: $s(t)=\sum_k A_k\cos(2\pi k t)$. It is one of the most far-reaching ideas in all of science.</p>
+        <p class=”note”>Turn up the second harmonic and the curve grows shoulders; add a third and corners begin to form. Higher $k$ brings finer detail. This is the time-frequency tradeoff in action: the blue curve is the signal in time, the green bars show “how much” of each frequency you used. JPEG images, MP3 audio, and MRI scans all rely on this same decomposition. Here we keep the idea minimal.</p>
         <p class="note">Why this matters: waves, heat flow, circuits, and quantum dynamics all become easier when you think in frequencies. Many equations diagonalize in a Fourier basis, turning hard derivatives into simple multipliers.</p>
         <div class="demo">
           <canvas id="fourier" width="560" height="260"></canvas>
-          <p class="note">This picture shows time signal (blue) and a small bar spectrum (green) for $k=1..5$.</p>
+          <p class="note">Slide the amplitudes and watch the waveform reshape in real time. Blue is the combined signal; green bars show the strength of each frequency component ($k=1..5$).</p>
           <div class="controls">
             <label>A1 <input id="A1" type="range" min="0" max="1.5" step="0.01" value="1.00"/></label>
             <label>A2 <input id="A2" type="range" min="0" max="1.5" step="0.01" value="0.00"/></label>
@@ -306,7 +306,8 @@
 
       <div class="section">
         <h2 id="summary">Summary</h2>
-        <p class="note">You now have visuals for core tools: alignment and projection (dot), linear maps and eigenvectors (shape & preferred directions), basis mixing (rotations), damped motion (phase space), and a tiny Fourier builder (time/frequency). Each term in the equations is spelled out where it appears; use the sliders until the shapes feel familiar.</p>
+        <p class="note">Five tools, and you have already seen them all in action. The dot product tells you how things align. Eigenvectors reveal the directions a transformation cares about most. A change of basis lets you describe the same reality from a different vantage point. Phase-space spirals show you where energy goes. And Fourier analysis lets you hear the individual notes inside any signal.</p>
+        <p class="note">These are not five separate tricks. They are five views of the same deep idea: physics simplifies when you find the right way to look at it. Keep playing with the sliders until the shapes feel like old friends -- they will show up again and again as you go deeper.</p>
       </div>
     </article>
 

@@ -150,14 +150,15 @@
         <span class="tile-category">Computation</span>
         <h1 class="article-title">Turing Machines & Automata: Interactive</h1>
         <div class="article-meta">September 24, 2025 • Computation • Interactive</div>
-        <p class="article-description">A hands‑on tour of the core models of computation: finite automata (tiny, fast pattern checkers) and Turing machines (general, step‑by‑step algorithms). Each comes with a live visual and a breakdown of the parts.</p>
+        <p class="article-description">What is the simplest machine that can recognize a pattern? What is the minimum it takes to compute anything at all? This is a hands-on tour through the core models of computation, from finite automata to Turing machines, with live visuals you can build and run yourself.</p>
         <p class="note">Hover <span class="idea" data-note="Connects to NFAs: nondeterminism and ε‑moves; to Primer/Toolkit: matrices & state diagrams echo basis changes and linear maps.">here</span> for connections to companion pieces.</p>
       </div>
 
       <div class="section">
-        <h2 id="finite-automata-dfa">Finite Automata (DFA)</h2>
-        <p class="note">A DFA is a small machine that reads an input left to right and keeps only a <em>state</em>. The classic five‑tuple is $(Q,\Sigma,\delta,q_0,F)$: states $Q$, alphabet $\Sigma$, transition function $\delta$, start $q_0$, accepting set $F$. <span class="idea" data-note="Connections: NFAs extend this with sets of states and ε‑moves; see ‘NFAs from First Principles’.">related</span></p>
-        <p class="note">Below is a DFA that accepts exactly the binary strings with an even number of 1s. Shift your attention between the tape and the highlighted state: the machine stores only “parity so far”. That’s the trick: limited memory, fast decisions.</p>
+        <h2 id=”finite-automata-dfa”>Finite Automata (DFA)</h2>
+        <p class=”note”>What is the simplest possible computer? Strip away the hard drive, the RAM, the operating system. What is the bare minimum you need to recognize a pattern? The answer is a DFA: a deterministic finite automaton. It reads input one symbol at a time, left to right, and carries nothing but a single <em>state</em>. No memory. No scratch space. Just a state and a set of rules for what to do next. <span class=”idea” data-note=”Connections: NFAs extend this with sets of states and ε‑moves; see ‘NFAs from First Principles’.”>related</span></p>
+        <p class=”note”>Formally, it is a five-tuple $(Q,\Sigma,\delta,q_0,F)$: a finite set of states $Q$, an alphabet $\Sigma$, a transition function $\delta$ that says where to go next, a start state $q_0$, and a set of accepting states $F$. But the formalism hides how elegant the idea really is.</p>
+        <p class=”note”>Below is a DFA that accepts exactly the binary strings with an even number of 1s. Watch the tape and the highlighted state together. The machine remembers only one thing: the parity of the 1s it has seen so far. That is all it needs. Limited memory, instant decisions.</p>
         <div class="demo">
           <canvas id="dfa" width="680" height="280"></canvas>
           <div class="controls">
@@ -174,18 +175,19 @@
               <tr><td>q1</td><td>q1</td><td>q0</td></tr>
             </table>
           </div>
-          <p class="note">From first principles: choose an alphabet $\Sigma$ (here $\{0,1\}$). Words are finite strings over $\Sigma$ (the set $\Sigma^*$), including the empty word $\varepsilon$. A DFA processes a word one symbol at a time. The transition extends to whole words via $$\hat{\delta}(q,\varepsilon)=q,\qquad \hat{\delta}(q,aw)=\hat{\delta}(\,\delta(q,a),\,w\,),$$ and a word $w$ is accepted precisely when $\hat{\delta}(q_0,w)\in F$.</p>
-          <p class="note">What the state really is: a compact summary of “everything about the prefix that still matters”. For parity, that summary is a single bit: even/odd so far. For “ends with 01”, it’s whether your last one or two symbols were 0 then 1. If no finite summary exists, the language is not regular.</p>
+          <p class=”note”>From first principles: choose an alphabet $\Sigma$ (here $\{0,1\}$). Words are finite strings over $\Sigma$ (the set $\Sigma^*$), including the empty word $\varepsilon$. A DFA processes a word one symbol at a time. The following formula says: if the input is empty, stay where you are; otherwise, consume the first symbol and recurse on what remains. $$\hat{\delta}(q,\varepsilon)=q,\qquad \hat{\delta}(q,aw)=\hat{\delta}(\,\delta(q,a),\,w\,).$$ A word $w$ is accepted precisely when $\hat{\delta}(q_0,w)\in F$. In other words: start at the beginning, follow the arrows, and check where you land.</p>
+          <p class=”note”>Here is the deep insight. What the state really is: a compact summary of “everything about the prefix that still matters”. For parity, that summary is a single bit: even or odd so far. For “ends with 01”, it is whether your last one or two symbols were 0 then 1. And here is the remarkable part: if no finite summary exists for a pattern, then no DFA can recognize it. The machine’s limitation is also what makes it beautiful. It forces you to ask: what is the minimal amount of information I actually need to carry forward?</p>
           <p class="note">Terms in the formula: $Q=\{q0,q1\}$; $\Sigma=\{0,1\}$; $\delta(q,\sigma)$ picks the next state; $q_0=q0$ is the start; $F=\{q0\}$ accepts even‑parity strings.</p>
-          <p class="note">Deterministic vs nondeterministic: an NFA can branch, but you can track all branches as a set of states (subset construction). This is why NFAs and DFAs recognize the same class (regular languages). Kleene showed regular expressions, NFAs, and DFAs are equivalent; DFAs are closed under union/intersection (product) and, when total, complement (swap accepts).</p>
+          <p class="note">A natural question: what if we let the machine branch, exploring multiple paths at once? That gives you an NFA (nondeterministic finite automaton). It sounds more powerful, but here is the surprise: you can always convert an NFA back into a DFA by tracking all possible branches as a single set of states. NFAs and DFAs recognize exactly the same class of languages. Kleene proved something even more remarkable: regular expressions, NFAs, and DFAs are all equivalent, three different notations for exactly the same idea.</p>
         </div>
-        <p class="note">Context: Kleene and others used such automata to formalize “regular patterns”. They are fast and simple, but they can’t count arbitrarily far; that needs a stack (pushdown) or a tape (Turing).</p>
+        <p class=”note”>Kleene and others developed these automata in the 1950s to formalize what a “regular pattern” is. DFAs are fast and elegant, but they have a hard ceiling: they cannot count without bound. Try designing a DFA that checks whether a string has equal numbers of 0s and 1s. You will not succeed; that requires unbounded memory. For that, you need a stack (pushdown automata) or a full tape (Turing machines).</p>
       </div>
 
       <div class="section">
         <h2 id="turing-machines">Turing Machines</h2>
-        <p class="note">A Turing machine is an idealized paper‑and‑pencil computer: a tape of symbols, a head that reads/writes, and a finite state control. Formally, $(Q,\Gamma,\Sigma,\delta,q_0,q_{acc},q_{rej})$ with tape alphabet $\Gamma$, input alphabet $\Sigma\subseteq\Gamma$, and $\delta$ mapping $(\text{state},\text{symbol})$ to $(\text{write},\text{move},\text{next})$.</p>
-        <p class="note">Below: a tiny program that increments a <em>unary</em> number (a run of 1’s). It moves right over 1’s until it finds blank, writes a 1, and halts. Simple, but you can see the head walking, the local edit, and the stop: exactly how bigger programs behave.</p>
+        <p class="note">In 1936, a 23-year-old Alan Turing sat down to answer one of the deepest questions in mathematics: what does it mean to compute something? His answer was not a proof or a theorem. It was a machine. An imaginary one, built from the simplest possible ingredients: an infinitely long tape of symbols, a head that can read and write one cell at a time, and a finite set of rules telling it what to do next. That is it. No keyboard, no screen, no memory chips. And yet this bare-bones device turned out to be capable of computing anything that any computer can compute. Every app on your phone, every neural network, every algorithm ever written: all of it can, in principle, be run on Turing’s imagined machine.</p>
+        <p class="note">Formally, it is a seven-tuple $(Q,\Gamma,\Sigma,\delta,q_0,q_{acc},q_{rej})$: states $Q$, tape alphabet $\Gamma$, input alphabet $\Sigma\subseteq\Gamma$, and $\delta$ mapping $(\text{state},\text{symbol})$ to $(\text{write},\text{move},\text{next state})$. The formula is precise. The implication is staggering.</p>
+        <p class="note">Below is a tiny program that increments a <em>unary</em> number (a run of 1s). It walks right over the 1s until it finds a blank, writes a 1, and halts. Simple, almost trivially so. But watch the head moving, the tape being modified, the halt condition. This is exactly how every computation works at its core: read, decide, write, move, repeat.</p>
         <div class="demo">
           <div class="controls">
             <label>Unary input (1s): <input id="tmInput" type="text" value="111" /></label>
@@ -197,18 +199,19 @@
           <p class="note">Program (rules): <span id="tmSpec"></span></p>
           <p class="note">Terms in the formula: $Q=\{q0,qh\}$; $\Gamma=\{1,\_\}$; $\Sigma=\{1\}$; $q_0=q0$; $q_{acc}=qh$; $\delta(q0,1)=(1,R,q0)$, $\delta(q0,\_)=(1,S,qh)$. The head writes, moves L/R/S (stay), and changes state until it halts.</p>
         </div>
-        <p class="note">Context: Turing’s 1936 paper used these machines to pin down “effective procedure”. The surprising part is how little you need to get general computation: a finite control and a long enough tape.</p>
+        <p class=”note”>Turing’s 1936 paper, “On Computable Numbers,” did not just define a machine. It drew a line around what is computable and what is not. He proved that there exist well-defined mathematical questions that no algorithm can ever answer (the halting problem). The surprising part is not that computation is powerful. The surprising part is how little you need: a finite control and a long enough tape. Everything else is engineering.</p>
       </div>
 
       <div class="section">
-        <h2 id="language-classes">What Languages These Machines Recognize</h2>
-        <p class="note">Automata sit in a simple ladder. A DFA recognizes exactly the <em>regular</em> languages (think: patterns with no unbounded counting). Add a stack and you get a <em>pushdown automaton</em> (PDA) for <em>context‑free</em> languages such as balanced parentheses. Give a machine a full read/write tape and you get Turing machines that can simulate any algorithm we know how to write.</p>
-        <p class="note">Two helpful intuitions: (1) Regular languages have finitely many “situations that matter” (Myhill–Nerode equivalence classes). (2) A single unbounded counter (a stack) lets you match opens with closes, but not two counts at once (you need more memory for $a^n b^n c^n$). These pictures are the memory you’re allowed to carry.</p>
+        <h2 id=”language-classes”>What Languages These Machines Recognize</h2>
+        <p class=”note”>One of the most beautiful results in all of computer science is this: these machines form a perfect hierarchy, and each level corresponds to a fundamentally different kind of memory.</p>
+        <p class=”note”>At the bottom: DFAs, with no memory at all beyond their current state. They recognize the <em>regular</em> languages, patterns where you never need to count past some fixed limit. Add a single stack, and you get a <em>pushdown automaton</em> that can match opens with closes, handling <em>context-free</em> languages like balanced parentheses and the grammar of programming languages. Give a machine a full read/write tape, and you leap to Turing machines, which can simulate any algorithm we know how to write.</p>
+        <p class=”note”>Each level is strictly more powerful than the last. No DFA, however cleverly designed, can check that parentheses are balanced. No PDA can verify that a string has equal numbers of a’s, b’s, and c’s ($a^n b^n c^n$). But a Turing machine handles all of these without breaking a sweat. The hierarchy is really a hierarchy of memory: no memory, a stack, a tape. And the question “what kind of memory do you need?” turns out to be one of the deepest questions you can ask about a problem.</p>
       </div>
 
       <div class="section">
-        <h2 id="build-a-dfa">Build a DFA</h2>
-        <p class="note">Click “Add state” and place a few nodes. Choose a start, toggle accepting states, and add transitions with symbols from your alphabet. Enter an input and step through. The highlight shows the current state; acceptance requires halting in an accepting state with all input consumed.</p>
+        <h2 id=”build-a-dfa”>Build a DFA</h2>
+        <p class=”note”>Your turn. Click “Add state” and drop a few nodes on the canvas. Choose a start, toggle which states accept, and wire them together with transitions. Do not worry about getting it right on the first try; half the fun is watching your machine do something unexpected and figuring out why. Enter an input string and step through. The highlight shows where the machine is; acceptance means ending in an accepting state with all input consumed.</p>
         <div class="demo">
           <canvas id="dfaBuild" width="720" height="340"></canvas>
           <div class="controls" style="gap:6px;">
@@ -228,12 +231,13 @@
           <p class="note" id="dfabStatus">…</p>
           <p class="note">Parts: $Q$ = your states; $\Sigma$ = symbols you use in transitions; $\delta$ = your arrows; $q_0$ = start; $F$ = states you toggled to accept.</p>
         </div>
-        <p class="note">Tip: Try to build a DFA for strings over {0,1} that end with 01. How many states do you need? Where does the machine store “I just saw a 0”?</p>
+        <p class=”note”>Challenge: try building a DFA for strings over {0,1} that end with “01”. You will need three states. Ask yourself: where does the machine store “I just saw a 0”? That question is the whole game. Every DFA you design is really a question about what information is worth remembering.</p>
       </div>
 
       <div class="section">
         <h2 id="pushdown-automaton">Pushdown Automaton (Balanced Parentheses)</h2>
-        <p class="note">A PDA is a finite control plus a stack. Here we check balanced parentheses. Read '(' and push; read ')' and pop; reject on underflow; accept if the stack is empty at the end. The stack is the one unbounded memory you carry.</p>
+        <p class="note">A DFA cannot count. That is its fundamental limitation. But what if we gave it just a tiny bit of memory? Not a hard drive. Not even random access memory. Just a stack: a pile of symbols where you can only touch the top, like a stack of plates in a cafeteria. You can put a plate on top, or take the top plate off. That is all. And yet this small addition unlocks an entirely new class of languages.</p>
+        <p class="note">Here we use a PDA to check balanced parentheses, the classic example. Read '(' and push it onto the stack. Read ')' and pop. If you try to pop from an empty stack, reject immediately: too many closing parens. If the input ends and the stack is empty, accept: every open had a close. Watch the stack grow and shrink as you step through.</p>
         <div class="demo">
           <div class="split">
             <canvas id="pda" width="520" height="220"></canvas>
@@ -250,12 +254,12 @@
           <p class="note" id="pdaStatus">…</p>
           <p class="note">Parts: states $Q=\{q\}$ (one is enough here), stack alphabet $\Gamma=\{\$, (\}$ with base symbol $\$$; transition pushes on '(' and pops on ')' if possible; acceptance when input ends and top is $\$$.</p>
         </div>
-        <p class="note">Try adding a stray ')' mid‑string and step: the pop fails and the PDA rejects immediately. That’s the stack telling you “too many closes”.</p>
+        <p class=”note”>Try adding a stray ‘)’ in the middle of the string and step through. The pop fails and the PDA rejects immediately. That is the stack doing its job: it remembers exactly how many unmatched opens are pending, and it refuses to go negative. Every compiler you have ever used runs a version of this algorithm to check your code’s brackets.</p>
       </div>
 
       <div class="section">
         <h2 id="turing-program-editor">Edit a Turing Program</h2>
-        <p class="note">Write rules as lines like <code>q0,1 -> 1,R,q0</code> and <code>q0,_ -> 1,S,qh</code>. The machine reads the current symbol, writes, moves L/R/S (stay), and changes state. Halt when no rule matches or you reach a designated halt state like <code>qh</code>.</p>
+        <p class="note">This is where you get real power. The text box below is a Turing machine program, and you can rewrite it entirely. Each line is an instruction: given a state and a symbol under the head, write something, move left or right (or stay), and transition to a new state. The format is <code>q0,1 -> 1,R,q0</code>. You can add as many states as you like. You can make the machine loop, search, copy, compare. Anything computable is within reach. Try modifying the default increment program, or write something new from scratch. What happens if you make it move left instead of right? What if you add a second state that acts differently?</p>
         <div class="demo">
           <div class="controls" style="flex-direction:column; align-items:stretch; max-width:880px;">
             <label>Rules (one per line)</label>

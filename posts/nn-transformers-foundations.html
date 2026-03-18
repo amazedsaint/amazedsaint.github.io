@@ -68,7 +68,9 @@
 
       <div class="section">
         <h2 id="linear-units">Linear Units & Nonlinearity</h2>
-        <p class="note">A single neuron computes a weighted sum and passes it through a nonlinearity: $$y = \phi(\mathbf w\cdot\mathbf x + b).$$ Without $\phi$, stacks of linear layers collapse to one linear map. With $\phi$ (ReLU, GELU, tanh), you can fit bends in the data.</p>
+        <p>Every neural network, no matter how massive, is built from one absurdly simple building block: the neuron. A neuron takes some inputs, multiplies each by a weight, adds them up, and then squishes the result through a nonlinear function. That's it. The entire deep learning revolution rests on this.</p>
+        <p>Why does the nonlinearity matter so much? Without it, stacking layers would be pointless — two linear transformations in a row are just one linear transformation in disguise. The activation function (ReLU, GELU, tanh) is what lets a network bend and curve to fit real data. It's the difference between drawing a straight line and drawing anything you want.</p>
+        <p class="note">Formally, a single neuron computes: $$y = \phi(\mathbf w\cdot\mathbf x + b).$$ Without $\phi$, stacks of linear layers collapse to one linear map. With $\phi$, you can approximate arbitrarily complex functions.</p>
         <div class="demo">
           <canvas id="linUnit" width="520" height="320"></canvas>
           <div class="controls">
@@ -82,6 +84,8 @@
 
       <div class="section">
         <h2 id="softmax-crossentropy">Softmax & Cross‑Entropy</h2>
+        <p>When a network needs to pick one option out of many — "is this a cat, dog, or bird?" — it produces raw scores called logits. But raw scores aren't probabilities. Softmax fixes that: it exponentiates each score and normalizes them so they sum to one. Bigger logit, bigger probability. Simple and differentiable.</p>
+        <p>Now, how do we measure how wrong the network is? That's where cross-entropy comes in. It computes $-\log p_t$, the negative log of the probability assigned to the correct class. Why log probability? Because it punishes confident wrong answers far more than uncertain ones. If the network says "I'm 99% sure this is a dog" and it's actually a cat, the loss explodes. That harsh penalty is exactly what drives fast learning.</p>
         <p class="note">Softmax turns logits into probabilities: $$p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.$$ For a target class $t$, cross‑entropy is $L=-\log p_t$.</p>
         <div class="demo">
           <div class="controls">
@@ -100,7 +104,9 @@
 
       <div class="section">
         <h2 id="attention">Dot‑Product Attention</h2>
-        <p class="note">Weights for one query $q_i$ over keys $K$: softmax of scaled dot products.</p>
+        <p>Attention is the mechanism that lets a network decide what to focus on. Think of it like a soft dictionary lookup: the query says "what am I looking for?", the keys say "here's what I have", and the dot product between them measures how well each key matches the query. High match? Pay attention. Low match? Ignore it.</p>
+        <p>The scores get scaled (divided by $\sqrt{d}$ to keep gradients well-behaved) and then passed through softmax to become proper weights. The result is a smooth, differentiable way for the network to route information — no hard choices, just weighted blending. This is the beating heart of the transformer.</p>
+        <p class="note">Formally: attention weights for query $q_i$ over keys $K$ are the softmax of scaled dot products.</p>
         <div class="demo">
           <canvas id="attn" width="520" height="220"></canvas>
           <div class="controls">
@@ -112,7 +118,9 @@
 
       <div class="section">
         <h2 id="positional-encodings">Positional Encodings</h2>
-        <p class="note">Sinusoidal bands encode position at multiple scales.</p>
+        <p>Here's a problem: attention treats its inputs as a set, not a sequence. Without positional information, "the cat sat on the mat" and "the mat sat on the cat" look identical to the network. That's the bag-of-words problem, and it's a dealbreaker for language.</p>
+        <p>The fix is elegant: add a unique positional signal to each token's embedding before it enters the network. The original transformer uses sinusoidal functions at different frequencies — think of it like giving each position a unique fingerprint made of overlapping waves. Low-frequency waves encode coarse position (beginning vs. end), high-frequency waves encode fine position (this word vs. the next).</p>
+        <p class="note">Sinusoidal bands encode position at multiple scales, letting the network distinguish word order without any learned parameters.</p>
         <div class="demo">
           <canvas id="posenc" width="520" height="160"></canvas>
           <div class="controls">
@@ -124,6 +132,8 @@
 
       <div class="section">
         <h2 id="layernorm-residuals">Layer Norm & Residuals</h2>
+        <p>Deep networks have a dirty secret: they're really hard to train. As signals pass through dozens of layers, activations can drift wildly — some exploding, others vanishing. Layer normalization fixes this by re-centering and re-scaling activations at each layer, keeping everything in a well-behaved range. It's like recalibrating your instruments between each measurement.</p>
+        <p>Residual connections are the other essential trick. Instead of asking each layer to compute the full output, you let it compute a small correction and add that to the input: $\text{output} = x + f(x)$. This gives gradients a highway straight back to early layers during backpropagation, solving the vanishing gradient problem. Together, layer norm and residuals are what make it possible to stack 100+ layers without everything falling apart.</p>
         <div class="demo">
           <canvas id="ln" width="520" height="150"></canvas>
         </div>
@@ -131,6 +141,8 @@
 
       <div class="section">
         <h2 id="receptive-fields">Receptive Fields</h2>
+        <p>A receptive field is the region of input that a particular neuron can "see." In a convolutional network, each neuron only looks at a small local patch — a 3x3 window, say. Stack more layers and the receptive field grows, but it's always bounded. Attention flips this on its head: every token can attend to every other token in a single layer. The receptive field is the entire sequence, immediately.</p>
+        <p>This matters because it determines what relationships the network can capture. Convolutions are great for local patterns (edges, textures) but struggle with long-range dependencies. Attention handles global context naturally, which is why transformers dominate language tasks where a word's meaning can depend on something paragraphs away.</p>
         <div class="demo">
           <canvas id="rf" width="520" height="140"></canvas>
           <div class="controls">
@@ -143,6 +155,8 @@
 
       <div class="section">
         <h2 id="gradient-descent">Gradient Descent (2D Bowl)</h2>
+        <p>Training a neural network means finding the set of weights that minimizes a loss function. Imagine the loss as a landscape — hills, valleys, ridges — and your current weights as a ball sitting somewhere on that surface. Gradient descent simply says: look which way is downhill, and take a step in that direction.</p>
+        <p>The learning rate controls how big each step is. Too small, and you'll crawl toward the minimum painfully slowly. Too large, and you'll overshoot, bouncing around the valley or even flying off entirely. The sweet spot depends on the curvature of the landscape. This demo lets you feel that tradeoff: try cranking the learning rate up and watch the optimizer go haywire.</p>
         <div class="demo">
           <canvas id="gd" width="520" height="320"></canvas>
           <div class="controls">
@@ -157,6 +171,8 @@
 
       <div class="section">
         <h2 id="tiny-mlp">A Tiny MLP (Two ReLUs)</h2>
+        <p>A multilayer perceptron (MLP) is what you get when you stack neurons into layers. This tiny one has just two hidden neurons with ReLU activations, and their outputs get combined into a single value. Despite its simplicity, it can already produce piecewise-linear functions — straight segments joined at kinks — which is surprisingly powerful.</p>
+        <p>Each ReLU neuron contributes a "hinge" to the output. With two of them, you can make a bump, a notch, or a ramp. Add more neurons and you can approximate any continuous function to arbitrary precision. That's the universal approximation theorem in action. Play with the weights below to see how two simple hinges combine into richer shapes.</p>
         <div class="demo">
           <canvas id="mlp" width="520" height="220"></canvas>
           <div class="controls">
@@ -178,6 +194,8 @@
 
       <div class="section">
         <h2 id="toy-bpe">A Toy Tokenizer (BPE)</h2>
+        <p>Before a transformer can process text, it needs to break it into pieces — tokens. But which pieces? Individual characters are too granular (the model has to learn spelling from scratch). Whole words are too coarse (you'd need a token for every word ever written, including "un-tokenizable"). Byte Pair Encoding (BPE) finds a sweet spot by starting with characters and greedily merging the most frequent pairs.</p>
+        <p>The clever part: BPE automatically discovers sub-word units that balance vocabulary size and coverage. Common words like "the" become single tokens. Rare words get split into familiar chunks — "tokenizer" might become "token" + "izer." This means the model never encounters a truly unknown word, and common patterns get efficient single-token representations. Step through the merges below to watch vocabulary emerge from raw characters.</p>
         <div class="demo" id="bpeArea">
           <div class="controls">
             <label>Input text <input id="bpeInput" type="text" value="the other brother"/></label>
@@ -194,6 +212,8 @@
 
       <div class="section">
         <h2 id="attention-aggregation">Attention: Values Aggregation</h2>
+        <p>Computing attention weights is only half the story. Once we know how much to attend to each position, we use those weights to create a weighted blend of value vectors. Each token contributes its value in proportion to its attention weight — highly attended tokens dominate the output, while ignored tokens contribute almost nothing.</p>
+        <p>This is where information actually flows. The attention weights decide "who to listen to," and the values carry "what they have to say." The result is a new representation for each position that mixes information from across the sequence. It's how a word like "bank" can absorb context from "river" or "money" depending on the sentence.</p>
         <div class="demo">
           <canvas id="attnAgg" width="520" height="220"></canvas>
           <div class="controls">
@@ -205,6 +225,8 @@
 
       <div class="section">
         <h2 id="multi-head">Multi‑Head Attention (Weights)</h2>
+        <p>One attention head can only focus on one type of relationship at a time. But language is rich — a word might simultaneously need to attend to its syntactic subject, the verb it modifies, and a coreferent pronoun three sentences back. Multi-head attention solves this by running several attention mechanisms in parallel, each with its own learned queries, keys, and values.</p>
+        <p>Each head is free to specialize. In practice, researchers have found that different heads learn to track different linguistic phenomena: some handle positional adjacency, others track syntactic dependencies, and some capture semantic similarity. Their outputs are concatenated and projected back down, giving the network a multi-faceted view of the sequence in a single layer.</p>
         <div class="demo">
           <div class="controls">
             <label>heads <input id="mhaH" type="range" min="2" max="6" step="1" value="4"/></label>
@@ -217,6 +239,8 @@
 
       <div class="section">
         <h2 id="ffn-block">Position‑wise Feed‑Forward (FFN)</h2>
+        <p>After attention has mixed information across positions, each token passes through a small feed-forward network — independently and identically. This is where the transformer does its "thinking" per token. The FFN typically expands the representation to 4x its size, applies a nonlinearity (ReLU or GELU), then projects back down.</p>
+        <p>Why is this needed? Attention is great at routing and blending information, but it's fundamentally a weighted average — a linear operation over values. The FFN adds the nonlinear processing power needed to actually transform representations. Recent research suggests these layers act as key-value memories, storing factual knowledge the model has learned during training.</p>
         <div class="demo">
           <canvas id="ffn" width="520" height="180"></canvas>
         </div>
@@ -224,6 +248,8 @@
 
       <div class="section">
         <h2 id="putting-it-together">Putting It Together: A Transformer Block</h2>
+        <p>Now we assemble all the pieces. A single transformer block follows a clean recipe: layer norm, multi-head self-attention, add a residual connection, then layer norm again, feed-forward network, and another residual connection. That's it. Stack 12, 24, or 96 of these blocks and you get GPT, BERT, or any modern large language model.</p>
+        <p>The elegance is in the modularity. Attention handles cross-token communication ("what context matters here?"), the FFN handles per-token computation ("given this context, what does it mean?"), layer norm keeps signals stable, and residual connections let gradients flow. Each block refines the representation a little further, building increasingly abstract understanding of the input.</p>
         <div class="demo">
           <canvas id="tf" width="520" height="220"></canvas>
           <div class="controls">

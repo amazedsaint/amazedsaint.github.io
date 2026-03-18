@@ -46,25 +46,27 @@
                 </div>
             </div>
 
-            <h2>Generative dynamics on SE(3) reveal how symmetry, noise and reward shape motion</h2>
+            <h2>What if virtual creatures could move through space the way physics actually works?</h2>
 
-            <h3>Abstract</h3>
-            <p>Motion in three dimensions is naturally expressed on the Lie group $SE(3)$, the set of rigid transforms combining rotations $SO(3)$ with translations $\mathbb{R}^3$. Here we present an interactive swarm in which each agent ("fly") evolves by sampling infinitesimal <strong>on-manifold</strong> increments and applying them by left multiplication. A small <strong>generative prior</strong> supplies candidate increments; a <strong>GAN-like critic</strong> assigns rewards tied to user-placed attractors, repellents and a diffusing scalar "plume". Selecting and reinforcing high-reward proposals produces structured transport while preserving the symmetries of space.</p>
+            <h3>The Problem That Hooked Us</h3>
+            <p>Watch a fly navigate a room and you'll notice something remarkable: it doesn't just move forward, backward, left, and right. It banks, rolls, tumbles, and recovers, all while tracking a scent trail or dodging your hand. Its motion lives in a richer space than simple x-y-z coordinates can capture. Every pose of the fly is a combination of <em>where</em> it is and <em>how</em> it's oriented, and these two things are tangled together in a mathematically beautiful way.</p>
 
-            <h3>Main</h3>
-            <p>The pose of each agent is a homogeneous transform</p>
+            <p>This article is about building a swarm of virtual flies that respect that geometry. Each fly lives on $SE(3)$, the space of all rigid-body poses (rotations combined with translations). They propose small moves, score them against a landscape of attractors and repellents, and learn which kinds of moves work best. The result: structured, lifelike motion that emerges from three simple ingredients: <strong>symmetry</strong>, <strong>noise</strong>, and <strong>reward</strong>.</p>
+
+            <h3>The Mathematics of Rigid Motion</h3>
+            <p>To describe where a fly is and which way it's facing, we pack both pieces of information into a single matrix called a <strong>homogeneous transform</strong>. Think of it as a compact ID card: one part says "I'm rotated this way" and the other says "I'm located here."</p>
 
             $$T=\begin{pmatrix}R & t \\ 0 & 1\end{pmatrix}\in SE(3),\quad R\in SO(3),\ t\in\mathbb{R}^3.$$
 
-            <p>Updates are performed in the tangent space $\mathfrak{se}(3)$: we draw a <strong>twist</strong> $\xi=[\rho,\omega]\in\mathbb{R}^6$ and advance</p>
+            <p>Now, how does a fly take a step? It doesn't just add a displacement vector the way you might move a chess piece on a flat board. Instead, it works in the <strong>tangent space</strong>, a local flat patch that approximates the curved surface of $SE(3)$. The fly draws a small "twist" (six numbers encoding a tiny rotation and a tiny push) and then maps it back onto the manifold. This is the key move:</p>
 
             $$T_{t+1} \;=\; \exp(\xi_t)\,T_t.$$
 
-            <p>The exponential map uses the classical Rodrigues form for rotations,</p>
+            <p>The exponential map is what converts a twist in the flat tangent space into an actual rotation-plus-translation on the curved manifold. For the rotation part, it uses the elegant Rodrigues formula, which essentially says: "given an axis and an angle, here's the rotation matrix."</p>
 
             $$R(\omega)=\exp(\widehat{\omega})=I+\frac{\sin\theta}{\theta}\widehat{\omega}+\frac{1-\cos\theta}{\theta^2}\widehat{\omega}^2,\quad \theta=\|\omega\|,$$
 
-            <p>and a coupled translation via</p>
+            <p>The translation part is subtler. When something is simultaneously rotating and translating, the translation gets "bent" by the rotation. The $V(\omega)$ matrix below captures exactly this coupling, ensuring the fly traces a smooth screw-like path rather than an awkward rotate-then-jump.</p>
 
             $$\exp\!\begin{pmatrix}\widehat{\omega}&\rho\\0&0\end{pmatrix}
             =
@@ -73,51 +75,41 @@
             \end{pmatrix},\quad
             V(\omega)=I+\frac{1-\cos\theta}{\theta^2}\widehat{\omega}+\frac{\theta-\sin\theta}{\theta^3}\widehat{\omega}^2.$$
 
-            <p>In this formulation, orientation and position evolve coherently and never leave the manifold; there are no parameterization artefacts.</p>
+            <p>The beauty of this approach is that orientation and position evolve together, coherently, and the fly's state never "falls off" the manifold. There are no gimbal lock surprises, no angle-wrapping bugs, just clean geometry.</p>
 
-            <p>Candidate increments are drawn from a <strong>mixture prior</strong> with four physically interpretable components. A <strong>Haar-uniform</strong> term supplies orientation noise that is truly uniform on $SO(3)$ (a symmetry‑respecting baseline for exploration). A <strong>goal‑seeking</strong> term concentrates proposals toward the nearest user‑placed attractor (implemented as a von‑Mises–Fisher‑like directional sampler). A <strong>plume‑following</strong> term aligns proposals with the gradient of a diffusing, decaying scalar field seeded by clicks. A small <strong>exploration</strong> term contributes body‑frame jitter. Visual "ghost" segments in the scene show these one‑step proposals, making the prior itself observable.</p>
+            <p>So where do the proposed moves come from? Each fly draws from a <strong>mixture of four strategies</strong>, and each one has a clear physical interpretation. The <strong>Haar-uniform</strong> component is pure wandering: it samples orientations that are truly random on the sphere of rotations, so the fly has no hidden bias toward any direction. The <strong>goal-seeking</strong> component points proposals toward the nearest attractor you've placed in the scene. The <strong>plume-following</strong> component sniffs out a diffusing chemical signal and steers uphill along its gradient. And a small <strong>exploration</strong> component adds random body-frame jitter, like a fly buzzing unpredictably. In the simulation, you can actually <em>see</em> these proposals as faint "ghost" lines extending from each fly, making the decision process visible.</p>
 
-            <p>A lightweight <strong>critic</strong> converts a proposed next state $T'$ into a scalar reward,</p>
+            <p>Once the fly has a handful of proposed moves, it needs to decide which one is best. A lightweight <strong>critic</strong> scores each proposal by combining several signals into a single number:</p>
 
             $$R(T') \;=\; w_g\,\phi_{\mathrm{goal}}(T') + w_p\,\phi_{\mathrm{plume}}(T') - w_r\,\phi_{\mathrm{repel}}(T') - w_w\,\phi_{\mathrm{wall}}(T') - w_c\,\phi_{\mathrm{collision}}(T'),$$
 
-            <p>favoring proximity to attractors and strong plume signal, while penalizing walls, repellents and crowding. At each step, the agent selects the highest-reward proposal (a one-step free-energy descent) and updates its mixture weights by a small <strong>policy-gradient</strong> correction,</p>
+            <p>In plain English: the fly wants to be near attractors and strong plume signals, and it wants to stay away from walls, repellents, and other flies. It picks the best-scoring proposal and takes that step. But it also does something cleverer: it <strong>remembers which strategy produced the winning move</strong> and nudges its internal preferences accordingly, using a simple policy-gradient update:</p>
 
             $$\Delta \alpha_c \;\propto\; \eta\,\big(\mathbf{1}\{c=c^\star\}-\pi_\alpha(c)\big)\,R(T^\star),$$
 
-            <p>where $\alpha$ are component logits and $\pi_\alpha$ their softmax. Components that repeatedly yield good moves grow in prevalence; those that do not recede. This "GAN-like" loop is intentionally modest: it shapes behaviour without heavy function approximation, and it leaves the manifold geometry intact.</p>
+            <p>Here $\alpha$ are the component logits (raw preference scores) and $\pi_\alpha$ their softmax probabilities. Over time, strategies that consistently produce good moves gain influence, while those that don't quietly fade. It's a lightweight learning loop: no deep networks, no replay buffers, just a gentle tug on the mixture weights after every step.</p>
 
-            <p>The resulting dynamics resemble <strong>Langevin motion on a symmetry manifold</strong>: symmetric noise (Haar on $SO(3)$) plus <strong>potential‑driven drift</strong> derived from user‑defined fields. The white box acts as a boundary condition; reflections model elastic encounters. The plume field provides an intuitive language for exogenous information (clicks inject localized sources into a diffusion equation that then spreads and decays). Because all updates are computed in $\mathfrak{se}(3)$ and applied via the exponential map, the simulation respects the kinematics of rigid bodies used in robotics, vision and molecular modelling.</p>
+            <p>Step back and look at what emerges. The flies are performing something close to <strong>Langevin dynamics on a symmetry manifold</strong>: random noise (uniform on the rotation group) plus a drift term shaped by the reward landscape you create. The bounding box acts like walls in a room, with elastic reflections. The plume field gives you an intuitive way to broadcast information: click somewhere and a chemical signal blooms outward, diffusing and decaying like smoke in still air. Because every update happens in the Lie algebra $\mathfrak{se}(3)$ and gets mapped back through the exponential, the simulation never cheats on the underlying physics. The same math powers robotic arm planners, protein docking simulations, and camera pose estimators.</p>
 
-            <h3>Key Observations</h3>
+            <h3>What We Learned</h3>
 
-            <p>Several observations follow. First, <strong>geometry matters</strong>: using $SE(3)$ directly avoids the biases and singularities of Euclidean parameterizations, and the Haar component prevents covert frame preferences. Second, <strong>structure can be light</strong>: a small set of task‑aligned directions, blended with symmetry‑respecting noise, already produces rich transport. Third, <strong>the prior should be visible</strong>: rendering proposals exposes failure modes (e.g. collapsed headings or wall hugging) and makes tuning ethical, so users can see what the model intends to do before it acts. Finally, <strong>fields are a programmable substrate</strong>: attractors, repellents and plumes offer a compact way to sculpt behaviour without specifying policies explicitly.</p>
+            <p><strong>Geometry isn't optional.</strong> Working directly on $SE(3)$ sidesteps a whole class of bugs and biases. Euler angles have gimbal lock. Quaternions need normalization hacks. The Lie group approach just works, and the Haar-uniform component ensures no direction gets secretly favored.</p>
 
-            <p>Although the present implementation is pedagogical, the ingredients align with practice: manifold-correct motion models for tracking, proposal priors for 6-DoF pose estimation, and energy-shaping controllers for navigation. The interactive setting highlights the unifying theme: <strong>symmetry, noise and reward</strong> can be composed cleanly when the state space is treated as a group, not a vector space.</p>
+            <p><strong>You don't need much structure to get rich behavior.</strong> Four simple proposal strategies, blended with manifold-respecting noise, produce surprisingly lifelike motion. There's no neural network here, no massive training run. The complexity lives in the geometry, not the model.</p>
 
-            <h3>Technical Implementation</h3>
+            <p><strong>Making the prior visible changes everything.</strong> Those ghost lines showing proposed moves aren't just pretty: they turn debugging into observation. You can <em>see</em> when the flies are confused, when they're hugging a wall, when one strategy is dominating. Transparent AI starts with transparent proposals.</p>
 
-            <p>The simulation demonstrates several key technical concepts:</p>
+            <p><strong>Fields are a natural language for shaping behavior.</strong> Rather than hand-coding policies ("if near wall, turn left"), you paint the world with attractors, repellents, and diffusing plumes. The flies figure out the rest. It's a surprisingly expressive way to program collective motion without writing explicit rules.</p>
 
-            <ul>
-                <li><strong>SE(3) Lie Group Operations</strong>: All motion updates respect the group structure through proper exponential map computations</li>
-                <li><strong>Haar Measure Preservation</strong>: Uniform sampling on SO(3) maintains rotational symmetries</li>
-                <li><strong>von Mises-Fisher Distributions</strong>: Concentrated directional sampling for goal-oriented behavior</li>
-                <li><strong>Diffusion-Reaction Fields</strong>: 3D scalar field dynamics for information propagation</li>
-                <li><strong>REINFORCE Learning</strong>: Online mixture weight adaptation through policy gradients</li>
-            </ul>
+            <p>While this simulation is built for exploration and learning, the same ingredients show up in real systems: manifold-correct motion models in visual tracking, proposal distributions in 6-DoF pose estimation, and energy-shaping controllers for robot navigation. The deeper lesson is that <strong>symmetry, noise, and reward compose cleanly when you treat the state space as a group, not just a bag of numbers</strong>.</p>
 
-            <h3>Applications and Extensions</h3>
+            <h3>Under the Hood</h3>
 
-            <p>This framework has implications for:</p>
+            <p>Several pieces of mathematical machinery work together to make this happen. Every motion update flows through the <strong>SE(3) exponential map</strong>, so the group structure is never violated: no matter how wild the proposed twist, the result is always a valid rigid-body pose. Rotational exploration uses the <strong>Haar measure</strong> on $SO(3)$, which is the mathematically correct way to sample "uniformly at random" on the space of orientations (naively picking three Euler angles would cluster samples near the poles). When a fly is drawn toward an attractor, the directional pull comes from a <strong>von Mises-Fisher distribution</strong>, the spherical analogue of a Gaussian: peaked in the goal direction, with tunable concentration. The plume field evolves according to a <strong>diffusion-reaction equation</strong> discretized on a 3D grid, giving the environment a physical memory of past events. And the learning signal that reshapes each fly's strategy mix is a lightweight <strong>REINFORCE</strong> update, the simplest member of the policy gradient family.</p>
 
-            <ul>
-                <li><strong>Robotics</strong>: 6-DoF motion planning with proper geometric constraints</li>
-                <li><strong>Computer Vision</strong>: Pose estimation and tracking on manifolds</li>
-                <li><strong>Molecular Dynamics</strong>: Rigid body simulations with correct geometric properties</li>
-                <li><strong>Generative Models</strong>: Sampling and optimization on Lie groups</li>
-                <li><strong>Multi-Agent Systems</strong>: Distributed coordination with geometric constraints</li>
-            </ul>
+            <h3>Where This Goes Next</h3>
+
+            <p>The ideas here reach well beyond virtual flies. In <strong>robotics</strong>, every six-degree-of-freedom motion planner faces the same geometry: a gripper's pose is an element of $SE(3)$, and planning a reach-and-grasp trajectory means finding a smooth path on that manifold. In <strong>computer vision</strong>, estimating where a camera is and which way it's pointing is literally a pose estimation problem on $SE(3)$, and proposal-based methods like particle filters use the same sample-and-score loop. <strong>Molecular dynamics</strong> treats rigid protein domains as elements of $SE(3)$ when docking them against each other. The growing field of <strong>generative models on Lie groups</strong> (diffusion models for 3D molecules, for example) relies on the same exponential-map machinery to ensure samples stay on the manifold. And <strong>multi-agent coordination</strong>, from drone swarms to warehouse robots, benefits whenever the agents respect geometric constraints rather than fighting them.</p>
 
             <div style="background: var(--surface-2); padding: 20px; border-radius: 10px; margin: 30px 0; border: 1px solid var(--border);">
                 <h4>🎮 Interactive Exploration</h4>
