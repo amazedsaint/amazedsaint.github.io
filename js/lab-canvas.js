@@ -36,6 +36,12 @@
   var CONNECTION_DIST = 110;
   var MOUSE_INNER = 120;
   var MOUSE_OUTER = 280;
+  var WANDERER_COUNT = 3;
+  var WANDERER_INNER = 80;
+  var WANDERER_OUTER = 200;
+
+  // ── Wandering particles ──
+  var wanderers = [];
 
   // ── Spatial hash for O(n) connections ──
   var grid = {};
@@ -83,8 +89,9 @@
       document.documentElement.classList.add('canvas-active');
       initDots();
       initFlows();
+      initWanderers();
       startTime = performance.now();
-      window.addEventListener('resize', debounce(function(){ resize(); initDots(); initFlows(); }, 200));
+      window.addEventListener('resize', debounce(function(){ resize(); initDots(); initFlows(); initWanderers(); }, 200));
       window.addEventListener('mousemove', function(e){
         mouse.prevX = mouse.x; mouse.prevY = mouse.y;
         mouse.x = e.clientX; mouse.y = e.clientY;
@@ -180,6 +187,157 @@
     return pts;
   }
 
+  // ── Wanderers ──
+  function initWanderers(){
+    wanderers = [];
+    var colors = [
+      { h: 220, s: 80, l: 70 },  // blue
+      { h: 270, s: 70, l: 70 },  // violet
+      { h: 160, s: 70, l: 60 },  // green-teal
+    ];
+    for (var i = 0; i < WANDERER_COUNT; i++){
+      wanderers.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        tx: Math.random() * W,
+        ty: Math.random() * H,
+        vx: 0,
+        vy: 0,
+        color: colors[i % colors.length],
+        trail: [],
+        age: 0,
+        wanderTimer: 0,
+        speed: 0.6 + Math.random() * 0.4,
+      });
+    }
+  }
+
+  function updateWanderers(t, dt){
+    for (var i = 0; i < wanderers.length; i++){
+      var w = wanderers[i];
+      w.age += dt;
+      w.wanderTimer -= dt;
+
+      // Pick a new target periodically or when close
+      var dtx = w.tx - w.x, dty = w.ty - w.y;
+      var distToTarget = Math.sqrt(dtx*dtx + dty*dty);
+      if (w.wanderTimer <= 0 || distToTarget < 40){
+        w.tx = 60 + Math.random() * (W - 120);
+        w.ty = 60 + Math.random() * (H - 120);
+        w.wanderTimer = 3 + Math.random() * 5;
+      }
+
+      // Steer toward target with smooth acceleration
+      var ax = (w.tx - w.x) * 0.003 * w.speed;
+      var ay = (w.ty - w.y) * 0.003 * w.speed;
+
+      // Add slight sinusoidal drift for organic feel
+      ax += Math.sin(t * 0.7 + i * 2.1) * 0.15;
+      ay += Math.cos(t * 0.5 + i * 1.7) * 0.15;
+
+      w.vx += ax;
+      w.vy += ay;
+
+      // Damping
+      w.vx *= 0.97;
+      w.vy *= 0.97;
+
+      // Clamp speed
+      var spd = Math.sqrt(w.vx*w.vx + w.vy*w.vy);
+      var maxSpd = 2.5;
+      if (spd > maxSpd){ w.vx *= maxSpd/spd; w.vy *= maxSpd/spd; }
+
+      w.x += w.vx;
+      w.y += w.vy;
+
+      // Soft boundary bounce
+      if (w.x < 30){ w.vx += 0.5; w.x = 30; }
+      if (w.x > W - 30){ w.vx -= 0.5; w.x = W - 30; }
+      if (w.y < 30){ w.vy += 0.5; w.y = 30; }
+      if (w.y > H - 30){ w.vy -= 0.5; w.y = H - 30; }
+
+      // Store trail
+      w.trail.push({ x: w.x, y: w.y });
+      if (w.trail.length > 30) w.trail.shift();
+    }
+  }
+
+  function drawWanderers(elapsed){
+    if (elapsed < 1.6) return; // Wait for dots to appear first
+    var fadeIn = Math.min(1, (elapsed - 1.6) / 1.0);
+
+    for (var i = 0; i < wanderers.length; i++){
+      var w = wanderers[i];
+      var c = w.color;
+
+      // Draw trail
+      if (w.trail.length > 2){
+        ctx.lineWidth = 1.5;
+        for (var j = 1; j < w.trail.length; j++){
+          var trailAlpha = (j / w.trail.length) * 0.12 * fadeIn;
+          ctx.beginPath();
+          ctx.moveTo(w.trail[j-1].x, w.trail[j-1].y);
+          ctx.lineTo(w.trail[j].x, w.trail[j].y);
+          ctx.strokeStyle = 'hsla(' + c.h + ',' + c.s + '%,' + c.l + '%,' + trailAlpha + ')';
+          ctx.globalAlpha = 1;
+          ctx.stroke();
+        }
+      }
+
+      // Glow
+      var grad = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, WANDERER_OUTER * 0.5);
+      grad.addColorStop(0, 'hsla(' + c.h + ',' + c.s + '%,' + c.l + '%,0.06)');
+      grad.addColorStop(1, 'transparent');
+      ctx.globalAlpha = fadeIn;
+      ctx.fillStyle = grad;
+      ctx.fillRect(w.x - WANDERER_OUTER, w.y - WANDERER_OUTER, WANDERER_OUTER * 2, WANDERER_OUTER * 2);
+
+      // Core dot
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + c.h + ',' + c.s + '%,' + c.l + '%,0.5)';
+      ctx.globalAlpha = fadeIn;
+      ctx.fill();
+
+      // Bright center
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, 1, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + c.h + ',' + c.s + '%,' + (c.l + 20) + '%,0.8)';
+      ctx.globalAlpha = fadeIn;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Compute wanderer influence on a point (returns {fx, fy, glow, boost})
+  function wandererForce(px, py){
+    var fx = 0, fy = 0, glow = 0, boost = 0;
+    for (var i = 0; i < wanderers.length; i++){
+      var w = wanderers[i];
+      var ddx = px - w.x;
+      var ddy = py - w.y;
+      var dist = Math.sqrt(ddx*ddx + ddy*ddy);
+      if (dist > WANDERER_OUTER || dist === 0) continue;
+
+      if (dist < WANDERER_INNER){
+        // Recoil — dots pushed away
+        var f = (1 - dist / WANDERER_INNER) * 14;
+        fx += (ddx / dist) * f;
+        fy += (ddy / dist) * f;
+        glow = Math.max(glow, (1 - dist / WANDERER_INNER) * 0.18);
+        boost = Math.max(boost, (1 - dist / WANDERER_INNER) * 0.15);
+      } else {
+        // Gentle push in outer zone
+        var f2 = (1 - (dist - WANDERER_INNER) / (WANDERER_OUTER - WANDERER_INNER)) * 4;
+        fx += (ddx / dist) * f2;
+        fy += (ddy / dist) * f2;
+        glow = Math.max(glow, (1 - dist / WANDERER_OUTER) * 0.06);
+        boost = Math.max(boost, (1 - dist / WANDERER_OUTER) * 0.08);
+      }
+    }
+    return { fx: fx, fy: fy, glow: glow, boost: boost };
+  }
+
   // ── Utility ──
   function debounce(fn, ms){
     var t; return function(){ clearTimeout(t); t = setTimeout(fn, ms); };
@@ -225,10 +383,14 @@
     // Fire intro event when lattice is formed
     if (elapsed > 2.0) fireIntro();
 
+    // Update wanderers
+    updateWanderers(t, 1/60);
+
     drawDots(t, sf, elapsed, dotPhase);
     buildGrid();
     if (linePhase > 0) drawConnections(t, sf, linePhase);
     if (flowPhase > 0) drawFlows(t, sf, flowPhase);
+    drawWanderers(elapsed);
     drawMouseGlow();
     drawRipples(ts);
     drawASCII(t, elapsed);
@@ -270,19 +432,23 @@
 
       if (dist < MOUSE_OUTER && dist > 0){
         if (dist < MOUSE_INNER){
-          // Strong repulsion + glow
           var force = (1 - dist / MOUSE_INNER) * 22;
           mx = (dx / dist) * force;
           my = (dy / dist) * force;
           mGlow = (1 - dist / MOUSE_INNER) * 0.25;
         } else {
-          // Gentle outer push
           var force2 = (1 - (dist - MOUSE_INNER) / (MOUSE_OUTER - MOUSE_INNER)) * 6;
           mx = (dx / dist) * force2;
           my = (dy / dist) * force2;
           mGlow = (1 - dist / MOUSE_OUTER) * 0.08;
         }
       }
+
+      // Wanderer interaction — recoil from autonomous particles
+      var wf = wandererForce(d.x + nx, d.y + ny);
+      mx += wf.fx;
+      my += wf.fy;
+      mGlow = Math.max(mGlow, wf.glow);
 
       var drawX = d.x + nx + mx;
       var drawY = d.y + ny + my;
@@ -324,13 +490,17 @@
           var dist = Math.sqrt(dx*dx + dy*dy);
           if (dist > threshold) continue;
 
-          // Mouse proximity boost
+          // Mouse + wanderer proximity boost
           var midX = (a.dx + b.dx) * 0.5;
           var midY = (a.dy + b.dy) * 0.5;
           var mDx = midX - mouse.x;
           var mDy = midY - mouse.y;
           var mDist = Math.sqrt(mDx*mDx + mDy*mDy);
           var mBoost = mDist < MOUSE_OUTER ? (1 - mDist/MOUSE_OUTER) * 0.2 : 0;
+
+          // Wanderer boost on connections
+          var wfConn = wandererForce(midX, midY);
+          mBoost = Math.max(mBoost, wfConn.boost);
 
           var alpha = (1 - dist / threshold) * maxAlpha + mBoost;
           if (alpha < 0.004) continue;
