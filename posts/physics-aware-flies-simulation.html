@@ -6,6 +6,8 @@
     <title>3D Flies Simulator: Place Goals and See Motion</title>
     <meta name="description" content="Simple 3D simulator: click to add goals, hazards, and plumes; watch how motion responds in real time.">
     <link rel="stylesheet" href="../style.css">
+    <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+    <script src="../js/palette.js"></script>
 </head>
 <body>
     <div class="container">
@@ -748,7 +750,9 @@ function init(){
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.2;
   renderer.outputColorSpace=THREE.SRGBColorSpace;
-  renderer.setClearColor(0x0a0a0a, 1.0);
+  // Theme-aware clear color
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark' || (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme:dark)').matches);
+  renderer.setClearColor(isDark ? 0x09090b : 0xfafafa, 1.0);
   app.appendChild(renderer.domElement);
 
   const scene=new THREE.Scene();
@@ -771,7 +775,7 @@ function init(){
   // Box (wire) + invisible collider volume
   const boxGeo=new THREE.BoxGeometry(App.size, App.size, App.size);
   const edges=new THREE.EdgesGeometry(boxGeo);
-  const boxLines=new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color:0x00ff41, linewidth:1, transparent:true, opacity:0.2 }));
+  const boxLines=new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: isDark ? 0x3f3f46 : 0xd4d4d8, linewidth:1, transparent:true, opacity:0.4 }));
   scene.add(boxLines);
   const boxMat=new THREE.MeshBasicMaterial({ color:0xffffff, opacity:0.0, transparent:true });
   const boxMesh=new THREE.Mesh(boxGeo, boxMat); scene.add(boxMesh);
@@ -797,7 +801,7 @@ function init(){
     // Fallback: show a message in the app container
     const app = document.getElementById('app');
     if (app) {
-      app.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#4a6a3a; font-size:14px; font-family:monospace;">3D Simulation Loading...</div>';
+      app.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--muted); font-size:14px; font-family:var(--font-mono);">3D Simulation Loading...</div>';
     }
   }
 }

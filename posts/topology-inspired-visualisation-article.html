@@ -6,6 +6,8 @@
     <title>Shapes, Paths, and Patterns: Simple Visuals</title>
     <meta name="description" content="Simple, interactive visuals that explain symmetry, shapes, and motion in everyday language.">
     <link rel="stylesheet" href="../style.css">
+    <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+    <script src="../js/palette.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <script defer src="../js/notes.js"></script>
     <script>
@@ -1502,7 +1504,7 @@
                 this.wavePacket = [];
                 this.trail = [];
                 this.size = isQuantum ? 6 : 8;
-                this.color = isQuantum ? '#4169e1' : '#5a8a4a';
+                this.color = isQuantum ? '#4169e1' : P.muted;
                 this.glowRadius = 0;
                 this.pulsePhase = Math.random() * Math.PI * 2;
             }
@@ -1669,7 +1671,7 @@
                 } else if (this.reflected) {
                     color = '#ff6b6b'; // Red for reflected
                 } else {
-                    color = this.isQuantum ? '#4169e1' : '#5a8a4a'; // Blue for quantum, gray for classical
+                    color = this.isQuantum ? '#4169e1' : P.muted; // Blue for quantum, gray for classical
                 }
                 
                 quantumCtx.fillStyle = color;
@@ -1723,7 +1725,7 @@
                 quantumCtx.lineTo(quantumCanvas.width, y);
                 quantumCtx.stroke();
                 
-                quantumCtx.fillStyle = '#5a8a4a';
+                quantumCtx.fillStyle = P.muted;
                 quantumCtx.font = '10px Arial';
                 quantumCtx.fillText(`E=${e}`, 10, y - 5);
             }
@@ -1903,7 +1905,7 @@
             huffmanCtx.arc(nest.x, nest.y, nest.size * 0.3, 0, Math.PI * 2);
             huffmanCtx.fill();
             
-            huffmanCtx.fillStyle = '#c0c8b0';
+            huffmanCtx.fillStyle = P.text;
             huffmanCtx.font = 'bold 12px Arial';
             huffmanCtx.textAlign = 'center';
             huffmanCtx.fillText('ANT NEST', nest.x, nest.y + nest.size + 15);
@@ -1924,7 +1926,7 @@
                 huffmanCtx.arc(food.x, food.y, food.size + pulse, 0, Math.PI * 2);
                 huffmanCtx.stroke();
                 
-                huffmanCtx.fillStyle = '#c0c8b0';
+                huffmanCtx.fillStyle = P.text;
                 huffmanCtx.font = '10px Arial';
                 huffmanCtx.textAlign = 'center';
                 huffmanCtx.fillText(food.type.name, food.x, food.y + food.size + 12);
@@ -1932,7 +1934,7 @@
         }
         
         function drawMessage(message) {
-            huffmanCtx.fillStyle = '#c0c8b0';
+            huffmanCtx.fillStyle = P.text;
             huffmanCtx.font = 'bold 10px monospace';
             huffmanCtx.textAlign = 'center';
             huffmanCtx.fillText(`${message.type}: ${message.code}`, message.x, message.y);
@@ -1946,7 +1948,7 @@
                 huffmanCtx.arc(bit.x, bit.y, 3, 0, Math.PI * 2);
                 huffmanCtx.fill();
                 
-                huffmanCtx.fillStyle = '#c0c8b0';
+                huffmanCtx.fillStyle = P.text;
                 huffmanCtx.font = '8px monospace';
                 huffmanCtx.textAlign = 'center';
                 huffmanCtx.fillText(bit.value, bit.x, bit.y - 8);
@@ -1981,7 +1983,7 @@
             // Draw panel
             huffmanCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             huffmanCtx.fillRect(boxX, boxX, contentW, contentH);
-            huffmanCtx.strokeStyle = 'rgba(0,255,65,0.3)';
+            huffmanCtx.strokeStyle = P.stroke;
             huffmanCtx.lineWidth = 1;
             huffmanCtx.strokeRect(boxX, boxX, contentW, contentH);
             // Header
@@ -1997,7 +1999,7 @@
                 huffmanCtx.fillStyle = item.color;
                 huffmanCtx.fillRect(boxX + pad, y - 9, 10, 10);
                 // Text
-                huffmanCtx.fillStyle = '#c0c8b0';
+                huffmanCtx.fillStyle = P.text;
                 huffmanCtx.fillText(text, boxX + textStartX, y);
                 y += lineH;
             });
@@ -2027,7 +2029,7 @@
                 huffmanCtx.fillRect(x, y, barWidth, height);
                 
                 // Draw label
-                huffmanCtx.fillStyle = '#c0c8b0';
+                huffmanCtx.fillStyle = P.text;
                 huffmanCtx.font = '12px Arial';
                 huffmanCtx.textAlign = 'center';
                 huffmanCtx.fillText(item.location, x + barWidth/2, baseY + 20);
@@ -2046,7 +2048,7 @@
                         const bitX = x + barWidth/2 - (code.length * 5) + bitIndex * 10 + 5;
                         const bitY = y - 50;
                         
-                        huffmanCtx.fillStyle = bit === '1' ? '#4169e1' : 'rgba(0,255,65,0.3)';
+                        huffmanCtx.fillStyle = bit === '1' ? '#4169e1' : P.stroke;
                         huffmanCtx.beginPath();
                         huffmanCtx.arc(bitX, bitY, 3, 0, Math.PI * 2);
                         huffmanCtx.fill();
@@ -2092,7 +2094,7 @@
             function drawNode(node) {
                 // Draw edges first
                 if (node.left) {
-                    huffmanCtx.strokeStyle = 'rgba(0,255,65,0.4)';
+                    huffmanCtx.strokeStyle = P.stroke2;
                     huffmanCtx.lineWidth = 2;
                     huffmanCtx.beginPath();
                     huffmanCtx.moveTo(node.x, node.y);
@@ -2100,7 +2102,7 @@
                     huffmanCtx.stroke();
                     
                     // Label edge
-                    huffmanCtx.fillStyle = '#5a8a4a';
+                    huffmanCtx.fillStyle = P.muted;
                     huffmanCtx.font = 'bold 12px monospace';
                     huffmanCtx.fillText('0', (node.x + node.left.x) / 2 - 10, (node.y + node.left.y) / 2);
 
@@ -2108,7 +2110,7 @@
                 }
 
                 if (node.right) {
-                    huffmanCtx.strokeStyle = 'rgba(0,255,65,0.4)';
+                    huffmanCtx.strokeStyle = P.stroke2;
                     huffmanCtx.lineWidth = 2;
                     huffmanCtx.beginPath();
                     huffmanCtx.moveTo(node.x, node.y);
@@ -2116,7 +2118,7 @@
                     huffmanCtx.stroke();
 
                     // Label edge
-                    huffmanCtx.fillStyle = '#5a8a4a';
+                    huffmanCtx.fillStyle = P.muted;
                     huffmanCtx.font = 'bold 12px monospace';
                     huffmanCtx.fillText('1', (node.x + node.right.x) / 2 + 10, (node.y + node.right.y) / 2);
                     
@@ -2132,13 +2134,13 @@
                     huffmanCtx.arc(node.x, node.y, 8, 0, Math.PI * 2);
                     huffmanCtx.fill();
                     
-                    huffmanCtx.fillStyle = '#c0c8b0';
+                    huffmanCtx.fillStyle = P.text;
                     huffmanCtx.font = '10px Arial';
                     huffmanCtx.textAlign = 'center';
                     huffmanCtx.fillText(node.location, node.x, node.y + 25);
                 } else {
                     // Internal node
-                    huffmanCtx.fillStyle = '#5a8a4a';
+                    huffmanCtx.fillStyle = P.muted;
                     huffmanCtx.beginPath();
                     huffmanCtx.arc(node.x, node.y, 5, 0, Math.PI * 2);
                     huffmanCtx.fill();
@@ -2167,25 +2169,25 @@
             // Draw recursively into offscreen
             (function drawNode(node){
                 if (node.left) {
-                    huffmanTreeCtx.strokeStyle = 'rgba(0,255,65,0.4)';
+                    huffmanTreeCtx.strokeStyle = P.stroke2;
                     huffmanTreeCtx.lineWidth = 2;
                     huffmanTreeCtx.beginPath();
                     huffmanTreeCtx.moveTo(node.x, node.y);
                     huffmanTreeCtx.lineTo(node.left.x, node.left.y);
                     huffmanTreeCtx.stroke();
-                    huffmanTreeCtx.fillStyle = '#5a8a4a';
+                    huffmanTreeCtx.fillStyle = P.muted;
                     huffmanTreeCtx.font = 'bold 12px monospace';
                     huffmanTreeCtx.fillText('0', (node.x + node.left.x) / 2 - 10, (node.y + node.left.y) / 2);
                     drawNode(node.left);
                 }
                 if (node.right) {
-                    huffmanTreeCtx.strokeStyle = 'rgba(0,255,65,0.4)';
+                    huffmanTreeCtx.strokeStyle = P.stroke2;
                     huffmanTreeCtx.lineWidth = 2;
                     huffmanTreeCtx.beginPath();
                     huffmanTreeCtx.moveTo(node.x, node.y);
                     huffmanTreeCtx.lineTo(node.right.x, node.right.y);
                     huffmanTreeCtx.stroke();
-                    huffmanTreeCtx.fillStyle = '#5a8a4a';
+                    huffmanTreeCtx.fillStyle = P.muted;
                     huffmanTreeCtx.font = 'bold 12px monospace';
                     huffmanTreeCtx.fillText('1', (node.x + node.right.x) / 2 + 10, (node.y + node.right.y) / 2);
                     drawNode(node.right);
@@ -2197,12 +2199,12 @@
                     huffmanTreeCtx.beginPath();
                     huffmanTreeCtx.arc(node.x, node.y, 8, 0, Math.PI * 2);
                     huffmanTreeCtx.fill();
-                    huffmanTreeCtx.fillStyle = '#c0c8b0';
+                    huffmanTreeCtx.fillStyle = P.text;
                     huffmanTreeCtx.font = '10px Arial';
                     huffmanTreeCtx.textAlign = 'center';
                     huffmanTreeCtx.fillText(node.location, node.x, node.y + 25);
                 } else {
-                    huffmanTreeCtx.fillStyle = '#5a8a4a';
+                    huffmanTreeCtx.fillStyle = P.muted;
                     huffmanTreeCtx.beginPath();
                     huffmanTreeCtx.arc(node.x, node.y, 5, 0, Math.PI * 2);
                     huffmanTreeCtx.fill();
@@ -2236,14 +2238,14 @@
             ctx.lineCap = 'round';
             edgesForWorkshop.forEach(e => {
                 const w = 6 + Math.max(0.5, (e.prob || 0) * 30);
-                ctx.strokeStyle = 'rgba(0,255,65,0.12)';
+                ctx.strokeStyle = P.grid;
                 ctx.lineWidth = w;
                 ctx.beginPath();
                 ctx.moveTo(e.from.x, e.from.y);
                 ctx.lineTo(e.to.x, e.to.y);
                 ctx.stroke();
                 // edge label
-                ctx.fillStyle = '#5a8a4a';
+                ctx.fillStyle = P.muted;
                 ctx.font = 'bold 12px monospace';
                 const lx = (e.from.x + e.to.x)/2 + (e.bit === '1' ? 8 : -12);
                 const ly = (e.from.y + e.to.y)/2 - 6;
@@ -2252,12 +2254,12 @@
             // nodes
             (function drawNodes(node){
                 if (!node) return;
-                ctx.fillStyle = node.location ? '#4CAF50' : 'rgba(0,255,65,0.3)';
+                ctx.fillStyle = node.location ? '#4CAF50' : P.stroke;
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.location ? 7 : 5, 0, Math.PI*2);
                 ctx.fill();
                 if (node.location) {
-                    ctx.fillStyle = '#c0c8b0';
+                    ctx.fillStyle = P.text;
                     ctx.font = '10px Arial';
                     ctx.textAlign = 'center';
                     ctx.fillText(node.location, node.x, node.y + 22);
@@ -2382,33 +2384,33 @@
             ctx.lineCap = 'round';
             function drawNodeLanes(node){
                 if (node.left) {
-                    ctx.strokeStyle = 'rgba(0,255,65,0.15)';
+                    ctx.strokeStyle = P.grid2;
                     ctx.lineWidth = 18;
                     ctx.beginPath();
                     ctx.moveTo(node.x, node.y);
                     ctx.lineTo(node.left.x, node.left.y);
                     ctx.stroke();
                     // 0 label
-                    ctx.fillStyle = '#5a8a4a';
+                    ctx.fillStyle = P.muted;
                     ctx.font = 'bold 12px monospace';
                     ctx.fillText('0', (node.x + node.left.x)/2 - 10, (node.y + node.left.y)/2 - 6);
                     drawNodeLanes(node.left);
                 }
                 if (node.right) {
-                    ctx.strokeStyle = 'rgba(0,255,65,0.15)';
+                    ctx.strokeStyle = P.grid2;
                     ctx.lineWidth = 18;
                     ctx.beginPath();
                     ctx.moveTo(node.x, node.y);
                     ctx.lineTo(node.right.x, node.right.y);
                     ctx.stroke();
                     // 1 label
-                    ctx.fillStyle = '#5a8a4a';
+                    ctx.fillStyle = P.muted;
                     ctx.font = 'bold 12px monospace';
                     ctx.fillText('1', (node.x + node.right.x)/2 + 6, (node.y + node.right.y)/2 - 6);
                     drawNodeLanes(node.right);
                 }
                 // draw node hub as small rounded box
-                ctx.fillStyle = 'rgba(0,255,65,0.3)';
+                ctx.fillStyle = P.stroke;
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, 5, 0, Math.PI*2);
                 ctx.fill();
@@ -2476,7 +2478,7 @@
                 huffmanCtx.fillStyle = 'rgba(26,137,23,0.25)';
                 huffmanCtx.fillRect(c.x - w/2, c.y - h/2, w, 3);
                 // outline
-                huffmanCtx.strokeStyle = 'rgba(0,255,65,0.3)';
+                huffmanCtx.strokeStyle = P.stroke;
                 huffmanCtx.lineWidth = 1;
                 huffmanCtx.strokeRect(c.x - w/2, c.y - h/2, w, h);
             });
@@ -2596,13 +2598,13 @@
                 const bit = c.code[c.currentBitIdx] || '';
                 if (bit){
                     huffmanCtx.fillStyle = '#fff';
-                    huffmanCtx.strokeStyle = 'rgba(0,255,65,0.4)';
+                    huffmanCtx.strokeStyle = P.stroke2;
                     huffmanCtx.lineWidth = 1;
                     huffmanCtx.beginPath();
                     huffmanCtx.arc(c.x, c.y-12, 6, 0, Math.PI*2);
                     huffmanCtx.fill();
                     huffmanCtx.stroke();
-                    huffmanCtx.fillStyle = '#c0c8b0';
+                    huffmanCtx.fillStyle = P.text;
                     huffmanCtx.font = '8px monospace';
                     huffmanCtx.textAlign = 'center';
                     huffmanCtx.fillText(bit, c.x, c.y-10);
@@ -2665,7 +2667,7 @@
             huffmanCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             huffmanCtx.fillRect(50, 50, 300, 100);
             
-            huffmanCtx.strokeStyle = 'rgba(0,255,65,0.3)';
+            huffmanCtx.strokeStyle = P.stroke;
             huffmanCtx.lineWidth = 2;
             huffmanCtx.strokeRect(50, 50, 300, 100);
             
@@ -2673,7 +2675,7 @@
             huffmanCtx.font = 'bold 14px Arial';
             huffmanCtx.fillText(`Naive encoding: ${naiveBits} bits per message`, 70, 80);
             huffmanCtx.fillText(`Huffman encoding: ${avgHuffmanBits.toFixed(2)} bits per message`, 70, 105);
-            huffmanCtx.fillStyle = '#00ff41';
+            huffmanCtx.fillStyle = P.accent;
             huffmanCtx.fillText(`Space saved: ${compressionRatio.toFixed(1)}%`, 70, 130);
         }
         
@@ -2813,7 +2815,7 @@
                 graphCtx.fill();
                 
                 // Draw ID
-                graphCtx.fillStyle = '#c0c8b0';
+                graphCtx.fillStyle = P.text;
                 graphCtx.font = '12px Arial';
                 graphCtx.textAlign = 'center';
                 graphCtx.fillText(this.id, this.x, this.y - this.size - 5);
@@ -2852,7 +2854,7 @@
                 graphCtx.fill();
                 
                 // Draw border
-                graphCtx.strokeStyle = 'rgba(0,255,65,0.4)';
+                graphCtx.strokeStyle = P.stroke2;
                 graphCtx.lineWidth = 2;
                 graphCtx.beginPath();
                 graphCtx.arc(this.x, this.y, 10 + Math.sin(this.pulsePhase) * 2, 0, Math.PI * 2);

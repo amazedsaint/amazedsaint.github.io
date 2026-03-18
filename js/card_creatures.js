@@ -27,8 +27,8 @@
     let w=0,h=0, running=false, raf=0, last=0;
 
     // palette
-    const tagColor = cssVar(cover, '--tag-color', '#444');
-    const textColor = cssVar(cover, '--text', '#c0c8b0');
+    const tagColor = cssVar(cover, '--tag-text', '#059669');
+    const textColor = cssVar(cover, '--text-2', '#3f3f46');
     const edgeAlphaBase = 0.06;
 
     // state

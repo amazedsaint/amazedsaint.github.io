@@ -6,6 +6,8 @@
   <title>Graph Theory: A Practical Guide</title>
   <meta name="description" content="A concise, visual guide to graphs: paths and cuts, trees, flows, spectra, and how networks show up across computation and physics." />
   <link rel="stylesheet" href="../style.css">
+  <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+  <script src="../js/palette.js"></script>
   <script defer src="../js/connections.js"></script>
   <script>
     window.MathJax = {
@@ -184,12 +186,12 @@
       ctx.fillStyle=opts.fill||'#fff';
       ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
       if (opts.badge){ ctx.fillStyle=opts.badgeColor||'#1a8917'; ctx.beginPath(); ctx.arc(n.x+10,n.y-10,4,0,Math.PI*2); ctx.fill(); }
-      ctx.fillStyle=opts.textColor||'#c0c8b0'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(n.id), n.x, n.y);
+      ctx.fillStyle=opts.textColor||P.text; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(n.id), n.x, n.y);
       ctx.restore();
     }
     function drawEdge(ctx, a,b, color='#bbb', width=1, label){
       ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-      if(label!=null){ ctx.fillStyle='#5a8a4a'; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; const mx=(a.x+b.x)/2, my=(a.y+b.y)/2; ctx.fillText(label, mx+6, my-6); }
+      if(label!=null){ ctx.fillStyle=P.muted; ctx.font='11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; const mx=(a.x+b.x)/2, my=(a.y+b.y)/2; ctx.fillText(label, mx+6, my-6); }
       ctx.restore();
     }
     function layoutCircle(N, W, H){ const cx=W*0.5, cy=H*0.5, R=Math.min(W,H)*0.35; return Array.from({length:N}, (_,i)=>({ id:i, x:cx+R*Math.cos(2*Math.PI*i/N), y:cy+R*Math.sin(2*Math.PI*i/N) })); }
@@ -210,7 +212,7 @@
       function tick(){ if(!running) return; if(q.length>0){ step(); setTimeout(tick, 240); } else { running=false; ui.run.textContent='Run'; draw(); } }
       function updKpi(){ ui.frontier.textContent = String(q.length); ui.visited.textContent = String(seen.reduce((a,b)=>a+(b?1:0),0)); }
       function draw(){ ctx.clearRect(0,0,W,H); // edges
-        for(const e of edges){ const a=nodes[e.u], b=nodes[e.v]; const color='rgba(0,255,65,0.15)'; drawEdge(ctx,a,b,color,1); }
+        for(const e of edges){ const a=nodes[e.u], b=nodes[e.v]; const color=P.grid2; drawEdge(ctx,a,b,color,1); }
         // Tree arrows and node layers
         for(let v=0; v<nodes.length; v++){ if(parent[v]!==-1){ const a=nodes[parent[v]], b=nodes[v]; drawEdge(ctx,a,b,'#999',1.5); } }
         for(let v=0; v<nodes.length; v++){ const d=dist[v]; const col = (d===Infinity? '#fff' : (levelColors[d%levelColors.length]));
@@ -242,7 +244,7 @@
       function draw(){ ctx.clearRect(0,0,W,H); // candidate highlight
         if(idx<order.length){ const e=order[idx]; drawEdge(ctx, nodes[e.u], nodes[e.v], '#f59e0b', 2, e.w.toFixed(1)); }
         // edges base
-        for(const e of edges){ const key=edgeKey(e); if(inMst.has(key)) continue; const color = rejected.has(key)? 'rgba(0,255,65,0.15)' : 'rgba(0,255,65,0.18)'; drawEdge(ctx, nodes[e.u], nodes[e.v], color, 1, null); }
+        for(const e of edges){ const key=edgeKey(e); if(inMst.has(key)) continue; const color = rejected.has(key)? P.grid2 : P.grid3; drawEdge(ctx, nodes[e.u], nodes[e.v], color, 1, null); }
         // MST edges on top
         for(const key of inMst){ const [u,v]=key.split('-').map(s=>+s); const e={u,v}; drawEdge(ctx, nodes[u], nodes[v], '#1a8917', 3); }
         // nodes
@@ -271,7 +273,7 @@
         } x=nx; draw(); }
       function run(){ running=!running; ui.run.textContent=running? 'Pause':'Run'; if(running) tick(); }
       function tick(){ if(!running) return; step(); setTimeout(tick, 160); }
-      function draw(){ ctx.clearRect(0,0,W,H); for(const e of edges){ drawEdge(ctx, nodes[e.u], nodes[e.v], 'rgba(0,255,65,0.15)', 1); }
+      function draw(){ ctx.clearRect(0,0,W,H); for(const e of edges){ drawEdge(ctx, nodes[e.u], nodes[e.v], P.grid2, 1); }
         for(let i=0;i<nodes.length;i++){ const v=x[i]; const col = valToColor(v); const isFix=fixed.has(i); drawNode(ctx, nodes[i], { fill: col, stroke: isFix? (fixed.get(i)>0? '#1a8917':'#b91c1c') : '#444', badge:isFix, badgeColor: fixed.get(i)>0? '#1a8917' : '#b91c1c' }); }
       }
       function valToColor(v){ // blue-white-red

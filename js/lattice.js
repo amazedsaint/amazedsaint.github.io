@@ -132,13 +132,13 @@
     // edges
     for(const [k,weight] of state.edges){
       const [i,j] = k.split('-').map(Number); const A=state.nodes[i], B=state.nodes[j];
-      const alpha = 0.08 + weight*0.18; ctx.strokeStyle = `rgba(0,255,65,${alpha})`; ctx.lineWidth = 0.6 + weight*1.8;
+      ctx.strokeStyle = weight > 0.5 ? P.green : P.greenSoft; ctx.lineWidth = 0.6 + weight*1.8;
       ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
     }
     // nodes (numbers)
     ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
     for(const n of state.nodes){
-      const col = n.prime? 'rgba(0,255,65,0.35)':'rgba(0,255,65,0.22)';
+      const col = n.prime? P.green : P.greenSoft;
       ctx.fillStyle = col; ctx.fillText(String(n.val), n.x, n.y);
     }
     // ants last

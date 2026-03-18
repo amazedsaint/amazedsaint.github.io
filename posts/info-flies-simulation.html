@@ -6,6 +6,8 @@
   <title>Game of Flies: Build Houses, Add Hazards</title>
   <meta name="description" content="Place houses and hazards. Flies explore, join teams, orbit flags, fight rivals, and sometimes switch sides." />
   <link rel="stylesheet" href="../style.css" />
+  <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+  <script src="../js/palette.js"></script>
   <script defer src="../js/connections.js"></script>
   <style>
     html, body { height: 100%; }
@@ -653,8 +655,8 @@
         // draw flag banner and emoji
         const col = (typeof o.color==='string' && o.color) ? o.color : '#e5e7eb';
         const w=28, h=16, pole=10;
-        ctx.globalAlpha=1; ctx.strokeStyle='rgba(0,255,65,0.4)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(o.x-pole, o.y-h/2); ctx.lineTo(o.x-pole, o.y+h/2+6); ctx.stroke();
-        ctx.fillStyle=col; ctx.strokeStyle='#c0c8b0'; ctx.lineWidth=1;
+        ctx.globalAlpha=1; ctx.strokeStyle=P.stroke2; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(o.x-pole, o.y-h/2); ctx.lineTo(o.x-pole, o.y+h/2+6); ctx.stroke();
+        ctx.fillStyle=col; ctx.strokeStyle=P.text; ctx.lineWidth=1;
         ctx.beginPath(); ctx.rect(o.x-pole+2, o.y-h/2, w, h); ctx.fill(); ctx.stroke();
         // emoji label
         if (o.emoji){ ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, system-ui'; ctx.fillText(o.emoji, o.x-pole+w+10, o.y); }
@@ -690,9 +692,9 @@
           }
         }
         // body
-        ctx.fillStyle = 'rgba(0,255,65,0.4)';
+        ctx.fillStyle = P.stroke2;
         ctx.beginPath(); ctx.arc(f.x, f.y, 3.8, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,255,65,0.3)'; ctx.lineWidth = 0.6; ctx.stroke();
+        ctx.strokeStyle = P.stroke; ctx.lineWidth = 0.6; ctx.stroke();
         // under-attack ring
         if ((f.anger||0) > 0.05){
           ctx.strokeStyle = `rgba(220,40,30,${0.25+0.45*Math.min(1,f.anger)})`;
@@ -717,14 +719,14 @@
           const s=1.2+2.2*val;
           const c = channelColorRgbForFly(f, k);
           ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.25+0.6*val})`;
-          if ((f.info[k]||0) < 0){ ctx.strokeStyle='rgba(0,255,65,0.3)'; ctx.lineWidth=0.8; } else { ctx.strokeStyle='rgba(0,255,65,0.25)'; ctx.lineWidth=0.5; }
+          if ((f.info[k]||0) < 0){ ctx.strokeStyle=P.stroke; ctx.lineWidth=0.8; } else { ctx.strokeStyle=P.stroke; ctx.lineWidth=0.5; }
           ctx.beginPath(); ctx.arc(x,y, s, 0, Math.PI*2); ctx.fill();
           ctx.stroke();
         }
         // health bar above the fly
         const hp = Math.max(0, Math.min(1, f.h||0));
         const bw=12, bh=2, bx=f.x-bw/2, by=f.y-9;
-        ctx.fillStyle='rgba(0,255,65,0.15)'; ctx.fillRect(bx,by,bw,bh);
+        ctx.fillStyle=P.grid2; ctx.fillRect(bx,by,bw,bh);
         const r=Math.floor(220*(1-hp)), g=Math.floor(180*hp), b=40;
         ctx.fillStyle=`rgba(${r},${g},${b},0.9)`; ctx.fillRect(bx,by, bw*hp, bh);
       }

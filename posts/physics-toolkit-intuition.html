@@ -6,6 +6,8 @@
   <title>Physics Toolkit: A Guided Tour</title>
   <meta name="description" content="Interactive visuals for vectors and dot product, linear maps and eigenvectors, basis mixing, damped oscillators, and a small Fourier builder." />
   <link rel="stylesheet" href="../style.css" />
+  <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+  <script src="../js/palette.js"></script>
   <script>
     window.MathJax = {
       tex: { inlineMath: [["$","$"],["\\(","\\)"]], displayMath: [["$$","$$"],["\\[","\\]"]], packages: {'[+]':['base','ams']}, processEscapes: true },
@@ -37,13 +39,13 @@
         function draw(){
           ctx.clearRect(0,0,W,H);
           // axes
-          ctx.strokeStyle='rgba(0,255,65,0.12)'; ctx.beginPath(); ctx.moveTo(20,cy); ctx.lineTo(W-20,cy); ctx.stroke();
+          ctx.strokeStyle=P.grid; ctx.beginPath(); ctx.moveTo(20,cy); ctx.lineTo(W-20,cy); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx,H-10); ctx.stroke();
           // vectors
           const ax = Math.cos(aAng)*aLen, ay = Math.sin(aAng)*aLen;
           const bx = Math.cos(bAng)*bLen, by = Math.sin(bAng)*bLen;
-          drawArrow(cx,cy, cx+ax*s, cy-ay*s, 'rgba(65,220,255,0.9)');
-          drawArrow(cx,cy, cx+bx*s, cy-by*s, 'rgba(0,255,65,0.9)');
+          drawArrow(cx,cy, cx+ax*s, cy-ay*s, P.blue);
+          drawArrow(cx,cy, cx+bx*s, cy-by*s, P.green);
           // projection of b onto a
           const adotb = ax*bx + ay*by; const a2 = ax*ax+ay*ay; const k = (a2>1e-6)? (adotb/a2) : 0; const px = ax*k, py = ay*k;
           ctx.setLineDash([4,3]); drawArrow(cx,cy, cx+px*s, cy-py*s, 'rgba(200,120,0,0.9)'); ctx.setLineDash([]);
@@ -69,10 +71,10 @@
         function draw(){
           ctx.clearRect(0,0,W,H);
           // draw grid and its image
-          ctx.strokeStyle='rgba(0,255,65,0.12)'; for(let gx=-3; gx<=3; gx++){ const p1=toPix(gx,-3), p2=toPix(gx,3); line(p1,p2,'rgba(0,255,65,0.12)'); const q1=toPixM(gx,-3), q2=toPixM(gx,3); line(q1,q2,'rgba(0,255,65,0.08)'); }
-          for(let gy=-3; gy<=3; gy++){ const p1=toPix(-3,gy), p2=toPix(3,gy); line(p1,p2,'rgba(0,255,65,0.12)'); const q1=toPixM(-3,gy), q2=toPixM(3,gy); line(q1,q2,'rgba(0,255,65,0.08)'); }
+          ctx.strokeStyle=P.grid; for(let gx=-3; gx<=3; gx++){ const p1=toPix(gx,-3), p2=toPix(gx,3); line(p1,p2,P.grid); const q1=toPixM(gx,-3), q2=toPixM(gx,3); line(q1,q2,P.grid); }
+          for(let gy=-3; gy<=3; gy++){ const p1=toPix(-3,gy), p2=toPix(3,gy); line(p1,p2,P.grid); const q1=toPixM(-3,gy), q2=toPixM(3,gy); line(q1,q2,P.grid); }
           // unit circle and ellipse image
-          circle(toPix(0,0), s, 'rgba(65,220,255,0.25)');
+          circle(toPix(0,0), s, P.blueSoft);
           drawEllipseImage();
           // eigenvectors if real
           const tr=a+d, det=a*d-b*c; const disc=tr*tr-4*det; const evOut=document.getElementById('eigVal');
@@ -86,7 +88,7 @@
           const n=Math.hypot(vx,vy); if(n<1e-9) return null; return {x:vx/n, y:vy/n};
         }
         function arrowVec(v,color){ const p=toPix(0,0); const q=toPix(v.x, v.y); line(p,q,color,true); }
-        function drawEllipseImage(){ ctx.strokeStyle='rgba(0,255,65,0.8)'; ctx.beginPath(); for(let t=0;t<=Math.PI*2+1e-3;t+=0.02){ const x=Math.cos(t), y=Math.sin(t); const m=Mx(x,y); const P=toPix(m.x,m.y); if(t===0) ctx.moveTo(P.x,P.y); else ctx.lineTo(P.x,P.y);} ctx.stroke(); }
+        function drawEllipseImage(){ ctx.strokeStyle=P.greenSoft; ctx.beginPath(); for(let t=0;t<=Math.PI*2+1e-3;t+=0.02){ const x=Math.cos(t), y=Math.sin(t); const m=Mx(x,y); const P=toPix(m.x,m.y); if(t===0) ctx.moveTo(P.x,P.y); else ctx.lineTo(P.x,P.y);} ctx.stroke(); }
         function line(p1,p2,color,arrow){ ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); if(arrow){ const aAng=Math.atan2(p2.y-p1.y,p2.x-p1.x); const r=8; ctx.beginPath(); ctx.moveTo(p2.x,p2.y); ctx.lineTo(p2.x-r*Math.cos(aAng-0.3), p2.y-r*Math.sin(aAng-0.3)); ctx.lineTo(p2.x-r*Math.cos(aAng+0.3), p2.y-r*Math.sin(aAng+0.3)); ctx.closePath(); ctx.fillStyle=color; ctx.fill(); } }
         function toPix(x,y){ return { x: cx + x*s, y: cy - y*s }; }
         function toPixM(x,y){ const m=Mx(x,y); return toPix(m.x,m.y); }
@@ -106,13 +108,13 @@
           // original basis
           arrow(0,0,1,0,'#888'); arrow(0,0,0,1,'#888');
           // rotated basis
-          const c=Math.cos(th), si=Math.sin(th); arrow(0,0,c,si,'rgba(65,220,255,0.9)'); arrow(0,0,-si,c,'rgba(65,220,255,0.9)');
+          const c=Math.cos(th), si=Math.sin(th); arrow(0,0,c,si,P.blue); arrow(0,0,-si,c,P.blue);
           // vector and its coordinates in both bases
           arrow(0,0,vec.x,vec.y,'rgba(200,120,0,0.9)');
           const vrot={ x: c*vec.x + si*vec.y, y: -si*vec.x + c*vec.y };
           const out=document.getElementById('mixVal'); if(out) out.textContent=`in rotated basis: (${vrot.x.toFixed(2)}, ${vrot.y.toFixed(2)})`;
         }
-        function axes(){ ctx.strokeStyle='rgba(0,255,65,0.12)'; const p1=toPix(-2,0), p2=toPix(2,0), p3=toPix(0,-2), p4=toPix(0,2); line(p1,p2); line(p3,p4); }
+        function axes(){ ctx.strokeStyle=P.grid; const p1=toPix(-2,0), p2=toPix(2,0), p3=toPix(0,-2), p4=toPix(0,2); line(p1,p2); line(p3,p4); }
         function line(p1,p2){ ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); }
         function toPix(x,y){ return { x: cx + x*s, y: cy - y*s }; }
         function arrow(x1,y1,x2,y2,color){ const p1=toPix(x1,y1), p2=toPix(x2,y2); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); const a=Math.atan2(p2.y-p1.y,p2.x-p1.x); const r=7; ctx.beginPath(); ctx.moveTo(p2.x,p2.y); ctx.lineTo(p2.x-r*Math.cos(a-0.3), p2.y-r*Math.sin(a-0.3)); ctx.lineTo(p2.x-r*Math.cos(a+0.3), p2.y-r*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle=color; ctx.fill(); }
@@ -127,11 +129,11 @@
         const W=cv.width=540, H=cv.height=280; let w=2.0, g=0.2; let x=1.0, v=0.0; const dt=0.016; let raf=0;
         function step(){ const a = -w*w*x - g*v; v += a*dt; x += v*dt; }
         function draw(){ ctx.clearRect(0,0,W,H); axes(); const s=80, cx=W*0.5, cy=H*0.6; // phase portrait trail
-          ctx.strokeStyle='rgba(65,220,255,0.9)'; ctx.beginPath(); let tx=x, tv=v; for(let i=0;i<400;i++){ const px=cx+tx*s, py=cy-tv*s; if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); const a=-w*w*tx-g*tv; tv+=a*dt; tx+=tv*dt; }
+          ctx.strokeStyle=P.blue; ctx.beginPath(); let tx=x, tv=v; for(let i=0;i<400;i++){ const px=cx+tx*s, py=cy-tv*s; if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); const a=-w*w*tx-g*tv; tv+=a*dt; tx+=tv*dt; }
           ctx.stroke();
           const E = 0.5*(w*w*x*x + v*v); const out=document.getElementById('shoE'); if(out) out.textContent=E.toFixed(3);
         }
-        function axes(){ ctx.strokeStyle='rgba(0,255,65,0.12)'; ctx.beginPath(); ctx.moveTo(20,H*0.6); ctx.lineTo(W-20,H*0.6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W*0.5,10); ctx.lineTo(W*0.5,H-10); ctx.stroke(); }
+        function axes(){ ctx.strokeStyle=P.grid; ctx.beginPath(); ctx.moveTo(20,H*0.6); ctx.lineTo(W-20,H*0.6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W*0.5,10); ctx.lineTo(W*0.5,H-10); ctx.stroke(); }
         function setW(val){ w=parseFloat(val); }
         function setG(val){ g=parseFloat(val); }
         function reset(){ x=1.0; v=0.0; }
@@ -146,10 +148,10 @@
         const W=cv.width=560, H=cv.height=260; let A=[1,0,0,0,0];
         function signal(t){ let s=0; for(let k=1;k<=5;k++){ s+= A[k-1]*Math.cos(2*Math.PI*k*t); } return s; }
         function draw(){ ctx.clearRect(0,0,W,H); // time plot
-          const L=H*0.55; ctx.strokeStyle='rgba(0,255,65,0.12)'; ctx.beginPath(); ctx.moveTo(20,L); ctx.lineTo(W-20,L); ctx.stroke();
-          ctx.strokeStyle='rgba(65,220,255,0.9)'; ctx.beginPath(); for(let i=0;i<=520;i++){ const t=i/520; const y=L - signal(t)*60; const x=20 + i; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} ctx.stroke();
+          const L=H*0.55; ctx.strokeStyle=P.grid; ctx.beginPath(); ctx.moveTo(20,L); ctx.lineTo(W-20,L); ctx.stroke();
+          ctx.strokeStyle=P.blue; ctx.beginPath(); for(let i=0;i<=520;i++){ const t=i/520; const y=L - signal(t)*60; const x=20 + i; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} ctx.stroke();
           // spectrum bars
-          const baseY=H-20; const barW=20; for(let k=1;k<=5;k++){ const amp=Math.abs(A[k-1]); ctx.fillStyle='rgba(0,255,65,0.8)'; const h=amp*60; const x=30 + (k-1)*(barW+8); ctx.fillRect(x, baseY-h, barW, h); ctx.fillStyle='#5a8a4a'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(String(k), x+6, baseY+12); }
+          const baseY=H-20; const barW=20; for(let k=1;k<=5;k++){ const amp=Math.abs(A[k-1]); ctx.fillStyle=P.greenSoft; const h=amp*60; const x=30 + (k-1)*(barW+8); ctx.fillRect(x, baseY-h, barW, h); ctx.fillStyle=P.muted; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(String(k), x+6, baseY+12); }
         }
         function setAmp(k,val){ A[k-1]=parseFloat(val); draw(); }
         draw();

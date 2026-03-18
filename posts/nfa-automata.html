@@ -6,6 +6,8 @@
   <title>NFAs from First Principles: Interactive</title>
   <meta name="description" content="From first principles: nondeterministic finite automata (NFAs), ε‑moves, and subset construction, with live runners and a small builder." />
   <link rel="stylesheet" href="../style.css" />
+  <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+  <script src="../js/palette.js"></script>
   <script>
     window.MathJax = {
       tex: { inlineMath: [["$","$"],["\\(","\\)"]], displayMath: [["$$","$$"],["\\[","\\]"]], packages: {'[+]':['base','ams']}, processEscapes: true },
@@ -30,10 +32,10 @@
   <script>
     (function(){
       // ---------- Helpers ----------
-      function text(ctx, s, x, y, color){ ctx.fillStyle=color||'#5a8a4a'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(s,x,y); }
-      function drawState(ctx, n, active, accept, start){ ctx.save(); ctx.lineWidth=2; ctx.strokeStyle=active? '#00ff41':'#555'; ctx.fillStyle=accept? 'rgba(0,255,65,0.06)':'rgba(0,255,65,0.06)'; ctx.beginPath(); ctx.arc(n.x,n.y,20,0,Math.PI*2); ctx.fill(); ctx.stroke(); if(accept){ ctx.beginPath(); ctx.arc(n.x,n.y,16,0,Math.PI*2); ctx.strokeStyle='#00ff41'; ctx.stroke(); } if(start){ ctx.fillStyle='#00ff41'; ctx.beginPath(); ctx.moveTo(n.x-34,n.y); ctx.lineTo(n.x-24,n.y-6); ctx.lineTo(n.x-24,n.y+6); ctx.closePath(); ctx.fill(); } ctx.fillStyle='#c0c8b0'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(n.id, n.x, n.y); ctx.restore(); }
-      function drawArrow(ctx, x1,y1,x2,y2,label){ const a=Math.atan2(y2-y1,x2-x1); const r=20; const sx=x1+Math.cos(a)*r, sy=y1+Math.sin(a)*r; const ex=x2-Math.cos(a)*r, ey=y2-Math.sin(a)*r; ctx.strokeStyle='rgba(0,255,65,0.4)'; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke(); const ah=9; ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex-ah*Math.cos(a-0.3), ey-ah*Math.sin(a-0.3)); ctx.lineTo(ex-ah*Math.cos(a+0.3), ey-ah*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle='rgba(0,255,65,0.4)'; ctx.fill(); if(label){ text(ctx, label, (sx+ex)/2, (sy+ey)/2 - 6); } }
-      function drawSelf(ctx, n, label){ ctx.strokeStyle='rgba(0,255,65,0.4)'; ctx.beginPath(); ctx.arc(n.x, n.y-30, 14, Math.PI*0.2, Math.PI*2.8); ctx.stroke(); text(ctx, label, n.x+20, n.y-40); }
+      function text(ctx, s, x, y, color){ ctx.fillStyle=color||P.muted; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(s,x,y); }
+      function drawState(ctx, n, active, accept, start){ ctx.save(); ctx.lineWidth=2; ctx.strokeStyle=active? P.accent:'#555'; ctx.fillStyle=accept? P.accentBg:P.accentBg; ctx.beginPath(); ctx.arc(n.x,n.y,20,0,Math.PI*2); ctx.fill(); ctx.stroke(); if(accept){ ctx.beginPath(); ctx.arc(n.x,n.y,16,0,Math.PI*2); ctx.strokeStyle=P.accent; ctx.stroke(); } if(start){ ctx.fillStyle=P.accent; ctx.beginPath(); ctx.moveTo(n.x-34,n.y); ctx.lineTo(n.x-24,n.y-6); ctx.lineTo(n.x-24,n.y+6); ctx.closePath(); ctx.fill(); } ctx.fillStyle=P.text; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(n.id, n.x, n.y); ctx.restore(); }
+      function drawArrow(ctx, x1,y1,x2,y2,label){ const a=Math.atan2(y2-y1,x2-x1); const r=20; const sx=x1+Math.cos(a)*r, sy=y1+Math.sin(a)*r; const ex=x2-Math.cos(a)*r, ey=y2-Math.sin(a)*r; ctx.strokeStyle=P.stroke2; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke(); const ah=9; ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex-ah*Math.cos(a-0.3), ey-ah*Math.sin(a-0.3)); ctx.lineTo(ex-ah*Math.cos(a+0.3), ey-ah*Math.sin(a+0.3)); ctx.closePath(); ctx.fillStyle=P.stroke2; ctx.fill(); if(label){ text(ctx, label, (sx+ex)/2, (sy+ey)/2 - 6); } }
+      function drawSelf(ctx, n, label){ ctx.strokeStyle=P.stroke2; ctx.beginPath(); ctx.arc(n.x, n.y-30, 14, Math.PI*0.2, Math.PI*2.8); ctx.stroke(); text(ctx, label, n.x+20, n.y-40); }
 
       // ---------- NFA runner (sample) ----------
       function nfaRunner(){
@@ -78,8 +80,8 @@
           for(const s of nodes){ const outs=trans[s.id]||{}; for(const a in outs){ for(const d of outs[a]){ const t=nodes.find(n=>n.id===d); drawArrow(ctx, s.x,s.y,t.x,t.y, a); } } for(const d of (eps[s.id]||[])){ const t=nodes.find(n=>n.id===d); drawArrow(ctx, s.x,s.y,t.x,t.y, 'ε'); } }
           for(const n of nodes){ drawState(ctx, n, curSet.has(n.id), !!n.accept, n.id===start); }
           // input tape and status
-          const bx=20, by=30, cell=24; ctx.strokeStyle='rgba(0,255,65,0.15)'; ctx.fillStyle='#c0c8b0'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
-          for(let i=0;i<Math.max(12,input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x,by,cell,cell); const ch=input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===pos){ ctx.fillStyle='#00ff41'; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle='#c0c8b0'; } }
+          const bx=20, by=30, cell=24; ctx.strokeStyle=P.grid2; ctx.fillStyle=P.text; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          for(let i=0;i<Math.max(12,input.length+2);i++){ const x=bx+i*cell; ctx.strokeRect(x,by,cell,cell); const ch=input[i]||''; if(ch) ctx.fillText(ch, x+cell/2-3, by+16); if(i===pos){ ctx.fillStyle=P.accent; ctx.fillRect(x+2,by+2,cell-4,2); ctx.fillStyle=P.text; } }
           const accepting = Array.from(curSet).some(id => (nodes.find(n=>n.id===id)||{}).accept);
           const status=document.getElementById('nfaStatus'); status.textContent = (pos<input.length? `states={${Array.from(curSet).join(',')}} reading…` : `halted in {${Array.from(curSet).join(',')}} · ${accepting? 'accepted':'rejected'}`);
         }

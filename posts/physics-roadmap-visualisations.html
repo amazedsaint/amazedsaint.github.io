@@ -6,6 +6,8 @@
   <title>Spacetime, Fields, and Light: Interactive Visuals</title>
   <meta name="description" content="Interactive visuals and equations for Lorentz boosts, spin‑1/2, gauge symmetry, the Higgs mechanism, neutrino oscillations, and gravitational lensing." />
   <link rel="stylesheet" href="../style.css" />
+  <script>(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+  <script src="../js/palette.js"></script>
   <script>
     window.MathJax = {
       tex: {
@@ -56,17 +58,17 @@
           const scale=50; // pixels per unit
 
           // axes
-          ctx.strokeStyle = 'rgba(0,255,65,0.18)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = P.grid3; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(10,cy); ctx.lineTo(W-10,cy); ctx.stroke(); // x-axis (t=0)
           ctx.beginPath(); ctx.moveTo(cx,H-10); ctx.lineTo(cx,10); ctx.stroke(); // t-axis (x=0)
 
           // light cone (45°): t=|x|
-          ctx.strokeStyle = 'rgba(255,180,40,0.9)';
+          ctx.strokeStyle = P.orange;
           ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+scale*2, cy-2*scale); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx-scale*2, cy-2*scale); ctx.stroke();
 
           // Rest frame grid (hyperbolas as guide: t^2 - x^2 = const)
-          ctx.strokeStyle = 'rgba(0,255,65,0.06)';
+          ctx.strokeStyle = P.grid;
           for(let k=1;k<=3;k++){
             const s = k*1.0;
             // timelike hyperbola t = +sqrt(x^2 + s)
@@ -88,7 +90,7 @@
           // Boosted axes: x' and t'
           const g = gamma(v);
           // t' axis: x = v t -> line through origin with slope dt/dx = 1/v in (x,t)
-          ctx.strokeStyle = 'rgba(65,220,255,0.9)'; ctx.lineWidth = 1.2;
+          ctx.strokeStyle = P.blue; ctx.lineWidth = 1.2;
           ctx.beginPath();
           for(let t=0;t<=3;t+=0.01){
             const x = v*t; const X=cx+x*scale, T=cy-t*scale; if(t===0) ctx.moveTo(X,T); else ctx.lineTo(X,T);
@@ -108,19 +110,19 @@
           // original events (black)
           for(const e of events){
             const X = cx + e.x*scale, T = cy - e.t*scale;
-            ctx.fillStyle = '#c0c8b0'; ctx.beginPath(); ctx.arc(X,T,3,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = P.text; ctx.beginPath(); ctx.arc(X,T,3,0,Math.PI*2); ctx.fill();
           }
           // boosted coordinates (blue squares)
           for(const e of events){
             const xp = Lx(e.x,e.t), tp = Lt(e.x,e.t);
             const X = cx + xp*scale, T = cy - tp*scale;
-            ctx.fillStyle = 'rgba(65,220,255,0.9)'; ctx.fillRect(X-2,T-2,4,4);
+            ctx.fillStyle = P.blue; ctx.fillRect(X-2,T-2,4,4);
           }
 
           // labels
-          ctx.fillStyle = '#5a8a4a'; ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.fillStyle = P.muted; ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           ctx.fillText('x', W-20, cy-6); ctx.fillText('t', cx+6, 18);
-          ctx.fillStyle = 'rgba(65,220,255,0.9)';
+          ctx.fillStyle = P.blue;
           ctx.fillText("t' axis", cx+60, cy-80); ctx.fillText("x' axis", cx+120, cy-20);
 
           ctx.restore();
@@ -141,18 +143,18 @@
           ctx.clearRect(0,0,W,H);
           const cx=W*0.5, cy=H*0.6, R=80;
           // Bloch equator circle
-          ctx.strokeStyle='rgba(0,255,65,0.15)'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+          ctx.strokeStyle=P.grid2; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
           // pointer showing physical orientation (needs 2π)
           const bx=cx+Math.cos(ang)*R, by=cy-Math.sin(ang)*R;
-          ctx.strokeStyle='rgba(65,220,255,0.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(bx,by); ctx.stroke();
+          ctx.strokeStyle=P.blue; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(bx,by); ctx.stroke();
           // spinor phase for |up> under rotation around z: ψ → e^{-i θ/2} |up>
           const px=cx+Math.cos(ang/2)*R*0.7, py=cy-1.2*R;
-          ctx.strokeStyle='rgba(0,255,65,0.9)'; ctx.beginPath(); ctx.moveTo(cx,cy-1.2*R); ctx.lineTo(px,py); ctx.stroke();
-          ctx.fillStyle='#5a8a4a'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.strokeStyle=P.green; ctx.beginPath(); ctx.moveTo(cx,cy-1.2*R); ctx.lineTo(px,py); ctx.stroke();
+          ctx.fillStyle=P.muted; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           ctx.fillText('phase e^{-i θ/2}', cx-60, cy-1.2*R-16);
           const sgn = Math.cos(ang/2) >= 0 ? '+1' : '-1';
-          ctx.fillStyle='#c0c8b0'; ctx.fillText('spinor sign: '+sgn+' (returns after 4π)', 16, 22);
-          ctx.fillStyle='#5a8a4a'; ctx.fillText('rotation θ = '+ang.toFixed(2)+' rad', 16, 40);
+          ctx.fillStyle=P.text; ctx.fillText('spinor sign: '+sgn+' (returns after 4π)', 16, 22);
+          ctx.fillStyle=P.muted; ctx.fillText('rotation θ = '+ang.toFixed(2)+' rad', 16, 40);
         }
         function setTheta(v){ ang=parseFloat(v); draw(); }
         draw();
@@ -182,18 +184,18 @@
           const cx=W*0.5, cy=H*0.6, s=90;
           // potential contours
           for(let r=0.3; r<=2.2; r+=0.15){
-            ctx.strokeStyle = 'rgba(0,255,65,0.05)'; ctx.beginPath(); ctx.arc(cx,cy, r*s, 0, Math.PI*2); ctx.stroke();
+            ctx.strokeStyle = P.grid; ctx.beginPath(); ctx.arc(cx,cy, r*s, 0, Math.PI*2); ctx.stroke();
           }
           // vacuum circle r=vev
-          ctx.strokeStyle = 'rgba(0,255,65,0.9)'; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.arc(cx,cy, vev*s, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+          ctx.strokeStyle = P.green; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.arc(cx,cy, vev*s, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
           // particle (ball)
           const px = cx + state.x*s, py = cy - state.y*s;
-          ctx.fillStyle = '#c0c8b0'; ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle = P.text; ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.fill();
           // arrows for gradient
           const g = gradV(state.x, state.y); const gx = g.gx, gy=g.gy; const ax = gx, ay=gy;
-          const al = Math.hypot(ax,ay)||1; const k=24/al; ctx.strokeStyle='rgba(65,220,255,0.7)'; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+ax*k, py-ay*k); ctx.stroke();
+          const al = Math.hypot(ax,ay)||1; const k=24/al; ctx.strokeStyle=P.blueSoft; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+ax*k, py-ay*k); ctx.stroke();
           // text
-          ctx.fillStyle = '#5a8a4a'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.fillStyle = P.muted; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           ctx.fillText('Mexican-hat potential contour (vacuum circle in green)', 20, 20);
           ctx.restore();
           // masses at vacuum
@@ -227,7 +229,7 @@
               const a=alpha(x,y);
               // phase arrow
               const r=8; const ux=Math.cos(a), uy=Math.sin(a);
-              ctx.strokeStyle='rgba(65,220,255,0.9)'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+ux*r,y-uy*r); ctx.stroke();
+              ctx.strokeStyle=P.blue; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+ux*r,y-uy*r); ctx.stroke();
               // numeric gradients (central differences)
               const ax = (alpha(x+1,y)-alpha(x-1,y))/2;
               const ay = (alpha(x,y+1)-alpha(x,y-1))/2;
@@ -259,10 +261,10 @@
           ctx.clearRect(0,0,W,H);
           // probability curve vs L/E
           const maxX = 2000; // L/E axis extent
-          ctx.strokeStyle='rgba(0,255,65,0.15)'; ctx.beginPath(); ctx.moveTo(40, H-30); ctx.lineTo(W-10, H-30); ctx.stroke();
-          ctx.fillStyle='#5a8a4a'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText('L/E (km/GeV)', W-90, H-36);
+          ctx.strokeStyle=P.grid2; ctx.beginPath(); ctx.moveTo(40, H-30); ctx.lineTo(W-10, H-30); ctx.stroke();
+          ctx.fillStyle=P.muted; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText('L/E (km/GeV)', W-90, H-36);
           // curve
-          ctx.strokeStyle='rgba(0,255,65,0.9)'; ctx.lineWidth=1.5; ctx.beginPath();
+          ctx.strokeStyle=P.green; ctx.lineWidth=1.5; ctx.beginPath();
           for(let x=0;x<=maxX;x+=5){
             const P = 1 - Math.sin(2*theta)**2 * Math.sin(1.267*dm2*x)**2;
             const X = 40 + (W-70)*x/maxX; const Y = 20 + (H-60)*(1-P);
@@ -271,7 +273,7 @@
           ctx.stroke();
           // marker for current L/E
           const le = L/E; const Px = 40 + (W-70)*Math.min(le,maxX)/maxX; const Py = 20 + (H-60)*(1-Pee(L,E));
-          ctx.fillStyle='#c0c8b0'; ctx.beginPath(); ctx.arc(Px,Py,4,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle=P.text; ctx.beginPath(); ctx.arc(Px,Py,4,0,Math.PI*2); ctx.fill();
           document.getElementById('pee').textContent = Pee(L,E).toFixed(3);
           document.getElementById('le').textContent = (L/E).toFixed(1);
         }
@@ -294,18 +296,18 @@
         function draw(){
           ctx.clearRect(0,0,W,H); const cx=W/2, cy=H/2, s=100;
           // axes
-          ctx.strokeStyle='rgba(0,255,65,0.12)'; ctx.beginPath(); ctx.moveTo(10,cy); ctx.lineTo(W-10,cy); ctx.moveTo(cx,10); ctx.lineTo(cx,H-10); ctx.stroke();
+          ctx.strokeStyle=P.grid; ctx.beginPath(); ctx.moveTo(10,cy); ctx.lineTo(W-10,cy); ctx.moveTo(cx,10); ctx.lineTo(cx,H-10); ctx.stroke();
           // lens
-          ctx.fillStyle='#c0c8b0'; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill(); ctx.fillText('lens', cx+6, cy-6);
+          ctx.fillStyle=P.text; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill(); ctx.fillText('lens', cx+6, cy-6);
           // Einstein radius
-          ctx.strokeStyle='rgba(0,255,65,0.8)'; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.arc(cx,cy,thetaE*s,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+          ctx.strokeStyle=P.greenSoft; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.arc(cx,cy,thetaE*s,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
           // source
-          const sx=cx+beta*s, sy=cy; ctx.fillStyle='rgba(65,220,255,0.9)'; ctx.beginPath(); ctx.arc(sx,sy,4,0,Math.PI*2); ctx.fill(); ctx.fillText('source', sx+6, sy-6);
+          const sx=cx+beta*s, sy=cy; ctx.fillStyle=P.blue; ctx.beginPath(); ctx.arc(sx,sy,4,0,Math.PI*2); ctx.fill(); ctx.fillText('source', sx+6, sy-6);
           // images
           const [thm, thp] = solveImages(beta);
           const ix1=cx+thm*s, ix2=cx+thp*s; const iy=cy;
           ctx.fillStyle='#cc3333'; ctx.beginPath(); ctx.arc(ix1,iy,4,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(ix2,iy,4,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle='#5a8a4a'; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+          ctx.fillStyle=P.muted; ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
           ctx.fillText('θ_E', cx+thetaE*s+6, cy-6);
           const bEl=document.getElementById('beta'); if(bEl) bEl.textContent = beta.toFixed(2);
           const mEl=document.getElementById('thm'); if(mEl) mEl.textContent = thm.toFixed(2);
