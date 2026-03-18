@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thesis — antifold</title>
+  <meta name="description" content="The foundational thesis of antifold: computation as state evolution, not iterative correction.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="thesis.html" class="active">Thesis</a>
+      <a href="research.html">Research</a>
+      <a href="experiments.html">Experiments</a>
+      <a href="writing.html">Writing</a>
+      <a href="education.html">Education</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+
+    <section class="lab-section-narrow">
+      <div class="lab-prose">
+
+        <h2>The Problem</h2>
+
+        <p>
+          Computation today discards information at every step. Bits are destroyed, states are collapsed, intermediate structure is thrown away. This is not a side effect — it is the default assumption. Most systems are designed as if information is free to regenerate and cheap to lose.
+        </p>
+
+        <p>
+          Learning systems depend on repeated correction. Gradient descent is the dominant metaphor, but it is also the dominant cost. Train, evaluate, adjust, repeat — millions of times, across billions of parameters. The entire paradigm assumes that the only path to a good state is through relentless iteration toward it.
+        </p>
+
+        <p>
+          Instability grows with time and scale. Systems drift. Errors compound. Small misalignments become large failures given enough steps. The response is always the same: more monitoring, more retraining, more re-alignment. The architecture never questions why drift occurs in the first place.
+        </p>
+
+        <p>
+          Efficiency is treated as optimization, not principle. It is an afterthought — something to improve once the system already works. But a system designed without efficiency as a constraint will never be made efficient. You cannot retrofit a foundation.
+        </p>
+
+      </div>
+    </section>
+
+    <section class="lab-section-narrow">
+      <div class="lab-prose">
+
+        <h2>A Different Framing</h2>
+
+        <p>
+          What if systems were understood not as static function evaluators, but as evolving states? A computation is not a lookup — it is a trajectory through a space of configurations. The question shifts from "what does this function return" to "how does this state change, and what is preserved."
+        </p>
+
+        <p>
+          Learning, under this framing, becomes constrained transformation. Not: adjust weights until the loss is small enough. Instead: find a transformation of the current state that satisfies structural constraints while preserving what is already known. Correction is not external pressure — it is geometry.
+        </p>
+
+        <p>
+          Stability becomes a primary objective, not an emergent hope. You do not build a system and then check whether it drifts. You design the dynamics so that drift is structurally impossible, or at least bounded. Stability is not verified after the fact. It is guaranteed by construction.
+        </p>
+
+      </div>
+    </section>
+
+    <section class="lab-section-narrow">
+      <div class="lab-prose">
+
+        <h2>Principles</h2>
+
+        <ol class="lab-principles">
+          <li>
+            <div class="lab-principle-text">
+              <strong>Minimize irreversibility.</strong> Every transformation that cannot be undone is information lost. Design systems that preserve the option to reverse. Irreversibility should be a deliberate choice, not an unexamined default.
+            </div>
+          </li>
+          <li>
+            <div class="lab-principle-text">
+              <strong>Preserve structure during transformation.</strong> The geometry of a system's state space matters. Transformations should respect it. A mapping that distorts structure may still produce correct outputs — but it has destroyed something that cannot be measured by loss alone.
+            </div>
+          </li>
+          <li>
+            <div class="lab-principle-text">
+              <strong>Embed correction within the system.</strong> External feedback loops are slow and lossy. Correction should be intrinsic to state evolution — not a separate phase that runs after the computation, but a property of the computation itself.
+            </div>
+          </li>
+          <li>
+            <div class="lab-principle-text">
+              <strong>Treat time as a first-class variable.</strong> Most systems ignore temporal structure. Time is not a loop counter — it shapes what is possible. The order and duration of state transitions carry information. Discarding that information has consequences.
+            </div>
+          </li>
+          <li>
+            <div class="lab-principle-text">
+              <strong>Reduce unnecessary state change.</strong> The best computation is the one that doesn't happen. Minimize transitions that produce no useful change. Every unnecessary operation is wasted energy and an opportunity for error to enter the system.
+            </div>
+          </li>
+        </ol>
+
+      </div>
+    </section>
+
+    <section class="lab-section-narrow">
+      <div class="lab-prose">
+
+        <h2>Implications</h2>
+
+        <p>
+          When computation respects physical constraints, the boundary between model and machine dissolves. Software systems and physical systems converge — not as metaphor, but as shared mathematics. A control law and a learning rule become the same object expressed in different notation. This is not abstraction. It is recognition that the underlying structure was always unified.
+        </p>
+
+        <p>
+          The same primitives appear across domains. Symplectic maps in mechanics, unitary operators in quantum systems, measure-preserving flows in thermodynamics, structure-preserving updates in learning — these are not analogies. They are instances of the same principle: transformation without unnecessary destruction. Once you see the shared scaffolding, the boundaries between fields become administrative, not fundamental.
+        </p>
+
+        <p>
+          Lower compute and higher stability are not a trade-off. They are a consequence of better foundations. A system that does not destroy information does not need to regenerate it. A system with intrinsic correction does not need external re-alignment. A system that respects its own geometry does not drift. The efficiency is not optimized in — it falls out of the structure.
+        </p>
+
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="js/lab-canvas.js"></script>
+</body>
+</html>

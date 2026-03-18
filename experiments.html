@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Experiments — antifold</title>
+  <meta name="description" content="Structured observations from systems built on different assumptions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="thesis.html">Thesis</a>
+      <a href="research.html">Research</a>
+      <a href="experiments.html" class="active">Experiments</a>
+      <a href="writing.html">Writing</a>
+      <a href="education.html">Education</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Experiments</div>
+      <h2>Early observations.</h2>
+      <div class="lab-prose" style="margin-top:24px;">
+        <p>
+          These are not proofs. They are structured observations from systems built on different assumptions. Each suggests something about what becomes possible when computation respects its own constraints.
+        </p>
+      </div>
+    </section>
+
+    <div class="lab-experiment">
+      <div class="lab-experiment-label">EXPERIMENT 01</div>
+      <h3>Long-horizon stability</h3>
+      <div class="lab-experiment-row">
+        <dl>
+          <dt>Observation</dt>
+          <dd>System maintains structural coherence over extended evolution windows. State trajectories remain bounded without external correction.</dd>
+        </dl>
+        <dl>
+          <dt>Interpretation</dt>
+          <dd>Reduced drift compared to conventional systems. Internal constraints appear to function as implicit regularizers, preserving structure where gradient-based systems accumulate error.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="lab-experiment">
+      <div class="lab-experiment-label">EXPERIMENT 02</div>
+      <h3>Perturbation response</h3>
+      <div class="lab-experiment-row">
+        <dl>
+          <dt>Observation</dt>
+          <dd>After deliberate disturbance, the system returns to a stable configuration. Recovery time scales sub-linearly with perturbation magnitude.</dd>
+        </dl>
+        <dl>
+          <dt>Interpretation</dt>
+          <dd>Internal correction mechanisms operate without explicit programming. The system's state space geometry appears to create natural basins of attraction.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="lab-experiment">
+      <div class="lab-experiment-label">EXPERIMENT 03</div>
+      <h3>Reduced computational waste</h3>
+      <div class="lab-experiment-row">
+        <dl>
+          <dt>Observation</dt>
+          <dd>Fewer state updates required to reach comparable outcomes. The system avoids redundant transitions that produce no measurable change in output.</dd>
+        </dl>
+        <dl>
+          <dt>Interpretation</dt>
+          <dd>Efficiency emerges from structure rather than optimization. The system does less because less is necessary — not because it has been tuned to skip steps.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="js/lab-canvas.js"></script>
+</body>
+</html>

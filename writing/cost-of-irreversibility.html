@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Cost of Irreversibility — antifold</title>
+  <meta name="description" content="Why irreversible transformations lead to inefficiency, and what becomes possible when you design for reversibility.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="../index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="../thesis.html">Thesis</a>
+      <a href="../research.html">Research</a>
+      <a href="../experiments.html">Experiments</a>
+      <a href="../writing.html" class="active">Writing</a>
+      <a href="../education.html">Education</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Essay</div>
+      <h1>The Cost of Irreversibility</h1>
+
+      <div class="lab-prose">
+        <p>
+          An irreversible transformation is one that cannot be undone. Given the output, you cannot reconstruct the input. Information has been destroyed. This is not an abstract concern. It is a concrete property of nearly every operation in modern computational systems, and it has consequences that compound silently through every layer of a pipeline.
+        </p>
+
+        <p>
+          Start with the simplest example. A ReLU activation takes an input and returns the maximum of zero and that input. Every negative value becomes zero. Once the operation is applied, there is no way to know whether the original value was negative one or negative one thousand. Both map to the same output. The distinction is gone.
+        </p>
+
+        <p>
+          This happens billions of times per forward pass. Each activation, each pooling operation, each dimensionality reduction is a point of no return. The system commits to a representation and discards the alternatives. The information that supported those alternatives is erased.
+        </p>
+
+        <p>
+          Max pooling is another example. A two-by-two window of values is replaced by the largest value in the window. Three values are discarded. The spatial relationships between them are lost. The system gains translation invariance at the cost of spatial precision. This trade-off is well known. What is less often acknowledged is that the trade-off is permanent. No subsequent layer can recover what was removed.
+        </p>
+
+        <p>
+          The cost is not only informational. It is energetic. Landauer's principle establishes a minimum energy cost for erasing information. Every irreversible operation in a computation dissipates energy that a reversible operation would not. At the scale of modern systems — billions of parameters, trillions of operations — these costs are not negligible. They are structural inefficiencies baked into the architecture.
+        </p>
+
+        <blockquote>
+          Every irreversible choice forecloses a space of possibilities that no amount of downstream computation can reopen.
+        </blockquote>
+
+        <p>
+          There is a subtler cost as well. Irreversible systems are harder to reason about. If you can run a computation backward, you can verify it. You can trace the provenance of any output back to its inputs. You can identify exactly where a particular decision was made and what information supported it. Reversibility gives you auditability for free.
+        </p>
+
+        <p>
+          Irreversible systems offer no such guarantee. The forward pass is a one-way function. Interpreting why a model produced a particular output requires approximate methods — saliency maps, attention visualizations, feature ablation — because the exact causal chain has been partially erased by the computation itself.
+        </p>
+
+        <p>
+          The standard defense of irreversibility is that it enables compression. Dimensionality reduction is useful precisely because it discards what is not needed. But this presumes we know in advance what will not be needed. In practice, we do not. The relevance of information depends on context, and context changes. What the third layer discards might be exactly what the tenth layer requires.
+        </p>
+
+        <p>
+          The question, then, is not whether irreversibility is sometimes useful. It clearly is. Abstraction requires discarding detail. The question is whether irreversibility should be the default, or whether it should be a deliberate, minimal intervention in an otherwise structure-preserving system.
+        </p>
+
+        <p>
+          There are computational frameworks where reversibility is the default. Where transformations are bijective by construction. Where compression is achieved through reparameterization rather than projection. These frameworks impose constraints, but the constraints are productive. They force the designer to think about what is preserved, not just what is produced.
+        </p>
+
+        <p>
+          The cost of irreversibility is paid in information lost, energy dissipated, and capability foreclosed. It is paid at every layer, in every forward pass, across every deployment. The question is not whether reversibility is possible. It is what becomes possible when you design for it.
+        </p>
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="../js/lab-canvas.js"></script>
+</body>
+</html>

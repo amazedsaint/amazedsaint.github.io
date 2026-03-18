@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research — antifold</title>
+  <meta name="description" content="Five research areas exploring structure-preserving computation, learning systems, and distributed coordination.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="thesis.html">Thesis</a>
+      <a href="research.html" class="active">Research</a>
+      <a href="experiments.html">Experiments</a>
+      <a href="writing.html">Writing</a>
+      <a href="education.html">Education</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section">
+      <div class="lab-section-label">Research Areas</div>
+      <h2>What we study.</h2>
+      <div class="lab-grid" style="margin-top:32px;">
+        <div class="lab-card">
+          <div class="lab-card-tag">01</div>
+          <div class="lab-card-title">Learning Systems</div>
+          <div class="lab-card-desc">How models update state over time without loss. We study structure-preserving transformations that replace repeated correction with constrained evolution. The goal is learning that does not degrade with scale.</div>
+        </div>
+        <div class="lab-card">
+          <div class="lab-card-tag">02</div>
+          <div class="lab-card-title">Execution Substrates</div>
+          <div class="lab-card-desc">New runtimes where computation is evolving state, not instruction sequences. Programs as trajectories through configuration space, not lists of operations applied to memory.</div>
+        </div>
+        <div class="lab-card">
+          <div class="lab-card-tag">03</div>
+          <div class="lab-card-title">Control Systems</div>
+          <div class="lab-card-desc">Continuous correction embedded in the system rather than applied periodically from outside. Feedback that operates at the same timescale as the process it governs. Stability by construction.</div>
+        </div>
+        <div class="lab-card">
+          <div class="lab-card-tag">04</div>
+          <div class="lab-card-title">Physical Modeling</div>
+          <div class="lab-card-desc">Direct mapping between computation and real-world processes. Simulation that shares structure with what it models. The boundary between digital and physical dissolves when the primitives align.</div>
+        </div>
+        <div class="lab-card">
+          <div class="lab-card-tag">05</div>
+          <div class="lab-card-title">Distributed Coordination</div>
+          <div class="lab-card-desc">Many small systems behaving as one coherent system. Agreement without centralization. State consistency maintained through local interactions and shared constraints.</div>
+        </div>
+      </div>
+      <p style="margin-top:32px;">These areas share a common foundation. <a href="thesis.html" style="font-family:var(--font-mono);font-size:13px;">→ Read the thesis</a></p>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="js/lab-canvas.js"></script>
+  <script>
+    document.querySelectorAll('.lab-card').forEach(c => {
+      if (window.labCardAnimate) window.labCardAnimate(c);
+    });
+  </script>
+</body>
+</html>

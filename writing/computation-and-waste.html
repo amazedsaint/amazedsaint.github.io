@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Computation and Waste — antifold</title>
+  <meta name="description" content="How current systems discard information at every layer, and why efficiency must be structural.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="../index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="../thesis.html">Thesis</a>
+      <a href="../research.html">Research</a>
+      <a href="../experiments.html">Experiments</a>
+      <a href="../writing.html" class="active">Writing</a>
+      <a href="../education.html">Education</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Essay</div>
+      <h1>Computation and Waste</h1>
+
+      <div class="lab-prose">
+        <p>
+          Every computational system produces waste. Not in the colloquial sense of unused cycles or idle memory, but in a precise thermodynamic sense: information is destroyed, structure is discarded, and entropy increases. This is not a side effect. It is the default behavior of nearly every architecture in use today.
+        </p>
+
+        <p>
+          Consider what happens inside a standard neural network. An input tensor passes through a sequence of layers. At each stage, dimensionality is reduced, activations are clipped, and intermediate representations are overwritten. The system retains what it deems relevant and discards the rest. But relevance is determined by a loss function defined at the end of the pipeline. The intermediate layers have no way of knowing what they are throwing away.
+        </p>
+
+        <p>
+          This is not a new observation. Rolf Landauer established in 1961 that erasing a single bit of information dissipates a minimum of <em>kT</em> ln 2 joules of energy, where <em>k</em> is Boltzmann's constant and <em>T</em> is the temperature of the environment. The principle is subtle but absolute: any logically irreversible operation has a thermodynamic cost. Erasure is not free. It never was.
+        </p>
+
+        <p>
+          The implications extend far beyond physics. Every time a computational system discards information it cannot recover, it pays a cost. Not always in energy, but in capability. The discarded structure might have been useful downstream. The erased gradient might have contained a correction signal. The pooled feature map might have held spatial relationships that mattered three layers later.
+        </p>
+
+        <p>
+          Current practice treats this as acceptable. The reasoning is pragmatic: storage is cheap, compute is abundant, and we can always retrain. But this framing confuses affordability with efficiency. The fact that we can absorb waste does not mean the waste is harmless. It accumulates. It compounds. Systems trained with high waste require more data, more parameters, and more energy to reach the same performance as systems that preserve structure.
+        </p>
+
+        <blockquote>
+          The most efficient computation is the one that preserves the most structure.
+        </blockquote>
+
+        <p>
+          This is not an optimization target. It is a design principle. Efficiency retrofitted onto a wasteful architecture will always be bounded by the architecture's inherent information loss. You cannot recover what has already been erased. You can only prevent the erasure from happening in the first place.
+        </p>
+
+        <p>
+          Think of it structurally. A transformation that maps a high-dimensional input to a lower-dimensional output is, by definition, many-to-one. Multiple distinct inputs produce the same output. The inverse does not exist. Once the transformation is applied, the original distinctions are gone. No amount of post-hoc processing can reconstruct them.
+        </p>
+
+        <p>
+          The alternative is to design systems where transformations are invertible by construction. Where the forward pass does not destroy information but rearranges it. Where compression is achieved not by discarding dimensions but by finding more compact representations that remain fully recoverable.
+        </p>
+
+        <p>
+          This is harder. Invertible transformations impose constraints on architecture, on parameterization, on training dynamics. They demand that the designer think carefully about what the system preserves, not just what it produces. But the payoff is substantial. Systems that preserve structure waste less energy, require less data, generalize more robustly, and degrade more gracefully under distribution shift.
+        </p>
+
+        <p>
+          Waste in computation is not inevitable. It is a design choice, made implicitly every time we build a system that treats intermediate information as disposable. The question is whether we continue to accept that choice or begin to design around it.
+        </p>
+
+        <p>
+          Landauer's principle tells us that erasure has a floor cost. It does not tell us we must erase.
+        </p>
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="../js/lab-canvas.js"></script>
+</body>
+</html>

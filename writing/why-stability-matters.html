@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why Stability Matters — antifold</title>
+  <meta name="description" content="Long-horizon behavior in computational systems, drift, and what physical systems teach about equilibrium.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="../index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="../thesis.html">Thesis</a>
+      <a href="../research.html">Research</a>
+      <a href="../experiments.html">Experiments</a>
+      <a href="../writing.html" class="active">Writing</a>
+      <a href="../education.html">Education</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Essay</div>
+      <h1>Why Stability Matters</h1>
+
+      <div class="lab-prose">
+        <p>
+          Most computational systems are not designed for long horizons. They are designed for the next prediction, the next gradient step, the next output token. Performance is measured at the point of generation, not over the lifetime of the system. This creates a blind spot. Systems that perform well in the short term can drift catastrophically over time.
+        </p>
+
+        <p>
+          Drift is the quiet failure mode. It does not announce itself with a crash or an error code. It manifests as a slow divergence between what the system was trained to do and what it actually does after thousands or millions of sequential operations. Each individual step may be within tolerance. The accumulated deviation is not.
+        </p>
+
+        <p>
+          The standard response is periodic re-alignment. Retrain the model. Recalibrate the controller. Reset the state. This works, but it treats stability as a maintenance task rather than a property of the system. It is the computational equivalent of stopping a car to re-align the wheels every hundred miles instead of building a suspension that tracks straight.
+        </p>
+
+        <p>
+          Physical systems offer a different model. A pendulum at rest is stable not because something periodically corrects its position, but because the dynamics of the system drive it back to equilibrium when perturbed. The restoring force is intrinsic. It emerges from the structure of the system, not from an external supervisor.
+        </p>
+
+        <p>
+          This distinction matters. A system with intrinsic stability requires no monitoring infrastructure, no retraining schedule, no human in the loop to detect when it has drifted too far. It corrects itself because its dynamics are designed to converge. The equilibrium is not a target the system aims at. It is a basin the system naturally falls into.
+        </p>
+
+        <blockquote>
+          Stability should be a design constraint, not a performance metric.
+        </blockquote>
+
+        <p>
+          When we treat stability as a metric, we measure it after the fact. We observe the system, detect divergence, and intervene. This is reactive. When we treat stability as a constraint, we build it into the architecture. The system cannot drift because the transformations it applies are bounded, contractive, or energy-preserving by construction.
+        </p>
+
+        <p>
+          Consider the difference between a recurrent network that accumulates hidden state over time and one whose state transitions are guaranteed to be non-expansive. The first can represent arbitrary dynamics but may diverge. The second is constrained but remains bounded over any time horizon. The constraint is not a limitation. It is what makes the system trustworthy.
+        </p>
+
+        <p>
+          There is a deeper point here about the relationship between expressiveness and reliability. Unconstrained systems can represent more functions, but they cannot guarantee behavior. Constrained systems represent fewer functions, but the functions they do represent are well-behaved. For any system intended to run autonomously over long periods, the second property is more valuable than the first.
+        </p>
+
+        <p>
+          Biological systems understood this long before we built computers. Homeostasis is not an optimization objective in living organisms. It is an architectural feature. Body temperature, blood pH, osmotic pressure — these are maintained not by a central controller checking values against targets, but by distributed feedback mechanisms that correct deviations as they arise.
+        </p>
+
+        <p>
+          The lesson is direct. If you want a system that behaves well over long horizons, do not build a system that behaves well at each step and hope the behavior compounds. Build a system whose structure ensures that small errors do not grow. Make stability a consequence of the design, not a property you verify after deployment.
+        </p>
+
+        <p>
+          The systems that last are not the ones that perform best on a benchmark. They are the ones that still work correctly after a million steps without anyone watching.
+        </p>
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="../js/lab-canvas.js"></script>
+</body>
+</html>

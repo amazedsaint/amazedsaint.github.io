@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Software Meets the Physical World — antifold</title>
+  <meta name="description" content="The convergence of computation and physical processes, and why software that respects physical constraints performs better.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="../index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="../thesis.html">Thesis</a>
+      <a href="../research.html">Research</a>
+      <a href="../experiments.html">Experiments</a>
+      <a href="../writing.html" class="active">Writing</a>
+      <a href="../education.html">Education</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Essay</div>
+      <h1>Software Meets the Physical World</h1>
+
+      <div class="lab-prose">
+        <p>
+          Software operates in a world of abstraction. Variables have no mass. Functions have no friction. State changes happen instantaneously, without inertia. This is useful. It is also the source of a persistent gap between what software models and what actually happens when that software meets the physical world.
+        </p>
+
+        <p>
+          A physics simulation can model a ball falling under gravity. It computes position as a function of time using Newton's equations. The computation is correct. But the simulated ball does not experience air resistance in the way a real ball does, because the simulation discretizes time into steps and approximates drag as a force applied at each step. The real ball experiences continuous interaction with the atmosphere. The approximation is good enough for many purposes. It is never exact.
+        </p>
+
+        <p>
+          This gap between simulation and reality is well understood in engineering. It has a name: the sim-to-real gap. Roboticists train controllers in simulation and find that they fail when deployed on physical hardware. The failures are not random. They are systematic. They arise from assumptions the simulation makes that the physical world does not share.
+        </p>
+
+        <p>
+          The conventional response is to make simulations more detailed. Add more parameters. Model more phenomena. Increase the resolution. This helps, but it does not close the gap. It narrows it asymptotically, at increasing computational cost, without ever reaching zero.
+        </p>
+
+        <p>
+          There is another approach. Instead of making the simulation more like the world, make the computation more like the processes it models. If the physical system conserves energy, build conservation into the computational model as a hard constraint, not a quantity to approximate. If the physical system evolves continuously, use continuous-time representations instead of discrete time steps. If the physical system is Hamiltonian, parameterize the model as a Hamiltonian system.
+        </p>
+
+        <blockquote>
+          The gap between simulation and reality narrows when they share primitives.
+        </blockquote>
+
+        <p>
+          This is not a new idea, but it is an underutilized one. Most machine learning models are universal approximators. They can represent any function to arbitrary precision given enough parameters. But they do not know anything about the structure of the function they are approximating. A neural network trained to predict planetary motion does not know that energy is conserved. It must learn this from data, approximately, and it will violate it at the boundaries of its training distribution.
+        </p>
+
+        <p>
+          A model that encodes conservation of energy by construction cannot violate it. Not at the boundaries. Not anywhere. The constraint is not learned. It is structural. The model has fewer free parameters as a result, but the parameters it does have are more meaningful. They correspond to physical quantities, not arbitrary weights.
+        </p>
+
+        <p>
+          This principle extends beyond conservation laws. Symmetries, invariances, continuity, causality — these are all properties of physical systems that can be encoded as architectural constraints rather than learned from data. Each constraint reduces the hypothesis space. Each reduction makes the model more data-efficient, more generalizable, and more interpretable.
+        </p>
+
+        <p>
+          There is a convergence happening, though it is not the one typically discussed. It is not the convergence of artificial and human intelligence. It is the convergence of computational and physical processes. As software systems become more tightly coupled to hardware, to sensors, to actuators, the abstraction layer thins. The software must increasingly respect the constraints of the physical world it operates in.
+        </p>
+
+        <p>
+          Software that ignores physics works well in a sandbox. Software that respects physics works well in the world. The difference is not in capability but in robustness. A model that has internalized the structure of the domain it operates in does not merely predict well. It degrades gracefully, generalizes naturally, and interfaces cleanly with the physical systems it is meant to serve.
+        </p>
+
+        <p>
+          The future of computation is not purely digital. It is not purely physical. It is the point where the two share enough structure that the distinction stops mattering.
+        </p>
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="../js/lab-canvas.js"></script>
+</body>
+</html>

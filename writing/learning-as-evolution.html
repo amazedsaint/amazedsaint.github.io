@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning as Evolution — antifold</title>
+  <meta name="description" content="Reframing learning as state evolution, not repeated correction over data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="../index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="../thesis.html">Thesis</a>
+      <a href="../research.html">Research</a>
+      <a href="../experiments.html">Experiments</a>
+      <a href="../writing.html" class="active">Writing</a>
+      <a href="../education.html">Education</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Essay</div>
+      <h1>Learning as Evolution</h1>
+
+      <div class="lab-prose">
+        <p>
+          The standard model of machine learning is iterative. Sample a batch. Compute a loss. Backpropagate gradients. Update weights. Repeat. This loop is so foundational that it has become invisible. We no longer question whether it is the right abstraction. We only ask how to make it faster.
+        </p>
+
+        <p>
+          But consider what this loop actually describes. A system receives a static snapshot of data, measures how wrong it is, and adjusts itself to be less wrong. Then it forgets the snapshot and receives another. Each update is local in time. The system has no memory of how it arrived at its current state, only a direction to move next.
+        </p>
+
+        <p>
+          This is correction, not evolution. The distinction matters.
+        </p>
+
+        <p>
+          Correction implies an external reference. Something tells the system what it should have produced, and the system moves toward that target. Evolution implies an internal trajectory. The system changes because its dynamics drive it to change, not because an outside signal demands it. Correction is reactive. Evolution is generative.
+        </p>
+
+        <p>
+          Biological systems learn through evolution in this broader sense. An organism does not receive labeled examples of correct behavior. It exists in an environment. Its internal state changes continuously in response to interaction. The changes that improve fitness persist. The changes that do not are absorbed. There is no loss function. There is no training loop. There is only continuous state change under constraint.
+        </p>
+
+        <p>
+          The key difference is continuity. In gradient-based learning, the system is static between updates. Nothing happens to the weights between one step and the next. The system is frozen, then jolted, then frozen again. In biological learning, there is no pause. The state is always in motion. Adaptation is not a discrete event but an ongoing process.
+        </p>
+
+        <blockquote>
+          What if learning were not a loop but a flow?
+        </blockquote>
+
+        <p>
+          This reframing has consequences. A system that evolves continuously does not need epochs. It does not need to revisit the same data multiple times to converge. Its state trajectory is shaped by the structure of the system itself — by the constraints on how state can change, by the geometry of the space it moves through, by the conservation laws it respects.
+        </p>
+
+        <p>
+          There is a mathematical formalism for this. Dynamical systems theory describes how state evolves under a set of equations. The trajectory is determined by initial conditions and the vector field. There are no discrete updates. There are no batches. The system flows through state space along a path dictated by its own structure.
+        </p>
+
+        <p>
+          Applying this to learning means replacing the train loop with a differential equation. The parameters are not updated; they evolve. The evolution is governed not by a gradient computed from a batch but by a continuous field derived from the system's interaction with its environment. The system does not step toward a minimum. It flows along a manifold.
+        </p>
+
+        <p>
+          This is not merely a change in notation. It changes what is possible. Continuous evolution can respect conservation laws that discrete updates cannot. It can maintain invariants across time. It can couple learning to control to sensing in a single unified dynamic, rather than treating them as separate modules with separate training procedures.
+        </p>
+
+        <p>
+          Biology does not separate perception from action from learning. These are aspects of a single evolving process. The organism perceives, acts, and adapts simultaneously, because all three are expressions of the same underlying state change.
+        </p>
+
+        <p>
+          The question is whether we can build computational systems that do the same. Not systems that learn by being corrected, but systems that learn by evolving. Not systems that iterate over data, but systems that flow through state space under constraints that ensure convergence, stability, and coherence.
+        </p>
+
+        <p>
+          The train loop was a starting point. It does not have to be the ending point.
+        </p>
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="../js/lab-canvas.js"></script>
+</body>
+</html>

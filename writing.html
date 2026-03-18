@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing — antifold</title>
+  <meta name="description" content="Essays exploring the ideas behind our work.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="lab-style.css">
+  <meta name="theme-color" content="#0a0a0a">
+</head>
+<body>
+  <canvas id="lab-canvas"></canvas>
+
+  <div class="ascii-overlay" aria-hidden="true">┌──┬──┐
+│  │  │
+├──┼──┤
+│  │  │
+└──┴──┘</div>
+
+  <nav class="lab-nav">
+    <div class="lab-nav-logo"><a href="index.html">antifold</a></div>
+    <div class="lab-nav-links">
+      <a href="thesis.html">Thesis</a>
+      <a href="research.html">Research</a>
+      <a href="experiments.html">Experiments</a>
+      <a href="writing.html" class="active">Writing</a>
+      <a href="education.html">Education</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <div class="lab-page">
+    <section class="lab-section-narrow">
+      <div class="lab-section-label">Writing</div>
+      <h2>Essays.</h2>
+      <div class="lab-prose" style="margin-top:24px;">
+        <p>Longer explorations of the ideas behind our work. No implementation details — just the thinking.</p>
+      </div>
+      <div style="margin-top:32px;">
+        <a class="lab-essay-item" href="writing/computation-and-waste.html">
+          <div class="lab-essay-title">Computation and Waste</div>
+          <div class="lab-essay-excerpt">How current systems discard information, and why efficiency must be structural.</div>
+        </a>
+        <a class="lab-essay-item" href="writing/why-stability-matters.html">
+          <div class="lab-essay-title">Why Stability Matters</div>
+          <div class="lab-essay-excerpt">Long-horizon behavior, drift, and what physical systems teach about equilibrium.</div>
+        </a>
+        <a class="lab-essay-item" href="writing/learning-as-evolution.html">
+          <div class="lab-essay-title">Learning as Evolution</div>
+          <div class="lab-essay-excerpt">Reframing learning as state evolution, not repeated correction.</div>
+        </a>
+        <a class="lab-essay-item" href="writing/cost-of-irreversibility.html">
+          <div class="lab-essay-title">The Cost of Irreversibility</div>
+          <div class="lab-essay-excerpt">What is lost when transformations cannot be undone, and what becomes possible when they can.</div>
+        </a>
+        <a class="lab-essay-item" href="writing/software-meets-physical-world.html">
+          <div class="lab-essay-title">Software Meets the Physical World</div>
+          <div class="lab-essay-excerpt">Computation and physical processes are converging. The question is how.</div>
+        </a>
+      </div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>&copy; 2025 antifold</p>
+    </footer>
+  </div>
+
+  <script src="js/lab-canvas.js"></script>
+</body>
+</html>
