@@ -413,6 +413,7 @@
       var age = (ts - rip.born) / 1000;
       if (age > 0.8){ ripples.splice(i, 1); continue; }
       var progress = age / 0.8;
+      if (progress < 0) continue;
       var r = rip.maxR * progress;
       var alpha = rip.alpha * (1 - progress);
       ctx.beginPath();
