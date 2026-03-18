@@ -29,7 +29,7 @@
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#0a0a0a" />
     <meta name="og:title" content="antifold: Essays and Simulations" />
     <meta name="og:description" content="Articles and interactive demos on physics, computation, and intelligence." />
     <meta name="og:type" content="website" />
@@ -46,10 +46,14 @@
 
         <main>
             <style>
-              .section-block { margin: 24px 0 8px 0; }
-              .section-title { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; }
-              .section-desc { color: var(--muted); margin: 0 0 8px 0; }
-              .path { color: var(--muted); font-size: 13px; margin: 6px 0 10px 0; }
+              .section-block { margin: 28px 0 8px 0; padding-top: 16px; border-top: 1px dashed var(--border); }
+              .section-block:first-of-type { border-top: none; padding-top: 0; }
+              .section-title { font-size: 18px; font-weight: 700; margin: 0 0 6px 0; color: var(--bright); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-mono); }
+              .section-title::before { content: '> '; color: var(--muted); }
+              .section-desc { color: var(--muted); margin: 0 0 8px 0; font-size: 14px; }
+              .section-desc::before { content: '// '; color: var(--border); }
+              .path { color: var(--border); font-size: 12px; margin: 6px 0 10px 0; letter-spacing: 0.05em; }
+              .path::before { content: '$ '; color: var(--muted); }
             </style>
             <section class="hero">
                 <p>Interactive articles and demos on physics, computation, and intelligence.</p>
@@ -201,5 +205,38 @@
         </footer>
     </div>
     <script src="js/card_creatures.js"></script>
+    <!-- Matrix rain background -->
+    <canvas id="matrix-rain" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.06;"></canvas>
+    <script>
+    (function(){
+      const c = document.getElementById('matrix-rain');
+      if (!c || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const ctx = c.getContext('2d');
+      let w, h, cols, drops;
+      const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+      function resize() {
+        w = c.width = window.innerWidth;
+        h = c.height = window.innerHeight;
+        cols = Math.floor(w / 18);
+        drops = Array(cols).fill(0).map(() => Math.random() * -100 | 0);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      function draw() {
+        ctx.fillStyle = 'rgba(10,10,10,0.12)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#00ff41';
+        ctx.font = '14px monospace';
+        for (let i = 0; i < cols; i++) {
+          const ch = chars[Math.random() * chars.length | 0];
+          ctx.fillText(ch, i * 18, drops[i] * 18);
+          if (drops[i] * 18 > h && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+    </script>
 </body>
 </html>

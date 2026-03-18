@@ -22,19 +22,19 @@
     const toPix = (x, y) => ({ x: W * 0.5 + x * 120, y: H * 0.5 - y * 120 });
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      ctx.strokeStyle = '#eee';
+      ctx.strokeStyle = 'rgba(0,255,65,0.12)';
       ctx.beginPath(); ctx.moveTo(20, H * 0.5); ctx.lineTo(W - 20, H * 0.5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(W * 0.5, 20); ctx.lineTo(W * 0.5, H - 20); ctx.stroke();
       for (const p of pts) {
         const P = toPix(p.x, p.y);
-        ctx.fillStyle = p.label ? '#1a8917' : '#b91c1c';
+        ctx.fillStyle = p.label ? '#00ff41' : '#b91c1c';
         ctx.beginPath(); ctx.arc(P.x, P.y, 3, 0, Math.PI * 2); ctx.fill();
       }
       if (Math.abs(w1) > 1e-6) {
         const x1 = -1.2, x2 = 1.2;
         const y1 = -(w0 / w1) * x1 - b / w1, y2 = -(w0 / w1) * x2 - b / w1;
         const P1 = toPix(x1, y1), P2 = toPix(x2, y2);
-        ctx.strokeStyle = '#111';
+        ctx.strokeStyle = '#c0c8b0';
         ctx.beginPath(); ctx.moveTo(P1.x, P1.y); ctx.lineTo(P2.x, P2.y); ctx.stroke();
       }
       const eq = `y = ${(-w0 / w1).toFixed(2)} x ${(-b / w1 >= 0 ? '+' : '-') } ${Math.abs(b / w1).toFixed(2)}`;
@@ -96,13 +96,13 @@
       for (let j = 0; j < n; j++) {
         const x = offx + j * cell, y = offy;
         const val = w[j];
-        ctx.fillStyle = `rgba(26,137,23,${0.15 + 0.75 * val})`;
+        ctx.fillStyle = `rgba(0,255,65,${0.15 + 0.75 * val})`;
         ctx.fillRect(x, y, cell, cell);
-        ctx.strokeStyle = '#ccc'; ctx.strokeRect(x, y, cell, cell);
-        ctx.fillStyle = '#111'; ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+        ctx.strokeStyle = 'rgba(0,255,65,0.18)'; ctx.strokeRect(x, y, cell, cell);
+        ctx.fillStyle = '#c0c8b0'; ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
         ctx.fillText(String(j), x + 8, y - 6);
       }
-      ctx.fillStyle = '#666'; ctx.fillText('weights for query q[' + qi + ']', offx, offy + cell + 16);
+      ctx.fillStyle = '#5a8a4a'; ctx.fillText('weights for query q[' + qi + ']', offx, offy + cell + 16);
     }
     const tempEl = document.getElementById('temp'); if (tempEl) tempEl.oninput = (e) => { temp = parseFloat(e.target.value); render(); };
     const qEl = document.getElementById('qpick'); if (qEl) qEl.oninput = (e) => { qi = parseInt(e.target.value, 10); render(); };
@@ -116,7 +116,7 @@
     const enc = (pos, i) => { const div = Math.pow(10000, (2 * Math.floor(i / 2)) / d); return (i % 2 === 0) ? Math.sin(pos / div) : Math.cos(pos / div); };
     function render() {
       ctx.clearRect(0, 0, W, H);
-      const offx = 30, offy = H * 0.5; ctx.strokeStyle = '#eee';
+      const offx = 30, offy = H * 0.5; ctx.strokeStyle = 'rgba(0,255,65,0.12)';
       ctx.beginPath(); ctx.moveTo(20, offy); ctx.lineTo(W - 20, offy); ctx.stroke();
       const scaleX = (W - 60) / L, scaleY = 28;
       for (let c = 0; c < Math.min(6, d); c++) {
@@ -143,10 +143,10 @@
     function render() {
       ctx.clearRect(0, 0, W, H);
       const offx = 30, base = H * 0.75, scale = 20, bw = 20;
-      ctx.fillStyle = '#666'; ctx.fillText('values', offx, 18);
+      ctx.fillStyle = '#5a8a4a'; ctx.fillText('values', offx, 18);
       for (let i = 0; i < vec.length; i++) { const h = vec[i] * scale; const x = offx + i * (bw + 8); ctx.fillStyle = '#3b82f6'; ctx.fillRect(x, base - Math.max(0, h), bw, Math.abs(h)); }
-      const nv = norm(vec); ctx.fillStyle = '#666'; ctx.fillText('layer‑norm', offx + 200, 18);
-      for (let i = 0; i < nv.length; i++) { const h = nv[i] * scale; const x = offx + 200 + i * (bw + 8); ctx.fillStyle = '#1a8917'; ctx.fillRect(x, base - Math.max(0, h), bw, Math.abs(h)); }
+      const nv = norm(vec); ctx.fillStyle = '#5a8a4a'; ctx.fillText('layer‑norm', offx + 200, 18);
+      for (let i = 0; i < nv.length; i++) { const h = nv[i] * scale; const x = offx + 200 + i * (bw + 8); ctx.fillStyle = '#00ff41'; ctx.fillRect(x, base - Math.max(0, h), bw, Math.abs(h)); }
     }
     render();
   }
@@ -161,12 +161,12 @@
       for (let i = 0; i < N; i++) {
         const x = offx + i * cell; let highlight = false;
         if (mode === 'attn') highlight = true; else { const half = Math.floor(k / 2); highlight = i >= center - half && i <= center + half; }
-        ctx.fillStyle = highlight ? (i === center ? '#1a8917' : 'rgba(26,137,23,0.3)') : '#eee';
+        ctx.fillStyle = highlight ? (i === center ? '#00ff41' : 'rgba(0,255,65,0.3)') : 'rgba(0,255,65,0.12)';
         ctx.fillRect(x, y - 14, cell - 4, 28);
-        ctx.strokeStyle = '#ccc'; ctx.strokeRect(x, y - 14, cell - 4, 28);
-        if (i === center) { ctx.fillStyle = '#111'; ctx.fillText('•', x + cell * 0.35, y + 4); }
+        ctx.strokeStyle = 'rgba(0,255,65,0.18)'; ctx.strokeRect(x, y - 14, cell - 4, 28);
+        if (i === center) { ctx.fillStyle = '#c0c8b0'; ctx.fillText('•', x + cell * 0.35, y + 4); }
       }
-      ctx.fillStyle = '#666'; ctx.fillText(mode === 'attn' ? 'Self‑attention sees all positions' : `Conv kernel size ${k} sees local window`, offx, y + 36);
+      ctx.fillStyle = '#5a8a4a'; ctx.fillText(mode === 'attn' ? 'Self‑attention sees all positions' : `Conv kernel size ${k} sees local window`, offx, y + 36);
     }
     const modeEl = document.getElementById('mode'); if (modeEl) modeEl.onchange = (e) => { mode = e.target.value; render(); };
     const kernEl = document.getElementById('kern'); if (kernEl) kernEl.oninput = (e) => { k = parseInt(e.target.value, 10); render(); };
@@ -187,11 +187,11 @@
         for (let j = -8; j <= 8; j++) {
           const xx = i / 4, yy = j / 4; const val = f(xx, yy);
           const col = clamp01((val - 0) / 6);
-          ctx.fillStyle = `rgba(26,137,23,${0.04 + 0.26 * col})`;
+          ctx.fillStyle = `rgba(0,255,65,${0.04 + 0.26 * col})`;
           const X = offx + xx * S, Y = offy - yy * S; ctx.fillRect(X - 10, Y - 10, 20, 20);
         }
       }
-      const levels = [0.2, 0.5, 1, 2, 3, 4, 5]; ctx.fillStyle = 'rgba(17,17,17,0.3)';
+      const levels = [0.2, 0.5, 1, 2, 3, 4, 5]; ctx.fillStyle = 'rgba(192,200,176,0.3)';
       for (const L of levels) {
         for (let i = -24; i <= 24; i++) {
           for (let j = -24; j <= 24; j++) {
@@ -200,10 +200,10 @@
           }
         }
       }
-      ctx.strokeStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(offx - 20, offy); ctx.lineTo(W - 20, offy); ctx.stroke();
+      ctx.strokeStyle = 'rgba(0,255,65,0.15)'; ctx.beginPath(); ctx.moveTo(offx - 20, offy); ctx.lineTo(W - 20, offy); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(offx, 20); ctx.lineTo(offx, H - 20); ctx.stroke();
       const X = offx + x * S, Y = offy - y * S; const g = grad(x, y); const gscale = 20;
-      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(X, Y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#c0c8b0'; ctx.beginPath(); ctx.arc(X, Y, 4, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#b91c1c'; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X - g.gx * gscale, Y + g.gy * gscale); ctx.stroke();
       const xy = document.getElementById('gdxy'); if (xy) xy.textContent = `x=${x.toFixed(2)}, y=${y.toFixed(2)}, f=${f(x, y).toFixed(3)}`;
     }
@@ -227,11 +227,11 @@
     const yhat = (x) => v1a * relu(w1a * x + b1a) + v1b * relu(w1b * x + b1b) + b2;
     function draw() {
       ctx.clearRect(0, 0, W, H); const offx = 30, offy = H * 0.5, scaleX = (W - 60) / 2, scaleY = 60;
-      ctx.strokeStyle = '#eee'; ctx.beginPath(); ctx.moveTo(offx, offy); ctx.lineTo(W - 30, offy); ctx.stroke();
-      ctx.strokeStyle = '#bbb'; ctx.beginPath();
+      ctx.strokeStyle = 'rgba(0,255,65,0.12)'; ctx.beginPath(); ctx.moveTo(offx, offy); ctx.lineTo(W - 30, offy); ctx.stroke();
+      ctx.strokeStyle = 'rgba(0,255,65,0.18)'; ctx.beginPath();
       for (let i = 0; i <= 200; i++) { const x = -1 + (2 * i) / 200; const y = target(x); const X = offx + (x + 1) * scaleX; const Y = offy - y * scaleY; if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
       ctx.stroke();
-      ctx.strokeStyle = '#1a8917'; ctx.beginPath();
+      ctx.strokeStyle = '#00ff41'; ctx.beginPath();
       for (let i = 0; i <= 200; i++) { const x = -1 + (2 * i) / 200; const y = yhat(x); const X = offx + (x + 1) * scaleX; const Y = offy - y * scaleY; if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
       ctx.stroke();
       const eqEl = document.getElementById('mlpeq');
@@ -297,13 +297,13 @@
       const w = softmax(scores);
       for (let j = 0; j < n; j++) {
         const x = offx, y = offy + j * (cell + 8);
-        ctx.fillStyle = '#666'; ctx.fillText(`pos ${j}`, x, y - 6);
+        ctx.fillStyle = '#5a8a4a'; ctx.fillText(`pos ${j}`, x, y - 6);
         for (let k = 0; k < d; k++) { const val = V[j][k]; const len = val * 30; ctx.fillStyle = val >= 0 ? '#3b82f6' : '#b91c1c'; ctx.fillRect(x + 50 + k * 60, y, len, 6); }
-        ctx.fillStyle = '#1a8917'; ctx.fillRect(W - 140, y, w[j] * 100, 6);
+        ctx.fillStyle = '#00ff41'; ctx.fillRect(W - 140, y, w[j] * 100, 6);
       }
       const agg = Array.from({ length: d }, (_, k) => V.reduce((s, vec, idx) => s + w[idx] * vec[k], 0));
-      ctx.fillStyle = '#666'; ctx.fillText('result', offx, offy + n * (cell + 8) + 14);
-      for (let k = 0; k < d; k++) { const val = agg[k]; const len = val * 40; ctx.fillStyle = val >= 0 ? '#1a8917' : '#b91c1c'; ctx.fillRect(offx + 50 + k * 60, offy + n * (cell + 8) + 8, len, 8); }
+      ctx.fillStyle = '#5a8a4a'; ctx.fillText('result', offx, offy + n * (cell + 8) + 14);
+      for (let k = 0; k < d; k++) { const val = agg[k]; const len = val * 40; ctx.fillStyle = val >= 0 ? '#00ff41' : '#b91c1c'; ctx.fillRect(offx + 50 + k * 60, offy + n * (cell + 8) + 8, len, 8); }
     }
     const tEl = document.getElementById('aggTemp'); if (tEl) tEl.oninput = (e) => { temp = parseFloat(e.target.value); render(); };
     const qEl = document.getElementById('aggQ'); if (qEl) qEl.oninput = (e) => { qi = parseInt(e.target.value, 10); render(); };
@@ -328,7 +328,7 @@
         const ctx = cnv.getContext('2d');
         const scores = []; for (let j = 0; j < n; j++) scores.push(dot(Qh[hh][qi], Kh[hh][j]) / Math.max(1e-6, temp));
         const w = softmax(scores);
-        for (let j = 0; j < n; j++) { const x = 12, y = 14 + j * 16; const val = w[j]; ctx.fillStyle = `rgba(26,137,23,${0.18 + 0.75 * val})`; ctx.fillRect(x, y, 110, 12); ctx.fillStyle = '#111'; ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(`pos ${j}`, x, y - 2); }
+        for (let j = 0; j < n; j++) { const x = 12, y = 14 + j * 16; const val = w[j]; ctx.fillStyle = `rgba(0,255,65,${0.18 + 0.75 * val})`; ctx.fillRect(x, y, 110, 12); ctx.fillStyle = '#c0c8b0'; ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace'; ctx.fillText(`pos ${j}`, x, y - 2); }
       }
     }
     const tempEl = document.getElementById('mhaTemp'); if (tempEl) tempEl.oninput = (e) => { temp = parseFloat(e.target.value); render(); };
@@ -347,12 +347,12 @@
     const matvec = (M, v) => M.map((row) => row.reduce((s, wij, j) => s + wij * v[j], 0));
     function draw() {
       ctx.clearRect(0, 0, W, H); const offx = 30, base = H * 0.75, bw = 14, gap = 6;
-      ctx.fillStyle = '#666'; ctx.fillText('x (d_model)', offx, 16);
+      ctx.fillStyle = '#5a8a4a'; ctx.fillText('x (d_model)', offx, 16);
       for (let i = 0; i < d; i++) { const h = x[i] * 24; const X = offx + i * (bw + gap); ctx.fillStyle = h >= 0 ? '#3b82f6' : '#b91c1c'; ctx.fillRect(X, base - Math.max(0, h), bw, Math.abs(h)); }
-      const hvec = matvec(W1, x).map(relu); ctx.fillStyle = '#666'; ctx.fillText('ReLU(W1x)', offx + 200, 16);
-      for (let i = 0; i < Math.min(12, df); i++) { const h = hvec[i] * 14; const X = offx + 200 + i * (bw + gap); ctx.fillStyle = h >= 0 ? '#1a8917' : '#b91c1c'; ctx.fillRect(X, base - Math.max(0, h), bw, Math.abs(h)); }
-      const yvec = matvec(W2, hvec); ctx.fillStyle = '#666'; ctx.fillText('W2h (back to d_model)', offx + 400, 16);
-      for (let i = 0; i < d; i++) { const h = yvec[i] * 24; const X = offx + 400 + i * (bw + gap); ctx.fillStyle = h >= 0 ? '#1a8917' : '#b91c1c'; ctx.fillRect(X, base - Math.max(0, h), bw, Math.abs(h)); }
+      const hvec = matvec(W1, x).map(relu); ctx.fillStyle = '#5a8a4a'; ctx.fillText('ReLU(W1x)', offx + 200, 16);
+      for (let i = 0; i < Math.min(12, df); i++) { const h = hvec[i] * 14; const X = offx + 200 + i * (bw + gap); ctx.fillStyle = h >= 0 ? '#00ff41' : '#b91c1c'; ctx.fillRect(X, base - Math.max(0, h), bw, Math.abs(h)); }
+      const yvec = matvec(W2, hvec); ctx.fillStyle = '#5a8a4a'; ctx.fillText('W2h (back to d_model)', offx + 400, 16);
+      for (let i = 0; i < d; i++) { const h = yvec[i] * 24; const X = offx + 400 + i * (bw + gap); ctx.fillStyle = h >= 0 ? '#00ff41' : '#b91c1c'; ctx.fillRect(X, base - Math.max(0, h), bw, Math.abs(h)); }
     }
     draw();
   }
@@ -392,7 +392,7 @@
     function draw() {
       ctx.clearRect(0, 0, W, H); const offx = 20, base = H * 0.75, bw = 10, gap = 4;
       const title = ['Input', 'Self‑Attn', 'Add&Norm', 'FFN', 'Add&Norm'][stage] || 'Add&Norm';
-      ctx.fillStyle = '#666'; ctx.fillText(title, offx, 16);
+      ctx.fillStyle = '#5a8a4a'; ctx.fillText(title, offx, 16);
       for (let i = 0; i < n; i++) {
         for (let k = 0; k < d; k++) { const val = X[i][k]; const h = val * 16; const x = offx + k * (bw + gap) + i * (d * (bw + gap) + 12); ctx.fillStyle = h >= 0 ? '#3b82f6' : '#b91c1c'; ctx.fillRect(x, base - Math.max(0, h), bw, Math.abs(h)); }
       }

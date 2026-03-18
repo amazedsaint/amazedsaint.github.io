@@ -18,19 +18,19 @@
   <script defer src="../js/nn-transformers.js"></script>
   <style>
     .section { margin: 28px 0 36px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-    .demo { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
-    canvas { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .demo { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; max-width:880px; margin:12px auto; }
+    canvas { display:block; margin:10px auto; border:1px solid var(--border); border-radius:8px; background:var(--surface); }
     .controls { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
     .controls input[type=range], .controls select { accent-color: var(--accent); }
     .controls input[type=text] { padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
     .note { max-width:880px; margin:8px auto 0 auto; color: var(--muted); font-size:0.95em; }
-    .bar { height:10px; background:#e8ecef; border-radius:6px; overflow:hidden; position:relative; }
-    .bar > span { position:absolute; left:0; top:0; bottom:0; background:#1a8917; }
+    .bar { height:10px; background:var(--border); border-radius:6px; overflow:hidden; position:relative; }
+    .bar > span { position:absolute; left:0; top:0; bottom:0; background:var(--bright); }
     .tokens { max-width:880px; margin:8px auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; }
-    .token { display:inline-block; padding:4px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:#fafafa; }
-    .pair { display:inline-block; padding:2px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:#fff; }
+    .token { display:inline-block; padding:4px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:var(--surface-2); }
+    .pair { display:inline-block; padding:2px 6px; border:1px solid var(--border); border-radius:6px; margin:2px; background:var(--surface); }
     .headgrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; max-width:880px; margin: 8px auto; }
-    .headbox { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; text-align:center; }
+    .headbox { border:1px solid var(--border); border-radius:8px; padding:8px; background:var(--surface); text-align:center; }
   </style>
 </head>
 <body>

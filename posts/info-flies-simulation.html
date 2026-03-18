@@ -9,22 +9,22 @@
   <script defer src="../js/connections.js"></script>
   <style>
     html, body { height: 100%; }
-    body { margin: 0; background: #fff; }
+    body { margin: 0; background: var(--bg); }
     .sim-root { position: fixed; inset: 0; display: grid; grid-template-rows: 1fr; }
     .toolbar { display: none; }
     .tool-group { display: flex; align-items: center; gap: 6px; }
     .tool-label { font-size: 14px; color: var(--muted); }
-    .tool-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; position: relative; }
+    .tool-btn { padding: 6px 10px; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; position: relative; }
     .tool-btn.active { outline: 2px solid var(--accent); }
     .tool { display: inline-flex; align-items: center; gap: 6px; }
     .tool input[type=range] { width: 120px; }
     .tool small { color: var(--muted); }
-    #canvas { width: 100%; height: 100%; display: block; background: #ffffff; cursor: crosshair; }
-    .hud { position: fixed; left: 12px; bottom: 12px; background: rgba(255,255,255,0.95); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 12px; color: var(--text); }
+    #canvas { width: 100%; height: 100%; display: block; background: var(--surface); cursor: crosshair; }
+    .hud { position: fixed; left: 12px; bottom: 12px; background: var(--surface); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 12px; color: var(--text); }
     .legend { color: var(--muted); font-size: 12px; }
-    .sim-title { position: fixed; left: 50%; top: 56px; transform: translateX(-50%); z-index: 25; background: rgba(255,255,255,0.92); border:1px solid var(--border); padding: 6px 10px; border-radius: 999px; font-weight: 700; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .sim-title { position: fixed; left: 50%; top: 56px; transform: translateX(-50%); z-index: 25; background: var(--surface); border:1px solid var(--border); padding: 6px 10px; border-radius: 999px; font-weight: 700; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.20); }
     /* Header overlay to keep site nav consistent */
-    .header-overlay { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); backdrop-filter: saturate(1.2) blur(4px); }
+    .header-overlay { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: var(--surface); border-bottom: 1px solid var(--border); backdrop-filter: saturate(1.2) blur(4px); }
     /* Emoji button color cues (channel + valence) */
     /* Flag buttons as colored blocks */
     /* House buttons */
@@ -51,20 +51,20 @@
       .controls input[type=range]{ width: 55vw; }
     }
     .tabs { display:flex; gap:8px; margin: 8px 0; }
-    .tab-btn { padding:6px 10px; border:1px solid var(--border); background:#fff; border-radius:8px; cursor:pointer; font-size:12px; }
+    .tab-btn { padding:6px 10px; border:1px solid var(--border); background:var(--surface); border-radius:8px; cursor:pointer; font-size:12px; }
     .tab-btn.active { outline:2px solid var(--accent); }
     .tab-section { display:none; }
     .tab-section.active { display:block; }
     /* Tooltip and legend */
     .flag-tip { position: fixed; pointer-events: none; background: rgba(0,0,0,0.8); color:#fff; font-size:12px; padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); z-index: 30; display:none; }
-    .legend-mini { position: fixed; right: 12px; bottom: 12px; background: rgba(255,255,255,0.95); border:1px solid var(--border); padding:8px 10px; border-radius:8px; font-size:12px; color:var(--text); }
+    .legend-mini { position: fixed; right: 12px; bottom: 12px; background: var(--surface); border:1px solid var(--border); padding:8px 10px; border-radius:8px; font-size:12px; color:var(--text); }
     .legend-row { display:flex; align-items:center; gap:8px; }
     .swatch { width:10px; height:10px; border-radius:2px; display:inline-block; }
     .swatch.red{ background:#e44242; }
     .swatch.blue{ background:#3b82f6; }
     .swatch.white{ background:#f3f4f6; border:1px solid #e5e7eb; }
     /* Fullscreen button */
-    .fullscreen-btn { position: fixed; right: 12px; top: 116px; z-index: 30; padding:6px 10px; border:1px solid var(--border); background:#fff; border-radius:8px; font-size:12px; cursor:pointer; }
+    .fullscreen-btn { position: fixed; right: 12px; top: 116px; z-index: 30; padding:6px 10px; border:1px solid var(--border); background:var(--surface); border-radius:8px; font-size:12px; cursor:pointer; }
   </style>
   <script>
     // Guard against duplicate custom element registrations from third‑party overlays
@@ -653,8 +653,8 @@
         // draw flag banner and emoji
         const col = (typeof o.color==='string' && o.color) ? o.color : '#e5e7eb';
         const w=28, h=16, pole=10;
-        ctx.globalAlpha=1; ctx.strokeStyle='#888'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(o.x-pole, o.y-h/2); ctx.lineTo(o.x-pole, o.y+h/2+6); ctx.stroke();
-        ctx.fillStyle=col; ctx.strokeStyle='#222'; ctx.lineWidth=1;
+        ctx.globalAlpha=1; ctx.strokeStyle='rgba(0,255,65,0.4)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(o.x-pole, o.y-h/2); ctx.lineTo(o.x-pole, o.y+h/2+6); ctx.stroke();
+        ctx.fillStyle=col; ctx.strokeStyle='#c0c8b0'; ctx.lineWidth=1;
         ctx.beginPath(); ctx.rect(o.x-pole+2, o.y-h/2, w, h); ctx.fill(); ctx.stroke();
         // emoji label
         if (o.emoji){ ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, system-ui'; ctx.fillText(o.emoji, o.x-pole+w+10, o.y); }
@@ -690,9 +690,9 @@
           }
         }
         // body
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillStyle = 'rgba(0,255,65,0.4)';
         ctx.beginPath(); ctx.arc(f.x, f.y, 3.8, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,255,65,0.3)'; ctx.lineWidth = 0.6; ctx.stroke();
         // under-attack ring
         if ((f.anger||0) > 0.05){
           ctx.strokeStyle = `rgba(220,40,30,${0.25+0.45*Math.min(1,f.anger)})`;
@@ -717,14 +717,14 @@
           const s=1.2+2.2*val;
           const c = channelColorRgbForFly(f, k);
           ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.25+0.6*val})`;
-          if ((f.info[k]||0) < 0){ ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=0.8; } else { ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=0.5; }
+          if ((f.info[k]||0) < 0){ ctx.strokeStyle='rgba(0,255,65,0.3)'; ctx.lineWidth=0.8; } else { ctx.strokeStyle='rgba(0,255,65,0.25)'; ctx.lineWidth=0.5; }
           ctx.beginPath(); ctx.arc(x,y, s, 0, Math.PI*2); ctx.fill();
           ctx.stroke();
         }
         // health bar above the fly
         const hp = Math.max(0, Math.min(1, f.h||0));
         const bw=12, bh=2, bx=f.x-bw/2, by=f.y-9;
-        ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(bx,by,bw,bh);
+        ctx.fillStyle='rgba(0,255,65,0.15)'; ctx.fillRect(bx,by,bw,bh);
         const r=Math.floor(220*(1-hp)), g=Math.floor(180*hp), b=40;
         ctx.fillStyle=`rgba(${r},${g},${b},0.9)`; ctx.fillRect(bx,by, bw*hp, bh);
       }

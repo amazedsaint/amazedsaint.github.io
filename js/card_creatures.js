@@ -28,7 +28,7 @@
 
     // palette
     const tagColor = cssVar(cover, '--tag-color', '#444');
-    const textColor = 'rgba(0,0,0,0.70)';
+    const textColor = cssVar(cover, '--text', '#c0c8b0');
     const edgeAlphaBase = 0.06;
 
     // state
