@@ -1,5 +1,5 @@
 // lab-canvas.js — Lattice animation engine
-// Staged intro, translucent rendering, strong mouse response, theme-aware
+// Spring-physics mesh, wandering particles, pulse waves, theme-aware
 (function(){
   'use strict';
 
@@ -11,12 +11,12 @@
     var s = getComputedStyle(document.documentElement);
     function g(n,fb){ return s.getPropertyValue(n).trim() || fb; }
     C.bg       = g('--canvas-bg',       '#0a0a0a');
-    C.dot      = g('--canvas-dot',      'rgba(255,255,255,0.12)');
-    C.dotBright= g('--canvas-dot-bright','rgba(255,255,255,0.30)');
-    C.line     = g('--canvas-line',     'rgba(106,169,255,0.06)');
-    C.lineHot  = g('--canvas-line-hot', 'rgba(106,169,255,0.18)');
-    C.flow     = g('--canvas-flow',     'rgba(155,124,255,0.04)');
-    C.ascii    = g('--canvas-ascii',    'rgba(255,255,255,0.025)');
+    C.dot      = g('--canvas-dot',      'rgba(255,255,255,0.18)');
+    C.dotBright= g('--canvas-dot-bright','rgba(255,255,255,0.40)');
+    C.line     = g('--canvas-line',     'rgba(106,169,255,0.10)');
+    C.lineHot  = g('--canvas-line-hot', 'rgba(106,169,255,0.25)');
+    C.flow     = g('--canvas-flow',     'rgba(155,124,255,0.06)');
+    C.ascii    = g('--canvas-ascii',    'rgba(255,255,255,0.035)');
     C.trail    = g('--canvas-trail',    'rgba(10,10,10,0.12)');
   }
 
@@ -27,18 +27,20 @@
   var dots = [];
   var flows = [];
   var ripples = [];
+  var pulses = [];
   var raf = 0;
   var startTime = 0;
   var introFired = false;
+  var lastTs = 0;
 
   var DOT_SPACING = 48;
-  var FLOW_COUNT = 10;
+  var FLOW_COUNT = 12;
   var CONNECTION_DIST = 110;
   var MOUSE_INNER = 120;
   var MOUSE_OUTER = 280;
   var WANDERER_COUNT = 3;
-  var WANDERER_INNER = 80;
-  var WANDERER_OUTER = 200;
+  var WANDERER_INNER = 90;
+  var WANDERER_OUTER = 220;
 
   // ── Wandering particles ──
   var wanderers = [];
@@ -55,7 +57,7 @@
     grid = {};
     for (var i = 0; i < dots.length; i++){
       var d = dots[i];
-      var k = hashKey(d.dx || d.x, d.dy || d.y);
+      var k = hashKey(d.dx, d.dy);
       if (!grid[k]) grid[k] = [];
       grid[k].push(i);
     }
@@ -85,22 +87,21 @@
     resize();
 
     if (!reduce) {
-      // Tell CSS the canvas is running (delays hero text to sync with intro)
       document.documentElement.classList.add('canvas-active');
       initDots();
       initFlows();
       initWanderers();
       startTime = performance.now();
+      lastTs = startTime;
       window.addEventListener('resize', debounce(function(){ resize(); initDots(); initFlows(); initWanderers(); }, 200));
       window.addEventListener('mousemove', function(e){
         mouse.prevX = mouse.x; mouse.prevY = mouse.y;
         mouse.x = e.clientX; mouse.y = e.clientY;
         mouse.vx = mouse.x - mouse.prevX;
         mouse.vy = mouse.y - mouse.prevY;
-        // Spawn ripple on fast mouse movement
         var speed = Math.sqrt(mouse.vx*mouse.vx + mouse.vy*mouse.vy);
-        if (speed > 30 && ripples.length < 5){
-          ripples.push({ x: mouse.x, y: mouse.y, r: 0, maxR: 150, alpha: 0.15, born: performance.now() });
+        if (speed > 30 && ripples.length < 6){
+          ripples.push({ x: mouse.x, y: mouse.y, maxR: 160 + speed, alpha: 0.12 + speed * 0.001, born: performance.now() });
         }
       });
       window.addEventListener('scroll', function(){ scrollY = window.scrollY; scrollMax = Math.max(1, document.body.scrollHeight - window.innerHeight); }, { passive: true });
@@ -123,7 +124,7 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
 
-  // ── Dot field ──
+  // ── Dot field with spring physics ──
   function initDots(){
     dots = [];
     var cols = Math.ceil(W / DOT_SPACING) + 2;
@@ -135,24 +136,27 @@
         var by = r * DOT_SPACING;
         var dist = Math.sqrt((bx - cx) * (bx - cx) + (by - cy) * (by - cy));
         dots.push({
-          bx: bx,
-          by: by,
-          x:  bx + (Math.random() - 0.5) * 10,
-          y:  by + (Math.random() - 0.5) * 10,
-          dx: bx, dy: by,
+          bx: bx, by: by,
+          x: bx + (Math.random() - 0.5) * 8,
+          y: by + (Math.random() - 0.5) * 8,
+          // Spring displacement from forces
+          sx: 0, sy: 0,   // current spring offset
+          svx: 0, svy: 0, // spring velocity
+          dx: bx, dy: by,  // final draw position
+          drawAlpha: 0,
           phase: Math.random() * Math.PI * 2,
           speed: 0.3 + Math.random() * 0.4,
-          // For intro: radial birth time from center
+          baseSize: 0.8 + Math.random() * 0.8, // size variation
           birthDist: dist,
-          noiseX: Math.random() * 100,
-          noiseY: Math.random() * 100,
+          birthTime: 0,
+          noiseX: Math.random() * 200,
+          noiseY: Math.random() * 200,
         });
       }
     }
-    // Sort by distance for intro wave effect
     var maxDist = Math.sqrt(W*W + H*H) / 2;
     for (var i = 0; i < dots.length; i++){
-      dots[i].birthTime = (dots[i].birthDist / maxDist) * 1.4; // 0..1.4 seconds
+      dots[i].birthTime = (dots[i].birthDist / maxDist) * 1.4;
     }
   }
 
@@ -169,19 +173,20 @@
     return {
       points: generateCurve(startY),
       progress: 0,
-      speed: 0.0003 + Math.random() * 0.0005,
-      opacity: 0.04 + Math.random() * 0.06,
+      speed: 0.0004 + Math.random() * 0.0006,
+      opacity: 0.05 + Math.random() * 0.07,
+      width: 0.5 + Math.random() * 1.5,
     };
   }
 
   function generateCurve(startY){
     var pts = [];
-    var steps = 14;
+    var steps = 16;
     var x = -40, y = startY;
     for (var i = 0; i <= steps; i++){
       pts.push({ x: x, y: y });
       x += (W + 80) / steps;
-      y += (Math.random() - 0.5) * 80;
+      y += (Math.random() - 0.5) * 100;
       y = Math.max(20, Math.min(H - 20, y));
     }
     return pts;
@@ -191,23 +196,27 @@
   function initWanderers(){
     wanderers = [];
     var colors = [
-      { h: 220, s: 80, l: 70 },  // blue
-      { h: 270, s: 70, l: 70 },  // violet
-      { h: 160, s: 70, l: 60 },  // green-teal
+      { h: 215, s: 85, l: 68 },  // bright blue
+      { h: 268, s: 75, l: 72 },  // violet
+      { h: 155, s: 75, l: 58 },  // teal-green
     ];
     for (var i = 0; i < WANDERER_COUNT; i++){
+      // Start from edges for a dramatic entrance
+      var edge = Math.floor(Math.random() * 4);
+      var sx = edge === 0 ? 0 : edge === 2 ? W : Math.random() * W;
+      var sy = edge === 1 ? 0 : edge === 3 ? H : Math.random() * H;
       wanderers.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        tx: Math.random() * W,
-        ty: Math.random() * H,
-        vx: 0,
-        vy: 0,
+        x: sx, y: sy,
+        tx: W * 0.2 + Math.random() * W * 0.6,
+        ty: H * 0.2 + Math.random() * H * 0.6,
+        vx: 0, vy: 0,
         color: colors[i % colors.length],
         trail: [],
         age: 0,
         wanderTimer: 0,
-        speed: 0.6 + Math.random() * 0.4,
+        speed: 0.8 + Math.random() * 0.5,
+        pulseTimer: 2 + Math.random() * 4,
+        orbitPhase: Math.random() * Math.PI * 2,
       });
     }
   }
@@ -217,99 +226,146 @@
       var w = wanderers[i];
       w.age += dt;
       w.wanderTimer -= dt;
+      w.pulseTimer -= dt;
 
-      // Pick a new target periodically or when close
-      var dtx = w.tx - w.x, dty = w.ty - w.y;
-      var distToTarget = Math.sqrt(dtx*dtx + dty*dty);
-      if (w.wanderTimer <= 0 || distToTarget < 40){
-        w.tx = 60 + Math.random() * (W - 120);
-        w.ty = 60 + Math.random() * (H - 120);
-        w.wanderTimer = 3 + Math.random() * 5;
+      // Emit pulse wave periodically
+      if (w.pulseTimer <= 0 && w.age > 2){
+        pulses.push({ x: w.x, y: w.y, r: 0, maxR: 300, alpha: 0.1, born: performance.now(), color: w.color });
+        w.pulseTimer = 4 + Math.random() * 6;
       }
 
-      // Steer toward target with smooth acceleration
-      var ax = (w.tx - w.x) * 0.003 * w.speed;
-      var ay = (w.ty - w.y) * 0.003 * w.speed;
+      // Pick new target
+      var dtx = w.tx - w.x, dty = w.ty - w.y;
+      var distToTarget = Math.sqrt(dtx*dtx + dty*dty);
+      if (w.wanderTimer <= 0 || distToTarget < 50){
+        w.tx = 80 + Math.random() * (W - 160);
+        w.ty = 80 + Math.random() * (H - 160);
+        w.wanderTimer = 2.5 + Math.random() * 4;
+      }
 
-      // Add slight sinusoidal drift for organic feel
-      ax += Math.sin(t * 0.7 + i * 2.1) * 0.15;
-      ay += Math.cos(t * 0.5 + i * 1.7) * 0.15;
+      // Steer toward target
+      var ax = (w.tx - w.x) * 0.004 * w.speed;
+      var ay = (w.ty - w.y) * 0.004 * w.speed;
+
+      // Orbital drift — smooth curved paths instead of straight lines
+      w.orbitPhase += dt * 0.3;
+      ax += Math.sin(w.orbitPhase + i * 2.1) * 0.25;
+      ay += Math.cos(w.orbitPhase * 0.7 + i * 1.7) * 0.25;
+
+      // Repel from other wanderers
+      for (var j = 0; j < wanderers.length; j++){
+        if (j === i) continue;
+        var wdx = w.x - wanderers[j].x;
+        var wdy = w.y - wanderers[j].y;
+        var wdist = Math.sqrt(wdx*wdx + wdy*wdy);
+        if (wdist < 200 && wdist > 0){
+          var repel = (1 - wdist / 200) * 0.4;
+          ax += (wdx / wdist) * repel;
+          ay += (wdy / wdist) * repel;
+        }
+      }
+
+      // Repel gently from mouse
+      if (mouse.x > -999){
+        var mdx = w.x - mouse.x;
+        var mdy = w.y - mouse.y;
+        var mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+        if (mdist < 200 && mdist > 0){
+          ax += (mdx / mdist) * 0.3 * (1 - mdist / 200);
+          ay += (mdy / mdist) * 0.3 * (1 - mdist / 200);
+        }
+      }
 
       w.vx += ax;
       w.vy += ay;
-
-      // Damping
-      w.vx *= 0.97;
-      w.vy *= 0.97;
+      w.vx *= 0.96;
+      w.vy *= 0.96;
 
       // Clamp speed
       var spd = Math.sqrt(w.vx*w.vx + w.vy*w.vy);
-      var maxSpd = 2.5;
+      var maxSpd = 3.5;
       if (spd > maxSpd){ w.vx *= maxSpd/spd; w.vy *= maxSpd/spd; }
 
       w.x += w.vx;
       w.y += w.vy;
 
-      // Soft boundary bounce
-      if (w.x < 30){ w.vx += 0.5; w.x = 30; }
-      if (w.x > W - 30){ w.vx -= 0.5; w.x = W - 30; }
-      if (w.y < 30){ w.vy += 0.5; w.y = 30; }
-      if (w.y > H - 30){ w.vy -= 0.5; w.y = H - 30; }
+      // Soft boundary
+      var margin = 40;
+      if (w.x < margin){ w.vx += 0.8; w.x = margin; }
+      if (w.x > W - margin){ w.vx -= 0.8; w.x = W - margin; }
+      if (w.y < margin){ w.vy += 0.8; w.y = margin; }
+      if (w.y > H - margin){ w.vy -= 0.8; w.y = H - margin; }
 
-      // Store trail
-      w.trail.push({ x: w.x, y: w.y });
-      if (w.trail.length > 30) w.trail.shift();
+      // Trail — store with velocity for thickness variation
+      w.trail.push({ x: w.x, y: w.y, spd: spd });
+      if (w.trail.length > 50) w.trail.shift();
     }
   }
 
   function drawWanderers(elapsed){
-    if (elapsed < 1.6) return; // Wait for dots to appear first
-    var fadeIn = Math.min(1, (elapsed - 1.6) / 1.0);
+    if (elapsed < 1.6) return;
+    var fadeIn = Math.min(1, (elapsed - 1.6) / 1.2);
 
     for (var i = 0; i < wanderers.length; i++){
       var w = wanderers[i];
-      var c = w.color;
+      var col = w.color;
+      var spd = Math.sqrt(w.vx*w.vx + w.vy*w.vy);
 
-      // Draw trail
+      // Trail — gradient thickness based on speed
       if (w.trail.length > 2){
-        ctx.lineWidth = 1.5;
         for (var j = 1; j < w.trail.length; j++){
-          var trailAlpha = (j / w.trail.length) * 0.12 * fadeIn;
+          var prog = j / w.trail.length;
+          var trailAlpha = prog * 0.18 * fadeIn;
+          var trailWidth = 0.5 + prog * (0.5 + w.trail[j].spd * 0.4);
           ctx.beginPath();
           ctx.moveTo(w.trail[j-1].x, w.trail[j-1].y);
           ctx.lineTo(w.trail[j].x, w.trail[j].y);
-          ctx.strokeStyle = 'hsla(' + c.h + ',' + c.s + '%,' + c.l + '%,' + trailAlpha + ')';
+          ctx.strokeStyle = 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,' + trailAlpha + ')';
+          ctx.lineWidth = trailWidth;
           ctx.globalAlpha = 1;
           ctx.stroke();
         }
       }
 
-      // Glow
-      var grad = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, WANDERER_OUTER * 0.5);
-      grad.addColorStop(0, 'hsla(' + c.h + ',' + c.s + '%,' + c.l + '%,0.06)');
+      // Outer glow — larger, more visible
+      var glowSize = WANDERER_OUTER * (0.6 + spd * 0.08);
+      var grad = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, glowSize);
+      grad.addColorStop(0, 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,0.10)');
+      grad.addColorStop(0.4, 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,0.03)');
       grad.addColorStop(1, 'transparent');
       ctx.globalAlpha = fadeIn;
       ctx.fillStyle = grad;
-      ctx.fillRect(w.x - WANDERER_OUTER, w.y - WANDERER_OUTER, WANDERER_OUTER * 2, WANDERER_OUTER * 2);
-
-      // Core dot
       ctx.beginPath();
-      ctx.arc(w.x, w.y, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'hsla(' + c.h + ',' + c.s + '%,' + c.l + '%,0.5)';
+      ctx.arc(w.x, w.y, glowSize, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Halo ring
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, 6 + spd * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,0.12)';
+      ctx.lineWidth = 0.5;
+      ctx.globalAlpha = fadeIn;
+      ctx.stroke();
+
+      // Core dot — pulsing size
+      var coreSize = 2.5 + Math.sin(elapsed * 2 + i) * 0.5 + spd * 0.3;
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, coreSize, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,0.6)';
       ctx.globalAlpha = fadeIn;
       ctx.fill();
 
-      // Bright center
+      // Bright hot center
       ctx.beginPath();
-      ctx.arc(w.x, w.y, 1, 0, Math.PI * 2);
-      ctx.fillStyle = 'hsla(' + c.h + ',' + c.s + '%,' + (c.l + 20) + '%,0.8)';
+      ctx.arc(w.x, w.y, 1.2, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + col.h + ',' + (col.s - 10) + '%,' + Math.min(95, col.l + 25) + '%,0.9)';
       ctx.globalAlpha = fadeIn;
       ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
 
-  // Compute wanderer influence on a point (returns {fx, fy, glow, boost})
+  // Wanderer influence with spring force output
   function wandererForce(px, py){
     var fx = 0, fy = 0, glow = 0, boost = 0;
     for (var i = 0; i < wanderers.length; i++){
@@ -320,19 +376,17 @@
       if (dist > WANDERER_OUTER || dist === 0) continue;
 
       if (dist < WANDERER_INNER){
-        // Recoil — dots pushed away
-        var f = (1 - dist / WANDERER_INNER) * 14;
+        var f = (1 - dist / WANDERER_INNER) * 16;
         fx += (ddx / dist) * f;
         fy += (ddy / dist) * f;
-        glow = Math.max(glow, (1 - dist / WANDERER_INNER) * 0.18);
-        boost = Math.max(boost, (1 - dist / WANDERER_INNER) * 0.15);
+        glow = Math.max(glow, (1 - dist / WANDERER_INNER) * 0.22);
+        boost = Math.max(boost, (1 - dist / WANDERER_INNER) * 0.18);
       } else {
-        // Gentle push in outer zone
-        var f2 = (1 - (dist - WANDERER_INNER) / (WANDERER_OUTER - WANDERER_INNER)) * 4;
+        var f2 = (1 - (dist - WANDERER_INNER) / (WANDERER_OUTER - WANDERER_INNER)) * 5;
         fx += (ddx / dist) * f2;
         fy += (ddy / dist) * f2;
-        glow = Math.max(glow, (1 - dist / WANDERER_OUTER) * 0.06);
-        boost = Math.max(boost, (1 - dist / WANDERER_OUTER) * 0.08);
+        glow = Math.max(glow, (1 - dist / WANDERER_OUTER) * 0.08);
+        boost = Math.max(boost, (1 - dist / WANDERER_OUTER) * 0.10);
       }
     }
     return { fx: fx, fy: fy, glow: glow, boost: boost };
@@ -350,46 +404,46 @@
     );
   }
 
-  // Simple noise-like function
+  // Multi-octave noise
   function noise(x, y, t){
     return Math.sin(x * 0.03 + t * 0.2) * Math.cos(y * 0.02 + t * 0.15) * 0.5
-         + Math.sin(x * 0.01 + y * 0.02 + t * 0.1) * 0.5;
+         + Math.sin(x * 0.01 + y * 0.02 + t * 0.1) * 0.5
+         + Math.sin(x * 0.05 + t * 0.35) * Math.cos(y * 0.04 - t * 0.12) * 0.25;
   }
 
   function fireIntro(){
     if (introFired) return;
     introFired = true;
-    // Canvas is running — add class so CSS delays hero text to sync
     document.documentElement.classList.add('canvas-active');
     window.dispatchEvent(new Event('lattice-ready'));
   }
 
   // ── Main loop ──
   function loop(ts){
-    var elapsed = (ts - startTime) / 1000; // seconds since start
+    var dt = Math.min(0.05, (ts - lastTs) / 1000); // delta in seconds, capped
+    lastTs = ts;
+    var elapsed = (ts - startTime) / 1000;
     var t = ts * 0.001;
     var sf = scrollY / scrollMax;
 
-    // Clear canvas with background
+    // Clear
     ctx.globalAlpha = 1;
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
 
     // Intro phases
-    var dotPhase = Math.min(1, elapsed / 1.6);       // 0..1 over 1.6s
-    var linePhase = Math.min(1, Math.max(0, (elapsed - 0.8) / 1.0)); // 0..1 from 0.8s to 1.8s
-    var flowPhase = Math.min(1, Math.max(0, (elapsed - 1.6) / 0.8)); // 0..1 from 1.6s
+    var dotPhase = Math.min(1, elapsed / 1.6);
+    var linePhase = Math.min(1, Math.max(0, (elapsed - 0.8) / 1.0));
+    var flowPhase = Math.min(1, Math.max(0, (elapsed - 1.6) / 0.8));
 
-    // Fire intro event when lattice is formed
     if (elapsed > 2.0) fireIntro();
 
-    // Update wanderers
-    updateWanderers(t, 1/60);
-
-    drawDots(t, sf, elapsed, dotPhase);
+    updateWanderers(t, dt);
+    drawDots(t, sf, elapsed, dotPhase, dt);
     buildGrid();
     if (linePhase > 0) drawConnections(t, sf, linePhase);
     if (flowPhase > 0) drawFlows(t, sf, flowPhase);
+    drawPulses(ts);
     drawWanderers(elapsed);
     drawMouseGlow();
     drawRipples(ts);
@@ -409,56 +463,95 @@
     }
   }
 
-  function drawDots(t, sf, elapsed, phase){
+  function drawDots(t, sf, elapsed, phase, dt){
+    // Spring constants
+    var springK = 0.08;   // stiffness — how fast dots snap back
+    var springDamp = 0.85; // damping — friction on spring motion
+
     for (var i = 0; i < dots.length; i++){
       var d = dots[i];
 
       // Intro: fade in radially
       var birthProgress = phase > 0 ? Math.min(1, Math.max(0, (elapsed - d.birthTime) / 0.4)) : 0;
-      if (birthProgress <= 0) { d.dx = d.x; d.dy = d.y; continue; }
+      if (birthProgress <= 0) { d.dx = d.x; d.dy = d.y; d.drawAlpha = 0; continue; }
 
-      // Slow organic drift via noise
-      var nx = noise(d.noiseX, d.noiseY, t) * 4;
-      var ny = noise(d.noiseX + 50, d.noiseY + 50, t) * 4;
+      // Organic drift via noise (multi-octave, larger amplitude)
+      var nx = noise(d.noiseX, d.noiseY, t) * 7;
+      var ny = noise(d.noiseX + 50, d.noiseY + 50, t) * 7;
 
-      // Breathing
+      // Breathing pulse
       var pulse = 0.5 + 0.5 * Math.sin(t * d.speed + d.phase);
 
-      // Mouse interaction (two-zone: inner strong, outer gentle)
-      var dx = (d.x + nx) - mouse.x;
-      var dy = (d.y + ny) - mouse.y;
-      var dist = Math.sqrt(dx*dx + dy*dy);
-      var mx = 0, my = 0, mGlow = 0;
+      // Compute forces from mouse
+      var baseX = d.x + nx;
+      var baseY = d.y + ny;
+      var forcex = 0, forcey = 0, mGlow = 0;
 
-      if (dist < MOUSE_OUTER && dist > 0){
-        if (dist < MOUSE_INNER){
-          var force = (1 - dist / MOUSE_INNER) * 22;
-          mx = (dx / dist) * force;
-          my = (dy / dist) * force;
-          mGlow = (1 - dist / MOUSE_INNER) * 0.25;
+      var mdx = baseX - mouse.x;
+      var mdy = baseY - mouse.y;
+      var mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+
+      if (mdist < MOUSE_OUTER && mdist > 0){
+        if (mdist < MOUSE_INNER){
+          var force = (1 - mdist / MOUSE_INNER) * 26;
+          forcex += (mdx / mdist) * force;
+          forcey += (mdy / mdist) * force;
+          mGlow = (1 - mdist / MOUSE_INNER) * 0.3;
         } else {
-          var force2 = (1 - (dist - MOUSE_INNER) / (MOUSE_OUTER - MOUSE_INNER)) * 6;
-          mx = (dx / dist) * force2;
-          my = (dy / dist) * force2;
-          mGlow = (1 - dist / MOUSE_OUTER) * 0.08;
+          var force2 = (1 - (mdist - MOUSE_INNER) / (MOUSE_OUTER - MOUSE_INNER)) * 8;
+          forcex += (mdx / mdist) * force2;
+          forcey += (mdy / mdist) * force2;
+          mGlow = (1 - mdist / MOUSE_OUTER) * 0.1;
         }
       }
 
-      // Wanderer interaction — recoil from autonomous particles
-      var wf = wandererForce(d.x + nx, d.y + ny);
-      mx += wf.fx;
-      my += wf.fy;
+      // Forces from wanderers
+      var wf = wandererForce(baseX, baseY);
+      forcex += wf.fx;
+      forcey += wf.fy;
       mGlow = Math.max(mGlow, wf.glow);
 
-      var drawX = d.x + nx + mx;
-      var drawY = d.y + ny + my;
-      var alpha = (0.15 + pulse * 0.15 + mGlow) * birthProgress;
-      var radius = (1.2 + mGlow * 4) * birthProgress;
+      // Forces from pulse waves
+      for (var pi = 0; pi < pulses.length; pi++){
+        var p = pulses[pi];
+        var pdx = baseX - p.x;
+        var pdy = baseY - p.y;
+        var pdist = Math.sqrt(pdx*pdx + pdy*pdy);
+        var ringDist = Math.abs(pdist - p.r);
+        if (ringDist < 40 && pdist > 0){
+          var pForce = (1 - ringDist / 40) * 6 * p.alpha * 5;
+          forcex += (pdx / pdist) * pForce;
+          forcey += (pdy / pdist) * pForce;
+          mGlow = Math.max(mGlow, (1 - ringDist / 40) * p.alpha * 2);
+        }
+      }
+
+      // Spring physics: apply force, then spring back to zero
+      d.svx += forcex * 0.5;  // force influence
+      d.svy += forcey * 0.5;
+      d.svx += -d.sx * springK; // spring restoring force
+      d.svy += -d.sy * springK;
+      d.svx *= springDamp;
+      d.svy *= springDamp;
+      d.sx += d.svx;
+      d.sy += d.svy;
+
+      // Clamp spring displacement
+      var smax = 35;
+      if (d.sx > smax) d.sx = smax;
+      if (d.sx < -smax) d.sx = -smax;
+      if (d.sy > smax) d.sy = smax;
+      if (d.sy < -smax) d.sy = -smax;
+
+      var drawX = baseX + d.sx;
+      var drawY = baseY + d.sy;
+      var alpha = (0.18 + pulse * 0.14 + mGlow) * birthProgress;
+      var radius = (d.baseSize + mGlow * 4) * birthProgress;
 
       ctx.beginPath();
       ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
-      ctx.fillStyle = mGlow > 0.05 ? C.dotBright : C.dot;
-      ctx.globalAlpha = alpha;
+      ctx.fillStyle = mGlow > 0.06 ? C.dotBright : C.dot;
+      ctx.globalAlpha = Math.min(0.9, alpha);
       ctx.fill();
 
       d.dx = drawX;
@@ -470,9 +563,10 @@
 
   function drawConnections(t, sf, phase){
     var threshold = CONNECTION_DIST;
-    var maxAlpha = (0.08 + sf * 0.04) * phase;
+    var maxAlpha = (0.10 + sf * 0.04) * phase;
+    // Time-based shimmer
+    var shimmer = 0.5 + 0.5 * Math.sin(t * 0.4);
 
-    ctx.lineWidth = 0.5;
     for (var i = 0; i < dots.length; i++){
       var a = dots[i];
       if (!a.drawAlpha || a.drawAlpha < 0.01) continue;
@@ -490,28 +584,30 @@
           var dist = Math.sqrt(dx*dx + dy*dy);
           if (dist > threshold) continue;
 
-          // Mouse + wanderer proximity boost
+          // Mouse proximity boost
           var midX = (a.dx + b.dx) * 0.5;
           var midY = (a.dy + b.dy) * 0.5;
           var mDx = midX - mouse.x;
           var mDy = midY - mouse.y;
           var mDist = Math.sqrt(mDx*mDx + mDy*mDy);
-          var mBoost = mDist < MOUSE_OUTER ? (1 - mDist/MOUSE_OUTER) * 0.2 : 0;
+          var mBoost = mDist < MOUSE_OUTER ? (1 - mDist/MOUSE_OUTER) * 0.22 : 0;
 
-          // Wanderer boost on connections
+          // Wanderer boost
           var wfConn = wandererForce(midX, midY);
           mBoost = Math.max(mBoost, wfConn.boost);
 
-          var alpha = (1 - dist / threshold) * maxAlpha + mBoost;
-          if (alpha < 0.004) continue;
+          var prox = 1 - dist / threshold;
+          var alpha = prox * maxAlpha * (0.8 + shimmer * 0.2) + mBoost;
+          if (alpha < 0.005) continue;
 
-          var lw = mBoost > 0.02 ? 0.6 + mBoost * 10 : 0.6;
+          var lw = mBoost > 0.03 ? 0.6 + mBoost * 8 : 0.5 + prox * 0.3;
+          var hot = mBoost > 0.03;
 
           ctx.beginPath();
           ctx.moveTo(a.dx, a.dy);
           ctx.lineTo(b.dx, b.dy);
-          ctx.strokeStyle = mBoost > 0.02 ? C.lineHot : C.line;
-          ctx.globalAlpha = Math.min(0.3, alpha);
+          ctx.strokeStyle = hot ? C.lineHot : C.line;
+          ctx.globalAlpha = Math.min(0.35, alpha);
           ctx.lineWidth = lw;
           ctx.stroke();
         }
@@ -537,7 +633,7 @@
       if (n < 4) continue;
 
       ctx.beginPath();
-      ctx.lineWidth = 1;
+      ctx.lineWidth = f.width;
       ctx.strokeStyle = C.flow;
       ctx.globalAlpha = f.opacity * phase;
 
@@ -550,7 +646,7 @@
         var p2 = pts[Math.min(n-1, seg + 1)];
         var p3 = pts[Math.min(n-1, seg + 2)];
 
-        var steps = 8;
+        var steps = 10;
         var segEnd = seg < Math.floor(endSeg) ? 1 : (endSeg - seg);
 
         for (var s = 0; s <= steps * segEnd; s++){
@@ -570,10 +666,47 @@
     if (mouse.x < -999) return;
     var grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_OUTER);
     grad.addColorStop(0, C.lineHot);
+    grad.addColorStop(0.3, C.line);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.04;
+    ctx.globalAlpha = 0.05;
     ctx.fillStyle = grad;
-    ctx.fillRect(mouse.x - MOUSE_OUTER, mouse.y - MOUSE_OUTER, MOUSE_OUTER * 2, MOUSE_OUTER * 2);
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, MOUSE_OUTER, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Pulse waves from wanderers ──
+  function drawPulses(ts){
+    for (var i = pulses.length - 1; i >= 0; i--){
+      var p = pulses[i];
+      var age = (ts - p.born) / 1000;
+      if (age > 1.5){ pulses.splice(i, 1); continue; }
+      var progress = age / 1.5;
+      if (progress < 0) continue;
+      p.r = p.maxR * progress;
+      var alpha = p.alpha * (1 - progress) * (1 - progress);
+      var col = p.color;
+
+      // Ring
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,' + alpha + ')';
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1.5 * (1 - progress);
+      ctx.stroke();
+
+      // Inner glow
+      if (progress < 0.5){
+        var iGrad = ctx.createRadialGradient(p.x, p.y, p.r * 0.8, p.x, p.y, p.r);
+        iGrad.addColorStop(0, 'transparent');
+        iGrad.addColorStop(1, 'hsla(' + col.h + ',' + col.s + '%,' + col.l + '%,' + (alpha * 0.3) + ')');
+        ctx.fillStyle = iGrad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -585,19 +718,19 @@
       var progress = age / 0.8;
       if (progress < 0) continue;
       var r = rip.maxR * progress;
-      var alpha = rip.alpha * (1 - progress);
+      var alpha = rip.alpha * (1 - progress) * (1 - progress);
       ctx.beginPath();
       ctx.arc(rip.x, rip.y, r, 0, Math.PI * 2);
       ctx.strokeStyle = C.lineHot;
       ctx.globalAlpha = alpha;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.2 * (1 - progress);
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
 
   function drawASCII(t, elapsed){
-    if (elapsed < 1.5) return; // Wait for dots first
+    if (elapsed < 1.5) return;
     var fadeIn = Math.min(1, (elapsed - 1.5) / 1.0);
     ctx.font = '10px monospace';
     ctx.fillStyle = C.ascii;
@@ -609,7 +742,7 @@
         var hash = (x * 7 + y * 13 + Math.floor(t * 0.3)) % 17;
         if (hash > 3) continue;
         var ci = (x * 3 + y * 7 + Math.floor(t * 0.2)) % chars.length;
-        ctx.globalAlpha = fadeIn * 0.35;
+        ctx.globalAlpha = fadeIn * 0.3;
         ctx.fillText(chars[ci], x, y);
       }
     }
