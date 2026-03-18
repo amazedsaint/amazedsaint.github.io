@@ -4,7 +4,7 @@
   'use strict';
   var root = document.documentElement;
 
-  function getStored(){ return localStorage.getItem('lab-theme'); }
+  function getStored(){ return localStorage.getItem('theme'); }
   function getSystem(){ return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }
   function current(){ return root.dataset.theme || getStored() || getSystem() || 'dark'; }
 
@@ -16,7 +16,7 @@
     var now = current();
     var next = now === 'dark' ? 'light' : 'dark';
     root.dataset.theme = next;
-    localStorage.setItem('lab-theme', next);
+    localStorage.setItem('theme', next);
     // Update theme-color meta
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = next === 'dark' ? '#0a0a0a' : '#f8f7f4';
