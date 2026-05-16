@@ -1,0 +1,89 @@
+{
+  "event": {
+    "id": 1,
+    "name": "Arangu '26",
+    "location": "Stetson Middle School West Chester",
+    "startTime": "2026-05-16T08:00:00",
+    "endTime": "2026-05-16T18:00:00"
+  },
+  "generatedAt": "2026-05-16T13:50:26.556Z",
+  "sponsors": [
+    {
+      "id": 33,
+      "sponsorshipId": 40,
+      "name": "British Swim School of Downingtown-Reading",
+      "tier": "TITLE",
+      "businessType": "Swim School",
+      "image": "title-british-swim-school-of-downingtown-reading-fba3f80b.png",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1NxzFCRvtW37NG3e7G_SsRD_yGSoqUCBO",
+      "bytes": 84588,
+      "contentType": "image/png"
+    },
+    {
+      "id": 31,
+      "sponsorshipId": 38,
+      "name": "MRA CATERING",
+      "tier": "TITLE",
+      "businessType": "Catering",
+      "image": "title-mra-catering-31361d80.png",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1ndva_k8NuqV2NiOMzF9Lbaj5CafIaWKj",
+      "bytes": 120625,
+      "contentType": "image/png"
+    },
+    {
+      "id": 4,
+      "sponsorshipId": 12,
+      "name": "Jeejesh Mannambeth",
+      "tier": "PLATINUM",
+      "businessType": "Realtor",
+      "image": "platinum-jeejesh-mannambeth-75ddfe38.jpg",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1UXSQVZTJGRcA1JQlTgqjUEtGbc0okb76",
+      "bytes": 147938,
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": 14,
+      "sponsorshipId": 35,
+      "name": "Shining Ace",
+      "tier": "PLATINUM",
+      "businessType": "Kids' Learning Services",
+      "image": "platinum-shining-ace-ac0c21d7.png",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1qWDMFvBaLClKGF3f1PQGiSo8O--Sago4",
+      "bytes": 70592,
+      "contentType": "image/png"
+    },
+    {
+      "id": 5,
+      "sponsorshipId": 24,
+      "name": "Afresh Land and Seafood",
+      "tier": "GOLD",
+      "businessType": "Restaurant",
+      "image": "gold-afresh-land-and-seafood-04c9a215.jpg",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1f6CwEJqBf8_Np4gob4YPMs-ZgM49C6HV",
+      "bytes": 131612,
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": 29,
+      "sponsorshipId": 13,
+      "name": "Eagle Family & Implant Dentistry",
+      "tier": "SILVER",
+      "businessType": "Family Dentistry",
+      "image": "silver-eagle-family-and-implant-dentistry-768469b5.jpg",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1YhUdAOKFe3skrT5PEqQp0-5rNEpPN0Mp",
+      "bytes": 548258,
+      "contentType": "image/jpeg"
+    },
+    {
+      "id": 30,
+      "sponsorshipId": 37,
+      "name": "Urban Scoop",
+      "tier": "SILVER",
+      "businessType": "",
+      "image": "silver-urban-scoop-ac5d77b8.png",
+      "originalLogoUrl": "https://drive.google.com/uc?id=1F0nqyLMLYSA0Gvccmu1VyTkv9PcOJ_dd",
+      "bytes": 51703,
+      "contentType": "image/png"
+    }
+  ]
+}

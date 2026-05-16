@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arangu '26 Sponsors</title>
+  <meta name="description" content="A rotating sponsor display for Arangu '26.">
+  <meta name="theme-color" content="#062f26">
+  <style>
+    :root {
+      --bg: #062f26;
+      --bg-2: #0d4738;
+      --gold: #f3bd3d;
+      --red: #a51d30;
+      --ink: #17231f;
+      --muted: #5c6c66;
+      --paper: #ffffff;
+      --line: rgba(255, 255, 255, 0.18);
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--paper);
+    }
+
+    body {
+      min-width: 320px;
+    }
+
+    .sponsor-screen {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(18px, 3vw, 48px);
+      background:
+        linear-gradient(135deg, rgba(6, 47, 38, 0.98), rgba(9, 76, 60, 0.96) 58%, rgba(116, 24, 36, 0.72)),
+        var(--bg);
+      isolation: isolate;
+    }
+
+    .sponsor-screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent 78%);
+    }
+
+    .topbar,
+    .bottombar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .event-mark {
+      min-width: 0;
+    }
+
+    .event-mark span,
+    .tier-label {
+      display: block;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: clamp(11px, 1.2vw, 15px);
+      line-height: 1;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .event-mark b {
+      display: block;
+      margin-top: 8px;
+      color: white;
+      font-size: clamp(24px, 4vw, 58px);
+      line-height: 0.95;
+      font-weight: 900;
+    }
+
+    .tier-chip {
+      flex: 0 0 auto;
+      min-width: 118px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.11);
+      color: white;
+      text-align: center;
+      font-size: clamp(11px, 1.1vw, 14px);
+      line-height: 1;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(16px, 3vw, 44px) 0;
+    }
+
+    .sponsor-card {
+      width: min(92vw, 1320px);
+      height: min(68vh, 720px);
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(20px, 5vw, 70px);
+      border-radius: clamp(18px, 2.6vw, 38px);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+
+    .sponsor-card.is-changing {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+
+    .sponsor-logo {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .tier-title .sponsor-card {
+      height: min(72vh, 760px);
+      padding: clamp(18px, 4vw, 56px);
+    }
+
+    .tier-title .sponsor-logo {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .tier-platinum .sponsor-card {
+      height: min(66vh, 700px);
+      width: min(88vw, 1180px);
+    }
+
+    .tier-gold .sponsor-card,
+    .tier-silver .sponsor-card {
+      width: min(82vw, 1080px);
+      height: min(58vh, 610px);
+    }
+
+    .sponsor-copy {
+      min-width: 0;
+      max-width: min(74vw, 960px);
+    }
+
+    .sponsor-copy h1 {
+      margin: 0;
+      color: white;
+      font-size: clamp(28px, 5vw, 82px);
+      line-height: 0.96;
+      font-weight: 900;
+    }
+
+    .sponsor-copy p {
+      margin: 12px 0 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: clamp(14px, 1.6vw, 22px);
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .progress {
+      position: relative;
+      width: min(34vw, 360px);
+      height: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .progress span {
+      display: block;
+      width: var(--progress, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--gold);
+      transition: width 160ms linear;
+    }
+
+    .counter {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: clamp(11px, 1.1vw, 14px);
+      line-height: 1;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .loading,
+    .error {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--bg);
+      color: white;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .is-ready .loading {
+      display: none;
+    }
+
+    @media (orientation: portrait) {
+      .sponsor-screen {
+        padding: clamp(18px, 4vw, 42px);
+      }
+
+      .topbar,
+      .bottombar {
+        align-items: flex-start;
+      }
+
+      .stage {
+        padding: 24px 0;
+      }
+
+      .sponsor-card,
+      .tier-title .sponsor-card,
+      .tier-platinum .sponsor-card,
+      .tier-gold .sponsor-card,
+      .tier-silver .sponsor-card {
+        width: 92vw;
+        height: min(56vh, 740px);
+      }
+
+      .progress {
+        width: 42vw;
+      }
+    }
+
+    @media (max-width: 720px), (max-height: 520px) {
+      .sponsor-screen {
+        min-height: 360px;
+        padding: 14px;
+      }
+
+      .event-mark b {
+        margin-top: 5px;
+        font-size: 24px;
+      }
+
+      .tier-chip {
+        min-width: 92px;
+        padding: 9px 10px;
+        font-size: 10px;
+      }
+
+      .stage {
+        padding: 12px 0;
+      }
+
+      .sponsor-card,
+      .tier-title .sponsor-card,
+      .tier-platinum .sponsor-card,
+      .tier-gold .sponsor-card,
+      .tier-silver .sponsor-card {
+        width: 94vw;
+        height: 58vh;
+        min-height: 190px;
+        padding: 18px;
+        border-radius: 18px;
+      }
+
+      .sponsor-copy h1 {
+        font-size: 26px;
+      }
+
+      .sponsor-copy p {
+        font-size: 13px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sponsor-card,
+      .progress span {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="screen" class="sponsor-screen tier-title" aria-live="polite">
+    <header class="topbar">
+      <div class="event-mark">
+        <span>Arangu '26</span>
+        <b>Event Sponsors</b>
+      </div>
+      <div id="tier" class="tier-chip">Title Partner</div>
+    </header>
+
+    <section class="stage" aria-label="Sponsor logo">
+      <div id="card" class="sponsor-card">
+        <img id="logo" class="sponsor-logo" src="" alt="">
+      </div>
+    </section>
+
+    <footer class="bottombar">
+      <div class="sponsor-copy">
+        <span id="tierLabel" class="tier-label">Title Partner</span>
+        <h1 id="name">Loading sponsors</h1>
+        <p id="description">Preparing sponsor display.</p>
+      </div>
+      <div>
+        <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+        <div id="counter" class="counter">0 / 0</div>
+      </div>
+    </footer>
+  </main>
+  <div class="loading">Loading sponsor display...</div>
+
+  <script>
+    (function () {
+      var sponsors = [
+        {
+          name: "British Swim School of Downingtown-Reading",
+          tier: "TITLE",
+          businessType: "Swim School",
+          image: "title-british-swim-school-of-downingtown-reading-fba3f80b.png"
+        },
+        {
+          name: "MRA CATERING",
+          tier: "TITLE",
+          businessType: "Catering",
+          image: "title-mra-catering-31361d80.png"
+        },
+        {
+          name: "Jeejesh Mannambeth",
+          tier: "PLATINUM",
+          businessType: "Realtor",
+          image: "platinum-jeejesh-mannambeth-75ddfe38.jpg"
+        },
+        {
+          name: "Shining Ace",
+          tier: "PLATINUM",
+          businessType: "Kids' Learning Services",
+          image: "platinum-shining-ace-ac0c21d7.png"
+        },
+        {
+          name: "Afresh Land and Seafood",
+          tier: "GOLD",
+          businessType: "Restaurant",
+          image: "gold-afresh-land-and-seafood-04c9a215.jpg"
+        },
+        {
+          name: "Eagle Family & Implant Dentistry",
+          tier: "SILVER",
+          businessType: "Family Dentistry",
+          image: "silver-eagle-family-and-implant-dentistry-768469b5.jpg"
+        },
+        {
+          name: "Urban Scoop",
+          tier: "SILVER",
+          businessType: "",
+          image: "silver-urban-scoop-ac5d77b8.png"
+        }
+      ];
+
+      var tierLabels = {
+        TITLE: "Title Partner",
+        PLATINUM: "Platinum Partner",
+        GOLD: "Gold Partner",
+        SILVER: "Silver Partner",
+        BRONZE: "Bronze Partner"
+      };
+      var durations = {
+        TITLE: 10500,
+        PLATINUM: 9000,
+        GOLD: 7600,
+        SILVER: 6800,
+        BRONZE: 6200
+      };
+
+      var index = 0;
+      var startedAt = 0;
+      var duration = durations.TITLE;
+      var timer = null;
+      var frame = null;
+
+      var screen = document.getElementById("screen");
+      var card = document.getElementById("card");
+      var logo = document.getElementById("logo");
+      var tier = document.getElementById("tier");
+      var tierLabel = document.getElementById("tierLabel");
+      var name = document.getElementById("name");
+      var description = document.getElementById("description");
+      var progress = document.getElementById("progress");
+      var counter = document.getElementById("counter");
+
+      function labelFor(value) {
+        return tierLabels[value] || "Event Partner";
+      }
+
+      function classFor(value) {
+        return "tier-" + String(value || "partner").toLowerCase();
+      }
+
+      function renderSponsor(nextIndex) {
+        var sponsor = sponsors[nextIndex % sponsors.length];
+        var label = labelFor(sponsor.tier);
+        duration = durations[sponsor.tier] || 6500;
+        startedAt = Date.now();
+
+        screen.className = "sponsor-screen " + classFor(sponsor.tier);
+        tier.textContent = label;
+        tierLabel.textContent = label;
+        name.textContent = sponsor.name;
+        description.textContent = sponsor.businessType || "Proud supporter of Arangu '26";
+        counter.textContent = String(nextIndex + 1) + " / " + String(sponsors.length);
+        logo.alt = sponsor.name + " logo";
+        logo.src = sponsor.image;
+        progress.style.setProperty("--progress", "0%");
+        document.body.className = "is-ready";
+      }
+
+      function scheduleNext() {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(function () {
+          card.className = "sponsor-card is-changing";
+          window.setTimeout(function () {
+            index = (index + 1) % sponsors.length;
+            renderSponsor(index);
+            card.className = "sponsor-card";
+            scheduleNext();
+          }, 360);
+        }, duration);
+      }
+
+      function tick() {
+        var elapsed = Date.now() - startedAt;
+        var pct = duration > 0 ? Math.min(100, (elapsed / duration) * 100) : 0;
+        progress.style.setProperty("--progress", pct + "%");
+        frame = window.requestAnimationFrame(tick);
+      }
+
+      function preload() {
+        for (var i = 0; i < sponsors.length; i += 1) {
+          var image = new Image();
+          image.src = sponsors[i].image;
+        }
+      }
+
+      if (!sponsors.length) {
+        document.body.innerHTML = '<div class="error">No sponsor images are configured.</div>';
+        return;
+      }
+
+      preload();
+      renderSponsor(0);
+      scheduleNext();
+      if (window.requestAnimationFrame) {
+        frame = window.requestAnimationFrame(tick);
+      }
+
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          window.clearTimeout(timer);
+          if (frame) window.cancelAnimationFrame(frame);
+          return;
+        }
+        startedAt = Date.now();
+        scheduleNext();
+        if (window.requestAnimationFrame) frame = window.requestAnimationFrame(tick);
+      });
+    }());
+  </script>
+</body>
+</html>
