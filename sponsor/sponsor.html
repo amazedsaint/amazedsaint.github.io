@@ -45,6 +45,7 @@
       min-height: 420px;
       display: flex;
       flex-direction: column;
+      gap: clamp(10px, 1.5vh, 18px);
       padding: clamp(18px, 3vw, 48px);
       background:
         linear-gradient(135deg, rgba(6, 47, 38, 0.98), rgba(9, 76, 60, 0.96) 58%, rgba(116, 24, 36, 0.72)),
@@ -118,12 +119,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: clamp(16px, 3vw, 44px) 0;
+      padding: clamp(8px, 1.6vh, 24px) 0;
     }
 
     .sponsor-card {
+      position: relative;
       width: min(92vw, 1320px);
-      height: min(68vh, 720px);
+      height: min(58vh, 640px);
       min-height: 260px;
       display: flex;
       align-items: center;
@@ -145,30 +147,121 @@
       display: block;
       width: auto;
       height: auto;
-      max-width: 100%;
-      max-height: 100%;
+      max-width: var(--logo-max-width, 100%);
+      max-height: var(--logo-max-height, 100%);
       object-fit: contain;
     }
 
     .tier-title .sponsor-card {
-      height: min(72vh, 760px);
+      width: min(96vw, 1480px);
+      height: 100%;
       padding: clamp(18px, 4vw, 56px);
     }
 
-    .tier-title .sponsor-logo {
-      max-width: 100%;
-      max-height: 100%;
+    .tier-title {
+      --logo-max-width: 100%;
+      --logo-max-height: 100%;
     }
 
     .tier-platinum .sponsor-card {
-      height: min(66vh, 700px);
-      width: min(88vw, 1180px);
+      width: min(91vw, 1240px);
+      height: 92%;
+      padding: clamp(20px, 4.4vw, 62px);
+    }
+
+    .tier-platinum {
+      --logo-max-width: 96%;
+      --logo-max-height: 96%;
     }
 
     .tier-gold .sponsor-card,
     .tier-silver .sponsor-card {
-      width: min(82vw, 1080px);
-      height: min(58vh, 610px);
+      width: min(84vw, 1080px);
+      height: 82%;
+      padding: clamp(22px, 4.8vw, 68px);
+    }
+
+    .tier-gold {
+      --logo-max-width: 90%;
+      --logo-max-height: 90%;
+    }
+
+    .tier-silver,
+    .tier-bronze {
+      --logo-max-width: 84%;
+      --logo-max-height: 84%;
+    }
+
+    .tier-bronze .sponsor-card {
+      width: min(78vw, 980px);
+      height: 74%;
+      padding: clamp(24px, 5vw, 72px);
+    }
+
+    .sponsor-level-badge {
+      position: absolute;
+      top: clamp(12px, 2vw, 24px);
+      left: clamp(12px, 2vw, 24px);
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: calc(100% - 32px);
+      padding: 9px 13px;
+      border: 1px solid rgba(23, 35, 31, 0.12);
+      border-radius: 999px;
+      background: #f6f1e3;
+      color: var(--ink);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+      font-size: clamp(10px, 1vw, 13px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .tier-title .sponsor-level-badge {
+      background: linear-gradient(135deg, #fff0ad, #f1bb39);
+      color: #3b2a00;
+    }
+
+    .tier-platinum .sponsor-level-badge {
+      background: linear-gradient(135deg, #f4f7fb, #cfd8e6);
+      color: #263241;
+    }
+
+    .tier-gold .sponsor-level-badge {
+      background: linear-gradient(135deg, #ffe8a2, #d89b21);
+      color: #3c2800;
+    }
+
+    .tier-silver .sponsor-level-badge {
+      background: linear-gradient(135deg, #ffffff, #d6dce3);
+      color: #303841;
+    }
+
+    .tier-bronze .sponsor-level-badge {
+      background: linear-gradient(135deg, #f1c9a3, #b97034);
+      color: #2c1605;
+    }
+
+    .fallback-logo {
+      display: none;
+      max-width: 90%;
+      color: var(--ink);
+      text-align: center;
+      font-size: clamp(28px, 5vw, 76px);
+      line-height: 0.98;
+      font-weight: 900;
+    }
+
+    .sponsor-card.is-logo-error .sponsor-logo {
+      display: none;
+    }
+
+    .sponsor-card.is-logo-error .fallback-logo {
+      display: block;
     }
 
     .sponsor-copy {
@@ -257,7 +350,7 @@
       .tier-gold .sponsor-card,
       .tier-silver .sponsor-card {
         width: 92vw;
-        height: min(56vh, 740px);
+        height: min(50vh, 700px);
       }
 
       .progress {
@@ -292,10 +385,17 @@
       .tier-gold .sponsor-card,
       .tier-silver .sponsor-card {
         width: 94vw;
-        height: 58vh;
+        height: 48vh;
         min-height: 190px;
         padding: 18px;
         border-radius: 18px;
+      }
+
+      .sponsor-level-badge {
+        top: 10px;
+        left: 10px;
+        padding: 7px 9px;
+        font-size: 9px;
       }
 
       .sponsor-copy h1 {
@@ -322,18 +422,20 @@
         <span>Arangu '26</span>
         <b>Event Sponsors</b>
       </div>
-      <div id="tier" class="tier-chip">Title Partner</div>
+      <div id="tier" class="tier-chip">Title Sponsor</div>
     </header>
 
     <section class="stage" aria-label="Sponsor logo">
       <div id="card" class="sponsor-card">
+        <div id="cardBadge" class="sponsor-level-badge">Title Sponsor</div>
         <img id="logo" class="sponsor-logo" src="" alt="">
+        <div id="fallback" class="fallback-logo"></div>
       </div>
     </section>
 
     <footer class="bottombar">
       <div class="sponsor-copy">
-        <span id="tierLabel" class="tier-label">Title Partner</span>
+        <span id="tierLabel" class="tier-label">Title Sponsor</span>
         <h1 id="name">Loading sponsors</h1>
         <p id="description">Preparing sponsor display.</p>
       </div>
@@ -393,11 +495,11 @@
       ];
 
       var tierLabels = {
-        TITLE: "Title Partner",
-        PLATINUM: "Platinum Partner",
-        GOLD: "Gold Partner",
-        SILVER: "Silver Partner",
-        BRONZE: "Bronze Partner"
+        TITLE: "Title Sponsor",
+        PLATINUM: "Platinum Sponsor",
+        GOLD: "Gold Sponsor",
+        SILVER: "Silver Sponsor",
+        BRONZE: "Bronze Sponsor"
       };
       var durations = {
         TITLE: 10500,
@@ -416,6 +518,8 @@
       var screen = document.getElementById("screen");
       var card = document.getElementById("card");
       var logo = document.getElementById("logo");
+      var fallback = document.getElementById("fallback");
+      var cardBadge = document.getElementById("cardBadge");
       var tier = document.getElementById("tier");
       var tierLabel = document.getElementById("tierLabel");
       var name = document.getElementById("name");
@@ -424,7 +528,7 @@
       var counter = document.getElementById("counter");
 
       function labelFor(value) {
-        return tierLabels[value] || "Event Partner";
+        return tierLabels[value] || "Event Sponsor";
       }
 
       function classFor(value) {
@@ -440,14 +544,25 @@
         screen.className = "sponsor-screen " + classFor(sponsor.tier);
         tier.textContent = label;
         tierLabel.textContent = label;
+        cardBadge.textContent = label;
         name.textContent = sponsor.name;
         description.textContent = sponsor.businessType || "Proud supporter of Arangu '26";
         counter.textContent = String(nextIndex + 1) + " / " + String(sponsors.length);
         logo.alt = sponsor.name + " logo";
+        fallback.textContent = sponsor.name;
+        card.className = "sponsor-card";
         logo.src = sponsor.image;
         progress.style.setProperty("--progress", "0%");
         document.body.className = "is-ready";
       }
+
+      logo.addEventListener("error", function () {
+        card.className = "sponsor-card is-logo-error";
+      });
+
+      logo.addEventListener("load", function () {
+        card.className = "sponsor-card";
+      });
 
       function scheduleNext() {
         window.clearTimeout(timer);
@@ -470,6 +585,7 @@
       }
 
       function preload() {
+        if (typeof Image === "undefined") return;
         for (var i = 0; i < sponsors.length; i += 1) {
           var image = new Image();
           image.src = sponsors[i].image;
